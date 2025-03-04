@@ -1325,15 +1325,15 @@ function selectClass(className) {
             playerClass.attack += (playerLevel - 1) * 0.1;  // 每級增加 0.1 攻擊力
             playerClass.defense += (playerLevel - 1) * 0.1;  // 每級增加 0.1 防禦力
             const maxHealth = 1000 + (playerLevel - 1) * 100;  // 每級增加 100 氣血
-
-            const playerPath = isHost ? 'player1' : 'player2';
-            database.ref(`rooms/${currentRoomId}/${playerPath}`).update({
-                class: className,
-                health: maxHealth,  // 根據等級設置初始氣血
-                attack: playerClass.attack,
-                defense: playerClass.defense,
-                dodge: playerClass.dodge
-            });
+const playerPath = isHost ? 'player1' : 'player2';
+database.ref(`rooms/${currentRoomId}/${playerPath}`).update({
+    class: className,
+    health: maxHealth,  // 根據等級設置初始氣血
+    maxHealth: maxHealth,  // 儲存最大氣血值
+    attack: playerClass.attack,
+    defense: playerClass.defense,
+    dodge: playerClass.dodge
+});
         });
     }
 
@@ -1512,39 +1512,44 @@ function checkAnswer(isCorrect, questionId) {
         }
     }, 50);
 
-    // 傷害計算與動畫
-    let baseDamage = Math.floor((timeLeft / 15) * 13);
+   // 傷害計算與動畫
+let baseDamage;
+if (isCorrect) {
+    baseDamage = Math.floor((timeLeft / 15) * 13);  // 答對時的傷害計算保持不變
+} else {
+    baseDamage = Math.floor(Math.random() * 31) + 50;  // 答錯時隨機生成 50 至 80 點
+}
 
-    // 霸刀門雙倍攻擊判定（30%概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
-        baseDamage *= 2;
-        const swordFlash = document.createElement('div');
-        swordFlash.className = 'sword-flash';
-        swordFlash.style.top = `${Math.random() * 40 + 30}%`;
-        document.body.appendChild(swordFlash);
-        setTimeout(() => swordFlash.remove(), 400);
-    }
+// 霸刀門雙倍攻擊判定（30%概率）
+if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
+    baseDamage *= 2;
+    const swordFlash = document.createElement('div');
+    swordFlash.className = 'sword-flash';
+    swordFlash.style.top = `${Math.random() * 40 + 30}%`;
+    document.body.appendChild(swordFlash);
+    setTimeout(() => swordFlash.remove(), 400);
+}
 
-    // 影流教閃避判定（30%概率）
-    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
-        baseDamage = 0;
-        const dodgeDisplay = document.getElementById('dodgeText');
-        dodgeDisplay.style.display = 'block';
-        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
-    }
+// 影流教閃避判定（30%概率）
+if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
+    baseDamage = 0;
+    const dodgeDisplay = document.getElementById('dodgeText');
+    dodgeDisplay.style.display = 'block';
+    setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
+}
 
-    let damage;
-    if (isCorrect) {
-        damage = Math.floor(baseDamage * playerClass.attack / opponentDefense);
-    } else {
-        damage = Math.floor(baseDamage / playerClass.defense);
-        if (playerClass.type === 'mage') {
-            damage = Math.floor(damage * 0.7);
-            const reduceDisplay = document.getElementById('reduceDamageText');
-            reduceDisplay.style.display = 'block';
-            setTimeout(() => reduceDisplay.style.display = 'none', 1200);
-        }
+let damage;
+if (isCorrect) {
+    damage = Math.floor(baseDamage * playerClass.attack / opponentDefense);
+} else {
+    damage = Math.floor(baseDamage / playerClass.defense);
+    if (playerClass.type === 'mage') {
+        damage = Math.floor(damage * 0.7);
+        const reduceDisplay = document.getElementById('reduceDamageText');
+        reduceDisplay.style.display = 'block';
+        setTimeout(() => reduceDisplay.style.display = 'none', 1200);
     }
+}
 
     const targetElement = isCorrect 
         ? document.getElementById('opponentHealthBar')
@@ -1663,20 +1668,33 @@ function checkAnswer(isCorrect, questionId) {
     
 // 修改 updateHealthDisplay 函數
 function updateHealthDisplay(room) {
-    const myHealth = isHost ? room.player1.health : (room.player2?.health || 100);
-    const myName = isHost ? (room.player1?.name || '玩家1') : (room.player2?.name || '玩家2');
-    const opponentName = isHost ? (room.player2?.name || '玩家2') : (room.player1?.name || '玩家1');
+    const user = auth.currentUser;
+    if (user) {
+        const playerPath = isHost ? 'player1' : 'player2';
+        const opponentPath = isHost ? 'player2' : 'player1';
 
-    document.getElementById('myHealthContainer').innerHTML = `
-        <div>${myName} 氣血: <span id="myHealth">${Math.max(myHealth, 0)}</span></div>
-        <div class="health-bar"><div class="health-fill" id="myHealthBar"></div></div>
-    `;
-    document.getElementById('enemyHealthContainer').innerHTML = `
-        <div>${opponentName} 氣血: <span id="opponentHealth">${Math.max(isHost ? (room.player2?.health || 100) : room.player1.health, 0)}</span></div>
-        <div class="health-bar"><div class="health-fill" id="opponentHealthBar"></div></div>
-    `;
-    document.getElementById('myHealthBar').style.width = Math.max(myHealth, 0) + '%';
-    document.getElementById('opponentHealthBar').style.width = Math.max(isHost ? (room.player2?.health || 100) : room.player1.health, 0) + '%';
+        // 獲取各自的 maxHealth 和 health
+        const myMaxHealth = room[playerPath]?.maxHealth || 1000;  // 預設1000，若無數據
+        const opponentMaxHealth = room[opponentPath]?.maxHealth || 1000;
+        const myHealth = Math.max(room[playerPath]?.health || 0, 0);
+        const opponentHealth = Math.max(room[opponentPath]?.health || 0, 0);
+
+        // 計算氣血百分比
+        const myHealthPercentage = (myHealth / myMaxHealth) * 100;
+        const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
+
+        // 更新己方氣血條顯示
+        document.getElementById('myHealthContainer').innerHTML = `
+            <div>${user.displayName} 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
+            <div class="health-bar"><div class="health-fill" id="myHealthBar" style="width: ${myHealthPercentage}%"></div></div>
+        `;
+
+        // 更新敵方氣血條顯示
+        document.getElementById('enemyHealthContainer').innerHTML = `
+            <div>敵方氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
+            <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
+        `;
+    }
 }
     
 
@@ -2111,13 +2129,33 @@ function updateHealthDisplay(room) {
         <div class="health-bar"><div class="health-fill" id="opponentHealthBar"></div></div>
     `;
     
-    const myHealth = isHost ? room.player1.health : (room.player2?.health || 100);
-    const opponentHealth = isHost ? (room.player2?.health || 100) : room.player1.health;
-    
-document.getElementById('myHealth').textContent = Math.max(myHealth, 0);
-document.getElementById('opponentHealth').textContent = Math.max(opponentHealth, 0);
-    document.getElementById('myHealthBar').style.width = myHealth + '%';
-    document.getElementById('opponentHealthBar').style.width = opponentHealth + '%';
+
+    if (user) {
+        const playerPath = isHost ? 'player1' : 'player2';
+        const opponentPath = isHost ? 'player2' : 'player1';
+
+        // 從房間數據中獲取各自的 maxHealth 和 health
+        const myMaxHealth = room[playerPath]?.maxHealth || 1000;
+        const opponentMaxHealth = room[opponentPath]?.maxHealth || 1000;
+        const myHealth = Math.max(room[playerPath]?.health || 0, 0);
+        const opponentHealth = Math.max(room[opponentPath]?.health || 0, 0);
+
+        // 計算氣血百分比
+        const myHealthPercentage = (myHealth / myMaxHealth) * 100;
+        const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
+
+        // 更新己方氣血條顯示
+        document.getElementById('myHealthContainer').innerHTML = `
+            <div>${user.displayName} 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
+            <div class="health-bar"><div class="health-fill" id="myHealthBar" style="width: ${myHealthPercentage}%"></div></div>
+        `;
+
+        // 更新敵方氣血條顯示
+        document.getElementById('enemyHealthContainer').innerHTML = `
+            <div>敵方氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
+            <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
+        `;
+    }
 }
 
 function startGame(room) {
@@ -2350,11 +2388,18 @@ function handleGameEnd(winnerType) {
 
     // 添加經驗值和升級邏輯
     const user = auth.currentUser;
-    if (user && isWinner) {
+    let statsOverlay; // 定義 statsOverlay
+    if (user) {
         const userRef = database.ref('users/' + user.uid);
         userRef.transaction((userData) => {
-            if (!userData) userData = { level: 1, exp: 0 };
-            userData.exp += 50;  // 獲勝增加 50 經驗值
+            if (!userData) userData = { level: 1, exp: 0, score: 0 };
+            if (isWinner) {
+                userData.exp += 50; // 獲勝增加 50 經驗值
+                userData.score += 100; // 贏家增加 100 積分
+           } else {
+                userData.exp += 20;  // 輸家增加 20 經驗值
+                userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
+            }
             const expRequired = 100 * userData.level;
             if (userData.exp >= expRequired) {
                 userData.level += 1;
@@ -2362,16 +2407,53 @@ function handleGameEnd(winnerType) {
             }
             return userData;
         }).then(() => {
-            // 更新本地變數
-            userRef.once('value', (snapshot) => {
+
+userRef.once('value', (snapshot) => {
                 const userData = snapshot.val();
                 playerLevel = userData.level;
                 playerExp = userData.exp;
+                // 更新排行榜
+                const leaderboardRef = database.ref('leaderboard/' + user.uid);
+                leaderboardRef.set({
+                    name: user.displayName,
+                    score: userData.score
+                });
+            });
+
+            
+            // 創建彈出視窗顯示經驗值 BAR
+            statsOverlay = document.createElement('div');
+            statsOverlay.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+                border-radius: 15px; z-index: 10000; color: white; text-align: center;
+                width: 80%; max-width: 400px;
+            `;
+
+            userRef.once('value', (snapshot) => {
+                const userData = snapshot.val();
+                const expRequired = 100 * userData.level;
+                const expPercentage = (userData.exp / expRequired) * 100;
+
+                statsOverlay.innerHTML = `
+                    <h2>遊戲結束</h2>
+                    <p>等級: ${userData.level}</p>
+                    <p>經驗值: ${userData.exp} / ${expRequired}</p>
+                    <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
+                        <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
+                    </div>
+                    <p>積分: ${userData.score || 0}</p>
+                `;
+
+                if (userData.exp >= expRequired) {
+                    statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
+                }
+                document.body.appendChild(statsOverlay);
             });
         });
     }
 
-    // 重賽按鈕邏輯（保持不變）
+    // 重賽按鈕邏輯
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'rematch-buttons';
     const rematchBtn = document.createElement('button');
@@ -2386,6 +2468,11 @@ function handleGameEnd(winnerType) {
     buttonContainer.appendChild(rematchBtn);
     buttonContainer.appendChild(mainMenuBtn);
     victoryOverlay.appendChild(buttonContainer);
+
+    // 5 秒後移除彈出視窗
+    setTimeout(() => {
+        if (statsOverlay) statsOverlay.remove();
+    }, 5000);
 }
 
 
