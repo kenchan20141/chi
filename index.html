@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html>
     
@@ -9,12 +10,51 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>文瀾劍影錄</title>
+    <title>語弈錄</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>  
+
+.difficulty-icon {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    margin-bottom: 1rem;
+}
+        
+.difficulty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    max-width: 83%;
+    margin: 0 auto;
+}
+
+.difficulty-card {
+    background: rgba(45, 41, 38, 0.95);
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.3s;
+    text-align: center;
+}
+
+.difficulty-card:hover {
+    transform: scale(1.05);
+    border-color: #fff;
+}
+
+.difficulty-card.selected {
+    border-color: #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(46,204,113,0.5);
+}
+
+        
 #topicSelection {
     z-index: 10001; /* 確保高於等待頁面 */
 }
@@ -106,7 +146,10 @@
 }
         
         
-
+@keyframes damageFloat {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-50px); opacity: 0; }
+}
 
     /* 血條衝擊波特效 */
     @keyframes healthWave {
@@ -905,21 +948,22 @@
     <!-- 新增裝飾性邊框 -->
     <div class="main-border"></div>
     
-    <!-- 用戶信息區域 -->
-   <div id="userInfo" class="info-box" style="display: none;">
+    <!-- 修改1: 在用户信息部分添加百分比和升级所需 -->
+<div id="userInfo" class="info-box" style="display: none;">
     <span id="userName"></span> | 積分: <span id="userScore">0</span> | 等級: <span id="userLevel">1</span>
     <div>經驗值: 
         <div id="expBar" style="width: 100px; height: 10px; background: #333; border-radius: 5px; display: inline-block;">
             <div id="expFill" style="height: 100%; background: #4CAF50; width: 0%; transition: width 0.5s ease;"></div>
-        </div>
+        </div><span id="expText">0/0 (0.0%)</span>
+        <div id="expRemaining" style="display: inline-block; margin-left: 0px;">升級還需：0 經驗值</div>
     </div>
 </div>
     
     <!-- 強化標題 -->
     <div class="title-container">
         <h1>
-            <span class="title-text">文瀾劍影錄</span>
-            <span class="subtitle">俠骨柔腸·劍膽琴心</span>
+            <span class="title-text">語弈錄</span>
+            <span class="subtitle">桃李春風一杯酒，江湖夜雨十年燈</span>
         </h1>
     </div>
     
@@ -994,7 +1038,7 @@
     <div class="class-grid">
         <!-- 戰士 -->
         <div class="class-card" onclick="selectClass('warrior')">
-            <img src="https://i.ibb.co/p6g4PFH4/1.png" class="class-icon">
+            <img src="https://i.ibb.co/XfWY2Lgc/1.png" class="class-icon">
             <div class="selected-tick">✓</div>
             <h3>霸刀流</h3>
             <p>攻擊+20% 防禦-10%</p>
@@ -1002,12 +1046,12 @@
                 <li>⚔️ 裂空擊：命中後有30%機率造成雙倍傷害</li>
             </ul>
             <div class="popup-image" style="display: none;">
-                <img src="https://i.ibb.co/p6g4PFH4/1.png" alt="霸刀流全圖">
+                <img src="https://i.ibb.co/XfWY2Lgc/1.png" alt="霸刀流全圖">
             </div>
         </div>
         <!-- 坦克 -->
         <div class="class-card" onclick="selectClass('tank')">
-            <img src="https://i.ibb.co/4wksKZsF/image.png" class="class-icon">
+            <img src="https://i.ibb.co/ZR4Z2ZDT/image.png" class="class-icon">
             <div class="selected-tick">✓</div>
             <h3>鐵甲宗</h3>
             <p>防禦+20% 攻擊-10%</p>
@@ -1015,7 +1059,7 @@
                 <li>🛡️ 金鐘罩：每回合自動恢復2點氣血</li>
             </ul>
             <div class="popup-image" style="display: none;">
-                <img src="https://i.ibb.co/4wksKZsF/image.png" alt="鐵甲宗全圖">
+                <img src="https://i.ibb.co/ZR4Z2ZDT/image.pngg" alt="鐵甲宗全圖">
             </div>
         </div>
         <!-- 刺客 -->
@@ -1120,19 +1164,148 @@
         <div class="victory-text"></div>
     </div>
     
-<div id="difficultySelection" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid #d4af37; border-radius: 15px; z-index: 9999;">
-    <h2 style="color: #d4af37; text-align: center;">選擇難度</h2>
-   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; width: 300px;">
-        <button onclick="selectDifficulty('easy')" class="difficulty-btn">容易</button>
-        <button onclick="selectDifficulty('normal')" class="difficulty-btn">普通</button>
-        <button onclick="selectDifficulty('hard')" class="difficulty-btn">困難</button>
-        <button onclick="selectDifficulty('hell')" class="difficulty-btn">地獄</button>
+<div id="difficultySelection" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); padding: 0rem; z-index: 9999; overflow-y: auto;">
+    <h2 style="color: var(--gold); margin-bottom: 2rem;">選擇難度</h2>
+    <div class="difficulty-grid">
+        <div class="difficulty-card" onclick="selectDifficulty('easy')">
+            <img src="https://i.ibb.co/NdJSxqCJ/image-1.png" class="difficulty-icon">
+            <div class="selected-tick">✓</div>
+            <h3>布魯貓</h3>
+            <p>敵方氣血: 1000</p>
+            <p>正確率: 30%</p>
+            <p>答題時間: 6秒</p>
+            <p>勝出獎勵: 10點經驗</p>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/NdJSxqCJ/image-1.png" alt="容易難度全圖">
+            </div>
+        </div>
+        <div class="difficulty-card" onclick="selectDifficulty('normal')">
+            <img src="https://i.ibb.co/N0kzsd7/3.png" class="difficulty-icon">
+            <div class="selected-tick">✓</div>
+            <h3>雪羽千央</h3>
+            <p>敵方氣血: 1500</p>
+            <p>正確率: 50%</p>
+            <p>答題時間: 5秒</p>
+            <p>勝出獎勵: 30點經驗值</p>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/N0kzsd7/3.png" alt="普通難度全圖">
+            </div>
+        </div>
+        <div class="difficulty-card" onclick="selectDifficulty('hard')">
+            <img src="https://i.ibb.co/8Lr9D01n/image.pngg" class="difficulty-icon">
+            <div class="selected-tick">✓</div>
+            <h3>鶴棲朔</h3>
+            <p>敵方氣血: 2000</p>
+            <p>正確率: 70%</p>
+            <p>答題時間: 4秒</p>
+            <p>勝出獎勵: 100點經驗值</p>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/8Lr9D01n/image.png" alt="困難難度全圖">
+            </div>
+        </div>
+        <div class="difficulty-card" onclick="selectDifficulty('hell')">
+            <img src="https://i.ibb.co/HLBDYQVJ/4.png" class="difficulty-icon">
+            <div class="selected-tick">✓</div>
+            <h3>赤淵綾音</h3>
+            <p>敵方氣血: 3000</p>
+            <p>正確率: 90%</p>
+            <p>扣題時間: 3秒</p>
+            <p>勝出獎勵: 200點經驗</p>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/HLBDYQVJ/4.png" alt="地獄難度全圖">
+            </div>
+        </div>
+    </div>
+    <div id="selectedDifficultyInfo" style="margin-top: 2rem;"></div>
+</div>
+
+
+    <!-- 單機模式職業選擇界面 -->
+<div id="singlePlayerClassSelection" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); padding: 0rem; z-index: 9999; overflow-y: auto;">
+    <h2 style="color: var(--gold); margin-bottom: 2rem;">選擇你的武道流派</h2>
+    <div class="class-grid">
+        <!-- 戰士 -->
+        <div class="class-card" onclick="selectSinglePlayerClass('warrior')">
+            <img src="https://i.ibb.co/XfWY2Lgc/1.png" class="class-icon">
+            <div class="selected-tick">✓</div>
+            <h3>霸刀流</h3>
+            <p>攻擊+20% 防禦-10%</p>
+            <ul class="class-stats">
+                <li>⚔️ 裂空擊：命中後有30%機率造成雙倍傷害</li>
+            </ul>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/XfWY2Lgc/1.png" alt="霸刀流全圖">
+            </div>
+        </div>
+        <!-- 坦克 -->
+        <div class="class-card" onclick="selectSinglePlayerClass('tank')">
+            <img src="https://i.ibb.co/ZR4Z2ZDT/image.png" class="class-icon">
+            <div class="selected-tick">✓</div>
+            <h3>鐵甲宗</h3>
+            <p>防禦+20% 攻擊-10%</p>
+            <ul class="class-stats">
+                <li>🛡️ 金鐘罩：每回合自動恢復2點氣血</li>
+            </ul>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/ZR4Z2ZDT/image.png" alt="鐵甲宗全圖">
+            </div>
+        </div>
+        <!-- 刺客 -->
+        <div class="class-card" onclick="selectSinglePlayerClass('assassin')">
+            <img src="https://i.ibb.co/W4V5bX8X/image.png" class="class-icon">
+            <div class="selected-tick">✓</div>
+            <h3>影流教</h3>
+            <p>閃避+30% 防禦-10%</p>
+            <ul class="class-stats">
+                <li>🎯 鬼影步：30%機率完全閃避傷害</li>
+            </ul>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/W4V5bX8X/image.png" alt="影流教全圖">
+            </div>
+        </div>
+        <!-- 法師 -->
+        <div class="class-card" onclick="selectSinglePlayerClass('mage')">
+            <img src="https://i.ibb.co/tM82mXtr/3.png" class="class-icon">
+            <div class="selected-tick">✓</div>
+            <h3>玄天閣</h3>
+            <p>攻擊+10%</p>
+            <ul class="class-stats">
+                <li>🔥 離火訣：錯答傷害扣減30%</li>
+            </ul>
+            <div class="popup-image" style="display: none;">
+                <img src="https://i.ibb.co/tM82mXtr/3.png" alt="玄天閣全圖">
+            </div>
+        </div>
+    </div>
+    <div id="singlePlayerSelectedClassInfo" style="margin-top: 2rem;"></div>
+</div>
+
+<!-- 單機模式題庫選擇界面 -->
+<div id="singlePlayerTopicSelection" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(45, 41, 38, 0.95); padding: 2rem; border: none; border-radius: 0; z-index: 9999; overflow-y: auto;">
+    <h2 style="color: #d4af37; text-align: center;">選擇題庫</h2>
+    <div id="singlePlayerGradeSelection" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; width: 300px;">
+        <button onclick="selectSinglePlayerGrade('中一')" class="grade-btn">中一</button>
+        <button onclick="selectSinglePlayerGrade('中五')" class="grade-btn">中五</button>
+    </div>
+    <div id="singlePlayerTopicDetail" style="display: none; margin-top: 1rem;">
+        <h3 id="singlePlayerSelectedGrade" style="color: #d4af37; text-align: center;"></h3>
+        <div id="singlePlayerTopicList" style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; margin-top: 1rem;"></div>
     </div>
 </div>
 
     
     
 <script>
+
+    // 在代码开头定义不同难度的经验奖励
+const expRewards = {
+    easy: 10,
+    normal: 30,
+    hard: 100,
+    hell: 200
+};
+
+    let damageInterval;
 
 // Canvas 動畫代碼
 window.onload = function() {
@@ -1262,6 +1435,11 @@ window.onload = function() {
 };
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
+let singlePlayerClass = null; // 單機模式選中的職業
+let singlePlayerSelectedGrade = null; // 單機模式選中的年級
+    let selectedDifficulty = null;
+let singlePlayerSelectedTopic = null; // 單機模式選中的題庫
+    
     let playerLevel = 1;  // 預設等級為 1
 let playerExp = 0;    // 預設經驗值為 0
 let opponentJoinedMessage = null;
@@ -1328,11 +1506,12 @@ function selectClass(className) {
 const playerPath = isHost ? 'player1' : 'player2';
 database.ref(`rooms/${currentRoomId}/${playerPath}`).update({
     class: className,
-    health: maxHealth,  // 根據等級設置初始氣血
-    maxHealth: maxHealth,  // 儲存最大氣血值
+    health: maxHealth,
+    maxHealth: maxHealth,
     attack: playerClass.attack,
     defense: playerClass.defense,
-    dodge: playerClass.dodge
+    dodge: playerClass.dodge,
+    level: playerLevel || 1 // 確保等級被存儲
 });
         });
     }
@@ -1383,42 +1562,66 @@ function selectTopic(topic) {
         selectedGrade: selectedGrade,
         selectedTopic: selectedTopic,
         topicSelected: true
+    }).then(() => {
+        document.getElementById('topicSelection').style.display = 'none';
+        // 移除任何可能的等待信息
+        const waitingMessage = document.getElementById('waitingForTopic');
+        if (waitingMessage) waitingMessage.remove();
+        startCountdown();
+    }).catch(error => {
+        console.error('更新題庫選擇失敗:', error);
     });
-    document.getElementById('topicSelection').style.display = 'none';
-    startCountdown();
 }
     
-   function startCountdown() {
-    let countdown = 3;
-    const countdownElement = document.createElement('div');
-    countdownElement.id = 'countdown';
-    countdownElement.style.position = 'fixed';
-    countdownElement.style.top = '0';
-    countdownElement.style.left = '0';
-    countdownElement.style.width = '100%';
-    countdownElement.style.height = '100%';
-    countdownElement.style.display = 'flex';
-    countdownElement.style.alignItems = 'center';
-    countdownElement.style.justifyContent = 'center';
-    countdownElement.style.background = 'rgba(45, 41, 38, 0.95)';
-    countdownElement.style.color = 'var(--gold)';
-    countdownElement.style.fontSize = '10rem';
-    countdownElement.style.zIndex = '10001';
-    document.body.appendChild(countdownElement);
-
-    function updateCountdown() {
-        if (countdown > 0) {
-            countdownElement.textContent = countdown;
-            countdown--;
-            setTimeout(updateCountdown, 1000);
-        } else {
-            countdownElement.remove();
-            database.ref(`rooms/${currentRoomId}`).update({
-                gameStarted: true
+ function startCountdown() {
+    database.ref(`rooms/${currentRoomId}`).once('value').then(snapshot => {
+        const room = snapshot.val();
+        // 添加檢查：確保題庫已選擇且遊戲未開始
+        if (!room || room.countdownStarted || room.gameStarted || !room.topicSelected) {
+            console.log('未滿足倒數條件：', {
+                countdownStarted: room?.countdownStarted,
+                gameStarted: room?.gameStarted,
+                topicSelected: room?.topicSelected
             });
+            return;
         }
-    }
-    updateCountdown();
+
+        // 設置倒數計時開始標誌
+        database.ref(`rooms/${currentRoomId}`).update({ countdownStarted: true });
+
+        let countdown = 3;
+        const countdownElement = document.createElement('div');
+        countdownElement.id = 'countdown';
+        countdownElement.style.position = 'fixed';
+        countdownElement.style.top = '0';
+        countdownElement.style.left = '0';
+        countdownElement.style.width = '100%';
+        countdownElement.style.height = '100%';
+        countdownElement.style.display = 'flex';
+        countdownElement.style.alignItems = 'center';
+        countdownElement.style.justifyContent = 'center';
+        countdownElement.style.background = 'rgba(45, 41, 38, 0.95)';
+        countdownElement.style.color = 'var(--gold)';
+        countdownElement.style.fontSize = '10rem';
+        countdownElement.style.zIndex = '10001';
+        document.body.appendChild(countdownElement);
+
+        function updateCountdown() {
+            if (countdown > 0) {
+                countdownElement.textContent = countdown;
+                countdown--;
+                setTimeout(updateCountdown, 1000);
+            } else {
+                countdownElement.remove();
+                // 結束後統一設置遊戲開始並重置倒數標誌
+                database.ref(`rooms/${currentRoomId}`).update({
+                    gameStarted: true,
+                    countdownStarted: false
+                });
+            }
+        }
+        updateCountdown();
+    });
 }
 
 function displayQuestion(question) {
@@ -1471,9 +1674,11 @@ function checkAnswer(isCorrect, questionId) {
     }
 
     // 鐵甲宗治療代碼
-    if (playerClass && playerClass.type === 'tank' && !hasHealedThisTurn) {
-        hasHealedThisTurn = true;
-        const healAmount = 2;
+    if (playerClass.type === 'tank' && !hasHealedThisTurn) {
+    hasHealedThisTurn = true;
+    const maxHealth = room[playerPath].maxHealth;  // 從資料庫獲取最大氣血
+    const healAmount = Math.round(maxHealth * playerClass.healPercentage);
+        const newHealth = Math.min(room[playerPath].health + healAmount, maxHealth);  // 應用恢復
         const playerPath = isHost ? 'player1' : 'player2';
         database.ref(`rooms/${currentRoomId}/${playerPath}/health`).set(
             firebase.database.ServerValue.increment(healAmount)
@@ -1514,11 +1719,11 @@ function checkAnswer(isCorrect, questionId) {
 
    // 傷害計算與動畫
 let baseDamage;
-if (isCorrect) {
-    baseDamage = Math.floor((timeLeft / 15) * 13);  // 答對時的傷害計算保持不變
-} else {
-    baseDamage = Math.floor(Math.random() * 31) + 50;  // 答錯時隨機生成 50 至 80 點
-}
+    if (isCorrect) {
+        baseDamage = Math.floor(Math.random() * 31) + 50;  // 隨機生成50至80點
+    } else {
+        baseDamage = Math.floor(Math.random() * 31) + 50;  // 答錯時隨機生成50至80點
+    }
 
 // 霸刀門雙倍攻擊判定（30%概率）
 if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
@@ -1669,29 +1874,48 @@ if (isCorrect) {
 // 修改 updateHealthDisplay 函數
 function updateHealthDisplay(room) {
     const user = auth.currentUser;
-    if (user) {
-        const playerPath = isHost ? 'player1' : 'player2';
-        const opponentPath = isHost ? 'player2' : 'player1';
+    if (!user) return;
 
-        // 獲取各自的 maxHealth 和 health
-        const myMaxHealth = room[playerPath]?.maxHealth || 1000;  // 預設1000，若無數據
-        const opponentMaxHealth = room[opponentPath]?.maxHealth || 1000;
-        const myHealth = Math.max(room[playerPath]?.health || 0, 0);
-        const opponentHealth = Math.max(room[opponentPath]?.health || 0, 0);
+    const playerPath = isHost ? 'player1' : 'player2';
+    const opponentPath = isHost ? 'player2' : 'player1';
 
-        // 計算氣血百分比
-        const myHealthPercentage = (myHealth / myMaxHealth) * 100;
-        const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
+    const myMaxHealth = room[playerPath]?.maxHealth || 1000;
+    const opponentMaxHealth = room[opponentPath]?.maxHealth || 1000;
+    const myHealth = Math.max(room[playerPath]?.health || 0, 0);
+    const opponentHealth = Math.max(room[opponentPath]?.health || 0, 0);
 
-        // 更新己方氣血條顯示
-        document.getElementById('myHealthContainer').innerHTML = `
-            <div>${user.displayName} 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
-            <div class="health-bar"><div class="health-fill" id="myHealthBar" style="width: ${myHealthPercentage}%"></div></div>
-        `;
+    const myHealthPercentage = (myHealth / myMaxHealth) * 100;
+    const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
 
-        // 更新敵方氣血條顯示
+    // 更新己方顯示
+    document.getElementById('myHealthContainer').innerHTML = `
+        <div>${user.displayName || '未知玩家'} (等級 ${playerLevel || 1}) 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
+        <div class="health-bar"><div class="health-fill" id="myHealthBar" style="width: ${myHealthPercentage}%"></div></div>
+    `;
+
+    // 更新敵方顯示
+    const opponentData = room[opponentPath];
+    if (opponentData && opponentData.userId) {
+        // 從 Firebase 用戶數據庫獲取對方名稱和等級
+        database.ref('users/' + opponentData.userId).once('value').then(snapshot => {
+            const userData = snapshot.val() || {};
+            const opponentName = userData.displayName || opponentData.name || '未知玩家';
+            const opponentLevel = userData.level || opponentData.level || 1;
+
+            document.getElementById('enemyHealthContainer').innerHTML = `
+                <div>${opponentName} (等級 ${opponentLevel}) 氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
+                <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
+            `;
+        }).catch(error => {
+            console.error('獲取對方用戶數據失敗:', error);
+            document.getElementById('enemyHealthContainer').innerHTML = `
+                <div>未知玩家 (等級 1) 氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
+                <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
+            `;
+        });
+    } else {
         document.getElementById('enemyHealthContainer').innerHTML = `
-            <div>敵方氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
+            <div>等待玩家加入... 氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
             <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
         `;
     }
@@ -1715,7 +1939,64 @@ appId: "1:948613965375:web:ae966d7dd461e328093a8a"
 
 };
 firebase.initializeApp(firebaseConfig);
-  
+
+
+    // 監聽認證狀態變化
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            // 用戶已登入
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('userName').textContent = user.displayName || '未知玩家';
+            document.getElementById('logoutContainer').style.display = 'block';
+            document.getElementById('loginBtn').parentElement.style.display = 'none';
+
+            // 更新經驗值顯示
+            updateExpDisplay();
+        } else {
+            // 用戶未登入
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('logoutContainer').style.display = 'none';
+            document.getElementById('loginBtn').parentElement.style.display = 'block';
+        }
+    });
+
+    // 更新經驗值顯示的函數
+    function updateExpDisplay() {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            console.log("用戶未登入，無法更新經驗值顯示");
+            return;
+        }
+
+        const userRef = firebase.database().ref('users/' + user.uid);
+        userRef.once('value', (snapshot) => {
+            const userData = snapshot.val();
+            if (!userData) {
+                console.log("用戶數據不存在，使用默認值");
+                return;
+            }
+
+            // 從資料庫獲取當前經驗值和等級，若無數據則設為默認值
+            const exp = userData.exp || 0;
+            const level = userData.level || 1;
+
+            // 假設每級所需經驗值為 100 * 等級（可根據需求調整）
+            const expRequired = 100 * level;
+
+            // 計算經驗值百分比
+            const percentage = (exp / expRequired) * 100;
+
+            // 計算升級還需的經驗值
+            const remainingExp = expRequired - exp;
+
+            // 更新頁面上的顯示
+            document.getElementById('expText').textContent = `${exp}/${expRequired} (${percentage.toFixed(1)}%)`;
+            document.getElementById('expRemaining').textContent = `升級還需：${remainingExp} 經驗值`;
+            document.getElementById('expFill').style.width = `${percentage}%`;
+        }).catch((error) => {
+            console.error("獲取用戶數據失敗:", error);
+        });
+    }
 
 // 「登入」按鈕事件
 document.getElementById('loginBtn').onclick = function() {
@@ -1773,7 +2054,15 @@ document.getElementById('registerBtn').onclick = function() {
             return user.updateProfile({
                 displayName: displayName
             }).then(() => {
-                return displayNamesRef.child(displayName).set(true);
+                // 添加到 users 節點
+                return database.ref('users/' + user.uid).set({
+                    displayName: displayName,
+                    level: 1,
+                    exp: 0,
+                    score: 0
+                }).then(() => {
+                    return displayNamesRef.child(displayName).set(true);
+                });
             });
         })
         .then(() => {
@@ -1808,7 +2097,9 @@ document.getElementById('logoutBtn').onclick = function() {
 };
 
     
-    const auth = firebase.auth();
+
+
+const auth = firebase.auth();
    auth.onAuthStateChanged((user) => {
     const userInfo = document.getElementById('userInfo');
     const userName = document.getElementById('userName');
@@ -1824,12 +2115,13 @@ document.getElementById('logoutBtn').onclick = function() {
         userName.textContent = user.displayName || '未命名玩家';
 
         // 從資料庫獲取資料
-        database.ref('users/' + user.uid).once('value', (snapshot) => {
-            const userData = snapshot.val() || { level: 1, exp: 0 };
-            userLevel.textContent = userData.level;
-            const expPercentage = (userData.exp / (100 * userData.level)) * 100;
-            expFill.style.width = expPercentage + '%';
-        });
+      database.ref('users/' + user.uid).once('value', (snapshot) => {
+    const userData = snapshot.val() || { level: 1, exp: 0 };
+    playerLevel = userData.level; // 設置全局變量
+    userLevel.textContent = userData.level;
+    const expPercentage = (userData.exp / (100 * userData.level)) * 100;
+    expFill.style.width = expPercentage + '%';
+});
 
         database.ref('leaderboard/' + user.uid).once('value', (snapshot) => {
             const data = snapshot.val();
@@ -1842,6 +2134,7 @@ document.getElementById('logoutBtn').onclick = function() {
         userInfo.style.display = 'none';
     }
 });
+
 const database = firebase.database();
 
 let currentRoomId = null;
@@ -1864,10 +2157,10 @@ const soundEffects = {
 };
 
     const difficultySettings = {
-    easy: { damageChance: 0.2, damageInterval: 10000 }, // 20% 機率，每 10 秒扣血
-    normal: { damageChance: 0.4, damageInterval: 8000 }, // 40% 機率，每 8 秒扣血
-    hard: { damageChance: 0.6, damageInterval: 6000 }, // 60% 機率，每 6 秒扣血
-    hell: { damageChance: 0.8, damageInterval: 4000 } // 80% 機率，每 4 秒扣血
+    easy: { enemyHealth: 1000, damageChance: 0.3, damageInterval: 6000 },
+    normal: { enemyHealth: 1500, damageChance: 0.5, damageInterval: 5000 },
+    hard: { enemyHealth: 2000, damageChance: 0.7, damageInterval: 4000 },
+    hell: { enemyHealth: 3000, damageChance: 0.9, damageInterval: 3000 }
 };
 
 // 修改重點 2：初始按鈕文字設定
@@ -1880,36 +2173,57 @@ function toggleMusic() {
     isMusicPlaying ? bgMusic.play() : bgMusic.pause();
     
     // 反轉按鈕顯示文字
-    document.querySelector('.music-control').textContent = isMusicPlaying ? '🎵' : '🔇';
+    document.querySelector('.music-control').textContent = isMusicPlaying ? '🎵' : '';
 }
 
 function createRoom() {
-    currentRoomId = document.getElementById('roomId').value || Math.floor(1000 + Math.random() * 9000);
+    const roomIdInput = document.getElementById('roomId').value.trim();
+    if (roomIdInput.length !== 4) {
+        alert('請輸入四位戰場編號');
+        return;
+    }
+    const userId = generateUserId();
+    const player1Ref = database.ref('rooms/' + roomIdInput + '/player1');
+    player1Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
+    player1Ref.onDisconnect().remove();
+    currentRoomId = roomIdInput;
     isHost = true;
     document.getElementById('roomControl').style.display = 'none';
-    document.getElementById('classSelection').style.display = 'block';
     document.getElementById('waitingArea').style.display = 'block';
-    document.getElementById('displayRoomId').textContent = currentRoomId;
-
-    // 隨機決定題庫選擇者
-    const topicSelector = Math.random() < 0.5 ? 'player1' : 'player2';
-
-    database.ref('rooms/' + currentRoomId).set({
-        player1: { health: 100, class: null, currentQuestion: null },
-        player2: { health: 100, class: null, currentQuestion: null },
-        gameStarted: false,
-        gameEnded: false,
-        winner: null,
-        topicSelector: topicSelector // 新增字段
-    });
+    document.getElementById('displayRoomId').textContent = roomIdInput;
+    document.getElementById('classSelection').style.display = 'block';
     listenToRoomChanges();
 }
 
 function joinRoom() {
-    currentRoomId = document.getElementById('roomId').value;
-    document.getElementById('roomControl').style.display = 'none';
-    document.getElementById('classSelection').style.display = 'block';
-    listenToRoomChanges();
+    const roomId = document.getElementById('roomId').value.trim();
+    if (roomId.length !== 4) {
+        alert('請輸入四位戰場編號');
+        return;
+    }
+    const userId = generateUserId();
+    const roomRef = database.ref('rooms/' + roomId);
+    roomRef.once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const room = snapshot.val();
+            if (room.player2) {
+                alert('戰場已滿');
+                return;
+            }
+            const player2Ref = database.ref('rooms/' + roomId + '/player2');
+            player2Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
+            player2Ref.onDisconnect().remove();
+            currentRoomId = roomId;
+            isHost = false;
+            document.getElementById('roomControl').style.display = 'none';
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('displayRoomId').textContent = roomId;
+            document.getElementById('classSelection').style.display = 'block';
+            listenToRoomChanges();
+        } else {
+            alert('戰場不存在');
+        }
+    });
 }
 
     function createRoomWithId(roomId) {
@@ -1920,47 +2234,56 @@ function joinRoom() {
     document.getElementById('waitingArea').style.display = 'block';
     document.getElementById('displayRoomId').textContent = currentRoomId;
 
+    const user = auth.currentUser;
+if (user) {
     database.ref('rooms/' + currentRoomId).set({
-        player1: { health: 100, class: null, currentQuestion: null },
-        player2: { health: 100, class: null, currentQuestion: null },
+        player1: {
+            userId: user.uid,
+            name: user.displayName || '未知玩家',
+            level: playerLevel || 1,
+            health: 100,
+            class: null,
+            currentQuestion: null
+        },
+        player2: null,
         gameStarted: false,
         gameEnded: false,
         winner: null
     });
+} else {
+    alert('請先登入！');
+    return;
+}
     listenToRoomChanges();
 }
 
 function joinRoomWithId(roomId) {
     currentRoomId = roomId;
-    isHost = false; // 注意這裡與 createRoomWithId 的區別
+    isHost = false;
     document.getElementById('roomControl').style.display = 'none';
     document.getElementById('classSelection').style.display = 'block';
     listenToRoomChanges();
-}
-
-    function joinWaitingQueue() {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-        alert("請先登入！");
+    const user = auth.currentUser;
+    if (user) {
+        const player2Ref = database.ref('rooms/' + currentRoomId + '/player2');
+        player2Ref.set({
+            userId: user.uid,
+            name: user.displayName || '未知玩家',
+            level: playerLevel || 1,
+            health: 100,
+            class: null,
+            currentQuestion: null
+        }).catch((error) => {
+            console.error("設置 player2 失敗:", error);
+        });
+    } else {
+        alert('請先登入！');
         return;
     }
-
-    const waitingRef = database.ref('waitingRooms');
-    const userId = user.uid;
-
-    // 檢查是否已在等待隊列中
-    waitingRef.child(userId).once('value', (snapshot) => {
-        if (!snapshot.exists()) {
-            // 加入等待隊列
-            waitingRef.child(userId).set({
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-            checkForMatch();
-        } else {
-            alert("您已在等待中，請稍候！");
-        }
-    });
 }
+
+
+   
 
 function checkForMatch() {
     const waitingRef = database.ref('waitingRooms');
@@ -2014,9 +2337,15 @@ function startGameSession() {
 
 
   function randomMatch() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert('請先登入！');
+        return;
+    }
+
     console.log("randomMatch called");
     const waitingRef = database.ref('waitingRooms');
-    const userId = Math.random().toString(36).substr(2, 9); // 臨時用戶 ID
+    const userId = user.uid; // 使用真實用戶 ID
 
     waitingRef.once('value', (snapshot) => {
         console.log("Waiting data:", snapshot.val());
@@ -2028,7 +2357,13 @@ function startGameSession() {
             isHost = true;
 
             database.ref('rooms/' + roomId).set({
-                player1: { userId: userId, health: 100, class: null, currentQuestion: null, name: '玩家1' },
+                player1: { 
+                    userId: userId, 
+                    health: 100, 
+                    class: null, 
+                    currentQuestion: null, 
+                    name: user.displayName || '未知玩家' // 使用真實名稱
+                },
                 player2: null,
                 gameStarted: false,
                 gameEnded: false,
@@ -2041,7 +2376,6 @@ function startGameSession() {
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             });
 
-            // 房主斷線時清理
             const roomRef = database.ref('rooms/' + roomId);
             roomRef.onDisconnect().remove();
             waitingRef.onDisconnect().remove();
@@ -2059,14 +2393,17 @@ function startGameSession() {
 
             const player2Ref = database.ref('rooms/' + roomId + '/player2');
             player2Ref.set({
-                userId: userId, health: 100, class: null, currentQuestion: null, name: '玩家2'
+                userId: userId, 
+                health: 100, 
+                class: null, 
+                currentQuestion: null, 
+                name: user.displayName || '未知玩家' // 使用真實名稱
             }).then(() => {
                 waitingRef.remove();
             }).catch((error) => {
                 console.error("設置 player2 失敗:", error);
             });
 
-            // 第二位玩家斷線時清理自身記錄
             player2Ref.onDisconnect().remove();
 
             document.getElementById('roomControl').style.display = 'none';
@@ -2102,57 +2439,37 @@ function startNewGameSession() {
     
 function updateHealthDisplay(room) {
     const user = auth.currentUser;
-    if (user) {
-        document.getElementById('myHealthContainer').innerHTML = `
-            <div>${user.displayName} 氣血: <span id="myHealth">${Math.max(isHost ? room.player1.health : (room.player2?.health || 100), 0)}</span></div>
-            <div class="health-bar"><div class="health-fill" id="myHealthBar"></div></div>
-        `;
-    }
-     // 在原有代码前添加职业头像显示
-    const myClass = isHost ? room.player1.class : (room.player2?.class || '');
-    const opponentClass = isHost ? (room.player2?.class || '') : room.player1.class;
+    if (!user) return;
 
- // 添加职业头像
+    const playerPath = isHost ? 'player1' : 'player2';
+    const opponentPath = isHost ? 'player2' : 'player1';
+
+    const myMaxHealth = room[playerPath]?.maxHealth || 1000;
+    const opponentMaxHealth = room[opponentPath]?.maxHealth || 1000;
+    const myHealth = Math.max(room[playerPath]?.health || 0, 0);
+    const opponentHealth = Math.max(room[opponentPath]?.health || 0, 0);
+
+    const myHealthPercentage = (myHealth / myMaxHealth) * 100;
+    const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
+
+    // 更新己方顯示
     document.getElementById('myHealthContainer').innerHTML = `
-        <div style="display:flex; align-items:center; gap:1rem;">
-            <img src="https://example.com/${myClass}.png" style="width:50px; height:50px; border-radius:50%;">
-            <div>🏹 你的氣血: <span id="myHealth">100</span></div>
-        </div>
-        <div class="health-bar"><div class="health-fill" id="myHealthBar"></div></div>
+        <div>${user.displayName || '未知玩家'} (等級 ${playerLevel || 1}) 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
+        <div class="health-bar"><div class="health-fill" id="myHealthBar" style="width: ${myHealthPercentage}%"></div></div>
     `;
-    
-    document.getElementById('enemyHealthContainer').innerHTML = `
-        <div style="display:flex; align-items:center; gap:1rem;">
-            <img src="https://example.com/${opponentClass}.png" style="width:50px; height:50px; border-radius:50%;">
-            <div>🗡 敵方氣血: <span id="opponentHealth">100</span></div>
-        </div>
-        <div class="health-bar"><div class="health-fill" id="opponentHealthBar"></div></div>
-    `;
-    
 
-    if (user) {
-        const playerPath = isHost ? 'player1' : 'player2';
-        const opponentPath = isHost ? 'player2' : 'player1';
-
-        // 從房間數據中獲取各自的 maxHealth 和 health
-        const myMaxHealth = room[playerPath]?.maxHealth || 1000;
-        const opponentMaxHealth = room[opponentPath]?.maxHealth || 1000;
-        const myHealth = Math.max(room[playerPath]?.health || 0, 0);
-        const opponentHealth = Math.max(room[opponentPath]?.health || 0, 0);
-
-        // 計算氣血百分比
-        const myHealthPercentage = (myHealth / myMaxHealth) * 100;
-        const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
-
-        // 更新己方氣血條顯示
-        document.getElementById('myHealthContainer').innerHTML = `
-            <div>${user.displayName} 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
-            <div class="health-bar"><div class="health-fill" id="myHealthBar" style="width: ${myHealthPercentage}%"></div></div>
-        `;
-
-        // 更新敵方氣血條顯示
+    // 更新敵方顯示
+    const opponentData = room[opponentPath];
+    if (opponentData) {
+        const opponentName = opponentData.name || '未知玩家';
+        const opponentLevel = opponentData.level || 1;
         document.getElementById('enemyHealthContainer').innerHTML = `
-            <div>敵方氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
+            <div>${opponentName} (等級 ${opponentLevel}) 氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
+            <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
+        `;
+    } else {
+        document.getElementById('enemyHealthContainer').innerHTML = `
+            <div>等待玩家加入... 氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
             <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
         `;
     }
@@ -2484,49 +2801,229 @@ function startSinglePlayer() {
 
 // 選擇難度並啟動遊戲
 function selectDifficulty(difficulty) {
+    selectedDifficulty = difficulty;
     const settings = difficultySettings[difficulty];
     if (!settings) return;
 
-    // 初始化单机模式
-    currentRoomId ='single_' + Date.now();
-    isHost = true;
-    gameOver = false;
-    answered = false;
-    playerClass = null; // 单机模式不需要职业
+    const baseHealth = 1000;
+    const healthPerLevel = 100;
+    const user = auth.currentUser;
+    if (user) {
+        database.ref('users/' + user.uid).once('value', (snapshot) => {
+            const userData = snapshot.val() || { level: 1, exp: 0 };
+            playerLevel = userData.level;
+            singlePlayerHealth = baseHealth + (playerLevel - 1) * healthPerLevel;
+            enemyHealth = settings.enemyHealth;
+            updateSinglePlayerHealthDisplay();
+        });
+    } else {
+        singlePlayerHealth = baseHealth;
+        enemyHealth = settings.enemyHealth;
+        updateSinglePlayerHealthDisplay();
+    }
 
-    // 设置玩家气血
-    const initialHealth = 100;
-    // 添加敌方初始气血设置
-    const enemyInitialHealth = 100;
-    database.ref('rooms/' + currentRoomId).set({
-        player1: { health: initialHealth },
-        enemy: { health: enemyInitialHealth }, // 添加敌方气血
-        gameStarted: true,
-        gameEnded: false,
-        winner: null
+    document.querySelectorAll('.difficulty-card').forEach(card => {
+        card.classList.remove('selected');
+        card.querySelector('.selected-tick').style.display = 'none'; // 隱藏勾號
     });
+    const selectedCard = document.querySelector(`.difficulty-card[onclick="selectDifficulty('${difficulty}')"]`);
+    selectedCard.classList.add('selected');
+    selectedCard.querySelector('.selected-tick').style.display = 'flex'; // 顯示勾號
+    document.getElementById('selectedDifficultyInfo').innerHTML = `
+        <p style="font-size:1.5em;color:#2ecc71;">✓ 已選擇：${selectedCard.querySelector('h3').textContent}</p>
+    `;
 
-    // 显示游戏区域
-    document.getElementById('difficultySelection').style.display = 'none';
-    document.getElementById('gameArea').style.display = 'block';
-    const victoryOverlay = document.querySelector('.victory-overlay');
-victoryOverlay.style.display = 'none';
+    // 添加彈出效果
+    const popupImage = selectedCard.querySelector('.popup-image');
+    popupImage.style.display = 'block';
+    setTimeout(() => {
+        popupImage.style.display = 'none';
+        document.getElementById('difficultySelection').style.display = 'none';
+        document.getElementById('singlePlayerClassSelection').style.display = 'block';
+    }, 500);
+}
+    
+function selectSinglePlayerClass(className) {
+    const classData = {
+        warrior: { attack: 1.2, defense: 0.9, dodge: 0, skill: 'doubleDamage' },
+        tank: { attack: 0.9, defense: 1.2, dodge: 0, skill: 'heal' },
+        assassin: { attack: 1.0, defense: 0.9, dodge: 0.3, skill: 'dodge' },
+        mage: { attack: 1.1, defense: 1.0, dodge: 0, skill: 'counter' }
+    };
 
-    // 开始扣血计时器，确保按照难度设置的时间间距扣血
-    clearInterval(timer); // 清除可能存在的旧计时器
-    setInterval(() => {
+    singlePlayerClass = classData[className];
+    singlePlayerClass.type = className;
+
+    // 選擇反饋
+    document.querySelectorAll('#singlePlayerClassSelection .class-card').forEach(card => {
+        card.classList.remove('selected');
+        card.querySelector('.selected-tick').style.display = 'none';
+    });
+    const selectedCard = document.querySelector(`#singlePlayerClassSelection .class-card[onclick="selectSinglePlayerClass('${className}')"]`);
+    selectedCard.classList.add('selected');
+    selectedCard.querySelector('.selected-tick').style.display = 'flex';
+    document.getElementById('singlePlayerSelectedClassInfo').innerHTML = `
+        <p style="font-size:1.5em;color:#2ecc71;">✓ 已選擇：${selectedCard.querySelector('h3').textContent}</p>
+    `;
+
+    const popupImage = selectedCard.querySelector('.popup-image');
+    popupImage.style.display = 'block';
+    setTimeout(() => {
+        popupImage.style.display = 'none';
+        // 進入年級選擇界面
+        document.getElementById('singlePlayerClassSelection').style.display = 'none';
+        document.getElementById('singlePlayerTopicSelection').style.display = 'block';
+        document.getElementById('singlePlayerGradeSelection').style.display = 'grid'; // 顯示年級選擇
+        document.getElementById('singlePlayerTopicDetail').style.display = 'none';    // 隱藏題庫選擇
+    }, 500);
+}
+
+    function selectSinglePlayerGrade(grade) {
+    singlePlayerSelectedGrade = grade;
+    document.getElementById('singlePlayerSelectedGrade').textContent = `選擇 ${grade} 題庫`;
+    document.getElementById('singlePlayerGradeSelection').style.display = 'none';
+    document.getElementById('singlePlayerTopicDetail').style.display = 'block';
+
+    // 根據年級加載相應的題庫
+    const topics = grade === '中一' ? ['御人之妻'] : ['廉頗藺相如列傳'];
+    const topicList = document.getElementById('singlePlayerTopicList');
+    topicList.innerHTML = '';
+    topics.forEach(topic => {
+        const button = document.createElement('button');
+        button.textContent = topic;
+        button.className = 'topic-btn';
+        button.onclick = () => selectSinglePlayerTopic(topic);
+        topicList.appendChild(button);
+    });
+}
+
+function selectSinglePlayerTopic(topic) {
+    singlePlayerSelectedTopic = topic;
+    document.getElementById('singlePlayerTopicSelection').style.display = 'none';
+    startSinglePlayerCountdown();
+}
+
+  function startSinglePlayerCountdown() {
+    console.log('Starting countdown');
+    let countdown = 3;
+    const countdownElement = document.createElement('div');
+    countdownElement.id = 'countdown';
+    countdownElement.style.position = 'fixed';
+    countdownElement.style.top = '0';
+    countdownElement.style.left = '0';
+    countdownElement.style.width = '100%';
+    countdownElement.style.height = '100%';
+    countdownElement.style.display = 'flex';
+    countdownElement.style.alignItems = 'center';
+    countdownElement.style.justifyContent = 'center';
+    countdownElement.style.background = 'rgba(45, 41, 38, 0.95)';
+    countdownElement.style.color = 'var(--gold)';
+    countdownElement.style.fontSize = '10rem';
+    countdownElement.style.zIndex = '10001';
+    document.body.appendChild(countdownElement);
+
+    function updateCountdown() {
+        if (countdown > 0) {
+            countdownElement.textContent = countdown;
+            countdown--;
+            setTimeout(updateCountdown, 1000);
+        } else {
+            countdownElement.remove();
+            document.getElementById('gameArea').style.display = 'block';
+            document.querySelectorAll('#roomControl, #difficultySelection, #singlePlayerClassSelection, #singlePlayerTopicSelection, #waitingArea, #classSelection, #topicSelection').forEach(el => {
+                el.style.display = 'none';
+            });
+            const settings = difficultySettings[selectedDifficulty];
+            if (!settings) {
+                console.error('難度設置未找到，selectedDifficulty:', selectedDifficulty);
+                return;
+            }
+            damageInterval = setInterval(() => {
         if (Math.random() < settings.damageChance) {
-            const damage = 10; // 每次扣减 10 点气血
-            database.ref('rooms/' + currentRoomId + '/player1/health').set(
-                firebase.database.ServerValue.increment(-damage)
-            );
+            const baseDamage = 50 + Math.random() * 30;
+            const difficultyMultiplier = {
+                easy: 0.8,
+                normal: 1.0,
+                hard: 1.2,
+                hell: 1.5
+            }[selectedDifficulty];
+            let defenseAdjustment = 0;
+            if (singlePlayerClass.type === 'warrior' || singlePlayerClass.type === 'assassin') {
+                defenseAdjustment = -0.1;
+            } else if (singlePlayerClass.type === 'tank') {
+                defenseAdjustment = 0.2;
+            }
+            const levelDefenseAdjustment = (playerLevel - 1) * 0.05;
+            const totalDefenseAdjustment = defenseAdjustment + levelDefenseAdjustment;
+            let damageToPlayer = baseDamage * difficultyMultiplier * (1 - totalDefenseAdjustment);
+            damageToPlayer = Math.max(Math.round(damageToPlayer), 0);
+            singlePlayerHealth = Math.max(Math.round(singlePlayerHealth - damageToPlayer), 0);
+            updateSinglePlayerHealthDisplay();
+            if (singlePlayerHealth <= 0) {
+                handleSinglePlayerGameOver(false);
+            }
         }
     }, settings.damageInterval);
-
-    // 监听气血变化
-    listenToSinglePlayerHealth();
-    loadNewQuestionSinglePlayer();
+            loadNewQuestionSinglePlayer();
+        }
+    }
+    updateCountdown();
 }
+
+function updateSinglePlayerHealthDisplay() {
+    const maxPlayerHealth = 1000 + (playerLevel - 1) * 100; // 動態計算最大氣血
+    const maxEnemyHealth = difficultySettings[selectedDifficulty].enemyHealth;
+
+    document.getElementById('myHealth').textContent = `${singlePlayerHealth} / ${maxPlayerHealth}`;
+    document.getElementById('myHealthBar').style.width = `${(singlePlayerHealth / maxPlayerHealth) * 100}%`;
+
+    document.getElementById('opponentHealth').textContent = `${enemyHealth} / ${maxEnemyHealth}`;
+    document.getElementById('opponentHealthBar').style.width = `${(enemyHealth / maxEnemyHealth) * 100}%`;
+
+    // 添加動畫效果
+    const healthBar = singlePlayerHealth < maxPlayerHealth * 0.3 ? 'myHealthBar' : 'opponentHealthBar';
+    const wave = document.createElement('div');
+    wave.className = 'health-wave';
+    document.getElementById(healthBar).appendChild(wave);
+    setTimeout(() => wave.remove(), 500);
+}
+
+    
+    function loadNewQuestionSinglePlayer() {
+    // 從選中的年級和題庫中加載問題
+    const grade = singlePlayerSelectedGrade;
+    const topic = singlePlayerSelectedTopic;
+    const questionRef = database.ref(`questions/${grade}/${topic}`);
+    questionRef.once('value').then(snapshot => {
+        const questions = snapshot.val();
+        if (!questions) {
+            console.error('無法找到該題庫數據');
+            return;
+        }
+        const questionKeys = Object.keys(questions);
+        const randomId = questionKeys[Math.floor(Math.random() * questionKeys.length)];
+
+        const originalQuestion = questions[randomId];
+        const optionsCopy = [...originalQuestion.options];
+        const correctAnswer = optionsCopy[originalQuestion.correctIndex];
+        const shuffledOptions = shuffleArray(optionsCopy);
+        const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
+
+        currentQuestion = {
+            question: originalQuestion.question,
+            options: shuffledOptions,
+            correctIndex: newCorrectIndex,
+            id: Date.now()
+        };
+
+        answered = false;
+        displayQuestionSinglePlayer(currentQuestion);
+    }).catch(error => {
+        console.error('下載問題數據時出錯:', error);
+    });
+}
+
+    
 
 // 監聽單機模式氣血
 function listenToSinglePlayerHealth() {
@@ -2545,45 +3042,11 @@ function listenToSinglePlayerHealth() {
     });
 }
 
-// 單機模式問題加載
-function loadNewQuestionSinglePlayer() {
-    const totalQuestions = 622;
-    const randomId = Math.floor(Math.random() * totalQuestions);
 
-    const questionRef = database.ref(`questions/${randomId}`);
-    questionRef.once('value').then(snapshot => {
-        const originalQuestion = snapshot.val();
-        if (!originalQuestion) {
-            console.error('無法找到該問題數據');
-            return;
-        }
-
-        const optionsCopy = [...originalQuestion.options];
-        const correctAnswer = optionsCopy[originalQuestion.correctIndex];
-        const shuffledOptions = shuffleArray(optionsCopy);
-        const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
-
-        const processedQuestion = {
-            question: originalQuestion.question,
-            options: shuffledOptions,
-            correctIndex: newCorrectIndex,
-            id: Date.now()
-        };
-
-        currentQuestionId = processedQuestion.id;
-        database.ref('rooms/' + currentRoomId + '/player1').update({
-            currentQuestion: processedQuestion
-        });
-
-        answered = false;
-        displayQuestionSinglePlayer(processedQuestion);
-    }).catch(error => {
-        console.error('下載問題數據時出錯:', error);
-    });
-}
 
 // 顯示單機模式問題
 function displayQuestionSinglePlayer(question) {
+    console.log('Displaying question:', question); // 添加日誌
     window.currentQuestion = question;
     document.getElementById('question').textContent = question.question;
     const optionsDiv = document.getElementById('options');
@@ -2594,6 +3057,7 @@ function displayQuestionSinglePlayer(question) {
         button.textContent = option;
         button.setAttribute('data-question-id', question.id);
         button.onclick = () => {
+            console.log('Option clicked:', index); // 添加日誌
             if (!answered) {
                 checkAnswerSinglePlayer(index === question.correctIndex, question.id);
             }
@@ -2614,7 +3078,7 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
     clearInterval(timer);
 
     const buttons = document.querySelectorAll('#options button');
-    const correctIndex = window.currentQuestion.correctIndex;
+    const correctIndex = currentQuestion.correctIndex;
     buttons.forEach((btn, index) => {
         btn.style.pointerEvents = 'none';
         if (index === correctIndex) {
@@ -2626,48 +3090,65 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         }
     });
 
-    let damage = 0;
     if (isCorrect) {
-        // 增加扣减敌方气血的逻辑，假设敌方气血初始为100，每次答对扣10点
-        const enemyHealthElement = document.getElementById('opponentHealth');
-        const enemyHealth = parseInt(enemyHealthElement.textContent, 10);
-        const newEnemyHealth = enemyHealth - 10;
-        enemyHealthElement.textContent = newEnemyHealth;
-        document.getElementById('opponentHealthBar').style.width = newEnemyHealth + '%';
-
-        // 添加答对时的音效和震动
-        const soundEffects = {
-            attack: new Audio('https://taira-komori.jpn.org/sound_os2/jidaigeki01/Chinese_blade2.mp3')
-        };
-        soundEffects.attack.currentTime = 0;
         soundEffects.attack.play();
-        navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
-        if (navigator.vibrate) navigator.vibrate(200);
-
-        // 检查敌方气血是否归零
-        if (newEnemyHealth <= 0) {
-            handleSinglePlayerGameOver(true); // 传递参数表示胜利
+        if (navigator.vibrate) {
+            navigator.vibrate(200); // 答對震動 200ms
+        }
+        let attackMultiplier = singlePlayerClass.attack;
+        if (singlePlayerClass.type === 'warrior' && Math.random() < 0.3) {
+            attackMultiplier *= 2;
+            showEffect('sword-flash');
+        }
+        const baseDamage = 50 + Math.random() * 30; // 基數 50-80
+        const damageToEnemy = Math.round(baseDamage * attackMultiplier);
+        enemyHealth = Math.max(Math.round(enemyHealth - damageToEnemy), 0);
+        updateSinglePlayerHealthDisplay();
+        showDamageAnimation(damageToEnemy, 'enemy'); // 添加敵方扣減動畫
+        if (enemyHealth <= 0) {
+            handleSinglePlayerGameOver(true);
+            return;
         }
     } else {
-        damage = 10; // 答错扣 10 点气血
-        database.ref('rooms/' + currentRoomId + '/player1/health').set(
-            firebase.database.ServerValue.increment(-damage)
-        );
-        // 答错时仅震动
-        navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
-        if (navigator.vibrate) navigator.vibrate(200);
+    if (navigator.vibrate) {
+        navigator.vibrate(200); // 答錯震動 200ms
+    }
+        const baseDamage = 50 + Math.random() * 30;
+        const difficultyMultiplier = {
+            easy: 0.8,
+            normal: 1.0,
+            hard: 1.2,
+            hell: 1.5
+        }[selectedDifficulty];
+        let defenseAdjustment = 0;
+        if (singlePlayerClass.type === 'warrior' || singlePlayerClass.type === 'assassin') {
+            defenseAdjustment = -0.1;
+        } else if (singlePlayerClass.type === 'tank') {
+            defenseAdjustment = 0.2;
+        }
+        const levelDefenseAdjustment = (playerLevel - 1) * 0.05;
+        const totalDefenseAdjustment = defenseAdjustment + levelDefenseAdjustment;
+        let damageToPlayer = baseDamage * difficultyMultiplier * (1 - totalDefenseAdjustment);
+        damageToPlayer = Math.max(Math.round(damageToPlayer), 0);
+        singlePlayerHealth = Math.max(Math.round(singlePlayerHealth - damageToPlayer), 0);
+        updateSinglePlayerHealthDisplay();
+        showDamageAnimation(damageToPlayer, 'player'); // 添加玩家扣減動畫
+        if (singlePlayerHealth <= 0) {
+            handleSinglePlayerGameOver(false);
+            return;
+        }
     }
 
-    const targetElement = document.getElementById('myHealthBar');
-    targetElement.classList.add('damage-flash');
-    document.getElementById('gameArea').classList.add('screen-shake');
-    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.add('damage-effect'));
-
-    setTimeout(() => {
-        targetElement.classList.remove('damage-flash');
-        document.getElementById('gameArea').classList.remove('screen-shake');
-        document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    }, 500);
+    // 後續代碼保持不變
+    if (singlePlayerClass.type === 'tank' && !hasHealedThisTurn) {
+    hasHealedThisTurn = true;  // 確保每回合只恢復一次
+    const maxHealth = 1000 + (playerLevel - 1) * 100;  // 假設的最大氣血計算方式
+    const healAmount = Math.round(maxHealth * singlePlayerClass.healPercentage);  // 計算2%的恢復量
+    singlePlayerHealth = Math.min(singlePlayerHealth + healAmount, maxHealth);  // 應用恢復並限制不超過最大氣血
+    updateSinglePlayerHealthDisplay();  // 更新氣血顯示
+    document.getElementById('healText').style.display = 'block';  // 顯示恢復效果
+    setTimeout(() => document.getElementById('healText').style.display = 'none', 1000);  // 1秒後隱藏
+}
 
     setTimeout(() => {
         buttons.forEach(btn => {
@@ -2675,24 +3156,139 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
             btn.style.pointerEvents = 'auto';
         });
         answered = false;
-        loadNewQuestionSinglePlayer();
+        if (!gameOver) {
+            loadNewQuestionSinglePlayer();
+        }
     }, 700);
 }
 
+function showDamageAnimation(damage, target) {
+    const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
+    const healthContainer = document.getElementById(healthContainerId);
+    const healthBar = healthContainer.querySelector('.health-bar');
+    const rect = healthBar.getBoundingClientRect();
 
-    function handleSinglePlayerGameOver() {
-    if (gameOver) return;
+    const damageText = document.createElement('div');
+    damageText.textContent = `-${damage}`;
+    damageText.style.position = 'fixed';
+    damageText.style.color = target === 'enemy' ? '#ff0000' : '#ff5555';
+    damageText.style.fontSize = '2rem';
+    damageText.style.fontWeight = 'bold';
+    damageText.style.textShadow = '0 0 5px rgba(255, 0, 0, 0.5)';
+    damageText.style.zIndex = '9999';
+    damageText.style.animation = 'damageFloat 1s ease-out forwards';
+
+    // 計算隨機水平位置（在氣血條寬度範圍內）
+    const randomLeft = rect.left + Math.random() * rect.width;
+    // 垂直位置：敵方顯示在氣血條上方，己方顯示在氣血條下方
+    const topPosition = target === 'enemy' ? rect.top - 30 : rect.bottom + 10;
+    damageText.style.left = `${randomLeft}px`;
+    damageText.style.top = `${topPosition}px`;
+
+    document.body.appendChild(damageText);
+    setTimeout(() => damageText.remove(), 1000);
+}
+
+    
+
+// 輔助函數：顯示特效
+function showEffect(className) {
+    const effect = document.createElement('div');
+    effect.className = className;
+    document.body.appendChild(effect);
+    setTimeout(() => effect.remove(), 400);
+}
+
+    function handleSinglePlayerGameOver(isWinner) {
+    if (gameOver) return; // 避免重複觸發
     gameOver = true;
 
-    clearInterval(timer);
+    // 清除計時器
+    clearInterval(timer);          // 清除答題計時器
+    clearInterval(damageInterval); // 清除敵方扣血計時器
+
+    // 禁用選項按鈕
     document.querySelectorAll('#options button').forEach(btn => btn.disabled = true);
 
+    // 顯示勝利或失敗畫面
     const victoryOverlay = document.querySelector('.victory-overlay');
     const victoryText = document.querySelector('.victory-text');
-    const isWinner = /* 判断是否为胜方的逻辑，这里假设敌方气血先归零则为胜方，你可能需要根据实际情况调整 */ document.getElementById('opponentHealth').textContent <= 0;
-victoryText.textContent = isWinner? "武道昌隆！" : "雖敗猶榮！";
+    victoryText.textContent = isWinner ? "武道昌隆！" : "雖敗猶榮！";
     victoryOverlay.style.display = 'flex';
 
+    // 處理經驗值和等級邏輯
+    const user = auth.currentUser;
+    if (user) {
+        const userRef = database.ref('users/' + user.uid);
+        userRef.once('value', (snapshot) => {
+            const userData = snapshot.val() || { level: 1, exp: 0, score: 0 };
+            const expRequired = 100 * userData.level; // 每級所需經驗值
+            const expReward = isWinner ? expRewards[selectedDifficulty] : 0; // 獲勝才獲得經驗值
+            const oldLevel = userData.level;
+
+            if (isWinner) {
+                userData.exp += expReward; // 增加經驗值
+                while (userData.exp >= expRequired) {
+                    userData.level += 1;   // 升級
+                    userData.exp -= expRequired; // 扣除所需經驗值
+                }
+            }
+
+            // 更新用戶數據到資料庫
+            userRef.set(userData);
+
+            // 创建统计弹窗
+            const statsOverlay = document.createElement('div');
+            statsOverlay.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+                border-radius: 15px; z-index: 10000; color: white; text-align: center;
+                width: 80%; max-width: 400px;
+            `;
+
+            const currentExp = userData.exp;
+            const expPercentage = ((currentExp / expRequired) * 100).toFixed(1);
+            const remainingExp = expRequired - currentExp;
+            
+            statsOverlay.innerHTML = `
+                <h2>遊戲結束</h2>
+                <p>等級: ${userData.level}</p>
+                <p>經驗值: ${currentExp} / ${expRequired} (${expPercentage}%)</p>
+                <p>升級還需: ${remainingExp} 經驗</p>
+                <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
+                    <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
+                </div>
+            `;
+
+            if (userData.level > oldLevel) {
+                statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
+            } else if (isWinner) {
+                statsOverlay.innerHTML += `<p style="color: #4CAF50; font-size: 1.2rem;">獲得 ${expReward} 經驗值</p>`;
+            }
+
+            document.body.appendChild(statsOverlay);
+
+            // 添加关闭按钮
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '關閉';
+            closeBtn.style.cssText = `
+                margin-top: 1rem;
+                padding: 0.5rem 1rem;
+                background: #e74c3c;
+                border: none;
+                border-radius: 5px;
+                color: white;
+                cursor: pointer;
+            `;
+            closeBtn.onclick = () => statsOverlay.remove();
+            statsOverlay.appendChild(closeBtn);
+
+            // 5秒后自动关闭
+            setTimeout(() => statsOverlay.remove(), 5000);
+        });
+    }
+
+    // 添加重新開始和返回主菜單按鈕
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'rematch-buttons';
 
@@ -2701,34 +3297,45 @@ victoryText.textContent = isWinner? "武道昌隆！" : "雖敗猶榮！";
     const mainMenuBtn = document.createElement('button');
     mainMenuBtn.textContent = '歸隱山林';
 
-    restartBtn.onclick = () => {
-        database.ref('rooms/' + currentRoomId).remove();
-        const victoryOverlay = document.querySelector('.victory-overlay');
-const buttons = victoryOverlay.querySelector('.rematch-buttons');
-if (buttons) buttons.remove();
-victoryOverlay.style.display = 'none';
-
-
-// 初始化敌方气血
-        const enemyInitialHealth = 100;
-        document.getElementById('opponentHealth').textContent = enemyInitialHealth;
-        document.getElementById('opponentHealthBar').style.width = enemyInitialHealth + '%';
-
-        
-        startSinglePlayer();
-    };
-    mainMenuBtn.onclick = () => {
-        database.ref('rooms/' + currentRoomId).remove();
-        window.location.reload();
-    };
+    restartBtn.onclick = () => resetSinglePlayerGame();
+    mainMenuBtn.onclick = () => window.location.reload();
 
     buttonContainer.appendChild(restartBtn);
     buttonContainer.appendChild(mainMenuBtn);
     victoryOverlay.appendChild(buttonContainer);
+}
 
-    // 新增逻辑：在点击“再战江湖”时，清除可能存在的遮挡画面
-    const waitingForRematch = document.getElementById('waitingForRematch');
-    if (waitingForRematch) waitingForRematch.remove();
+    function resetSinglePlayerGame() {
+clearInterval(damageInterval); // 添加：確保清除扣血計時器
+        
+    // 重置遊戲狀態
+    gameOver = false;
+    answered = false;
+    singlePlayerHealth = 1000 + (playerLevel - 1) * 100; // 重置玩家氣血
+    enemyHealth = difficultySettings[selectedDifficulty].enemyHealth; // 重置敵方氣血
+    updateSinglePlayerHealthDisplay();
+
+    // 清除舊問題顯示
+    document.getElementById('question').textContent = '';
+    document.getElementById('options').innerHTML = '';
+
+    // 隱藏勝利畫面並移除按鈕
+    const victoryOverlay = document.querySelector('.victory-overlay');
+    victoryOverlay.style.display = 'none';
+    const buttons = victoryOverlay.querySelector('.rematch-buttons');
+    if (buttons) buttons.remove();
+
+    // 重置答案按鈕狀態
+    document.querySelectorAll('#options button').forEach(btn => {
+        btn.disabled = false;
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+    });
+
+    // 返回難度選擇界面
+    document.getElementById('difficultySelection').style.display = 'block';
+    document.getElementById('gameArea').style.display = 'none';
+    document.getElementById('singlePlayerTopicSelection').style.display = 'none';
 }
 
 document.getElementById('showLeaderboardBtn').onclick = function() {
@@ -2859,17 +3466,19 @@ function listenToRoomChanges() {
 
         updateHealthDisplay(room);
 
-        if (room.topicSelected && !room.gameStarted) {
-    // 移除等待消息
+        if (room.topicSelected && !room.gameStarted && !room.countdownStarted) {
+    // 移除等待消息並開始倒數計時
     const waitingForTopic = document.getElementById('waitingForTopic');
     if (waitingForTopic) waitingForTopic.remove();
-    // 開始倒數計時
     startCountdown();
 }
 
 if (room.gameStarted) {
-  
-    // 開始遊戲
+    document.getElementById('waitingArea').style.display = 'none';
+    document.getElementById('classSelection').style.display = 'none';
+    document.getElementById('topicSelection').style.display = 'none';
+    const waitingForTopic = document.getElementById('waitingForTopic');
+    if (waitingForTopic) waitingForTopic.remove();
     startGame(room);
 }
 
@@ -2947,6 +3556,9 @@ if (room.hostRematch && room.clientRematch) {
 
 <!-- 新增减伤提示 -->
 <div id="reduceDamageText" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ffff; text-shadow:0 0 10px rgba(0,255,255,0.5);">🔥 離火護體 傷害減少30%</div>
+
+
+
     
 </body>
 
@@ -2955,5 +3567,4 @@ if (room.hostRematch && room.clientRematch) {
 
     
 </html>
-
 
