@@ -1296,19 +1296,6 @@
     
 <script>
 
-
-async function getIpAddress() {
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        return data.ip;
-    } catch (error) {
-        console.error('獲取IP地址失敗:', error);
-        return null;
-    }
-}
-    
-
     // 在代码开头定义不同难度的经验奖励
 const expRewards = {
     easy: 10,
@@ -1386,29 +1373,6 @@ window.onload = function() {
         document.getElementById('roomControl').style.display = 'block';
     };
 };
-
-function generateDeviceFingerprint() {
-    const userAgent = navigator.userAgent;
-    const screenWidth = screen.width;
-    const screenHeight = screen.height;
-    const fingerprint = `${userAgent}-${screenWidth}-${screenHeight}`;
-    return btoa(fingerprint);
-}
-
-function getLocalIP(callback) {
-    const pc = new RTCPeerConnection({ iceServers: [] });
-    pc.createDataChannel('');
-    pc.createOffer().then(offer => pc.setLocalDescription(offer));
-    pc.onicecandidate = (ice) => {
-        if (!ice || !ice.candidate || !ice.candidate.candidate) return;
-        const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
-        const ipMatch = ipRegex.exec(ice.candidate.candidate);
-        if (ipMatch && ipMatch[1]) {
-            callback(ipMatch[1]);
-            pc.close();
-        }
-    };
-}    
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
 let singlePlayerClass = null; // 單機模式選中的職業
@@ -2161,206 +2125,110 @@ function toggleMusic() {
     document.querySelector('.music-control').textContent = isMusicPlaying ? '🎵' : '';
 }
 
-async function createRoom() {
-    // 獲取創建者的IP地址
-    const ip = await getIpAddress();
-    if (!ip) {
-        alert('無法獲取IP地址，請稍後再試。');
+function createRoom() {
+    const roomIdInput = document.getElementById('roomId').value.trim();
+    if (roomIdInput.length !== 4) {
+        alert('請輸入四位戰場編號');
         return;
     }
+    const userId = generateUserId();
+    const player1Ref = database.ref('rooms/' + roomIdInput + '/player1');
+    player1Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
+    player1Ref.onDisconnect().remove();
+    currentRoomId = roomIdInput;
+    isHost = true;
+    document.getElementById('roomControl').style.display = 'none';
+    document.getElementById('waitingArea').style.display = 'block';
+    document.getElementById('displayRoomId').textContent = roomIdInput;
+    document.getElementById('classSelection').style.display = 'block';
+    listenToRoomChanges();
+}
 
-    const roomId = Math.floor(1000 + Math.random() * 9000).toString(); // 生成四位數房間ID
-    const user = auth.currentUser;
+function joinRoom() {
+    const roomId = document.getElementById('roomId').value.trim();
+    if (roomId.length !== 4) {
+        alert('請輸入四位戰場編號');
+        return;
+    }
+    const userId = generateUserId();
     const roomRef = database.ref('rooms/' + roomId);
-
-    // 存儲房間數據，包括創建者的IP地址
-    await roomRef.set({
-        player1: {
-            name: user ? user.displayName : '匿名玩家',
-            ip: ip, // 記錄IP地址
-            health: 100,
-            class: null
-        },
-        player2: null,
-        createdAt: Date.now(),
-        gameStarted: false,
-        gameEnded: false
+    roomRef.once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const room = snapshot.val();
+            if (room.player2) {
+                alert('戰場已滿');
+                return;
+            }
+            const player2Ref = database.ref('rooms/' + roomId + '/player2');
+            player2Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
+            player2Ref.onDisconnect().remove();
+            currentRoomId = roomId;
+            isHost = false;
+            document.getElementById('roomControl').style.display = 'none';
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('displayRoomId').textContent = roomId;
+            document.getElementById('classSelection').style.display = 'block';
+            listenToRoomChanges();
+        } else {
+            alert('戰場不存在');
+        }
     });
+}
 
+    function createRoomWithId(roomId) {
     currentRoomId = roomId;
     isHost = true;
-
     document.getElementById('roomControl').style.display = 'none';
-    document.getElementById('waitingArea').style.display = 'block';
-    document.getElementById('displayRoomId').textContent = roomId;
-
-    listenToRoomChanges();
     document.getElementById('classSelection').style.display = 'block';
-}
-    
-async function joinRoom() {
-    // 獲取加入者的IP地址
-    const ip = await getIpAddress();
-    if (!ip) {
-        alert('無法獲取IP地址，請稍後再試。');
-        return;
-    }
-
-    const roomId = document.getElementById('roomId').value.trim();
-    if (roomId.length !== 4 || isNaN(roomId)) {
-        alert('請輸入有效的四位戰場編號');
-        return;
-    }
-
-    const roomRef = database.ref('rooms/' + roomId);
-    const snapshot = await roomRef.once('value');
-    const room = snapshot.val();
-
-    if (!room) {
-        alert('戰場不存在');
-        return;
-    }
-
-    // 檢查房間內現有玩家的IP地址
-    if (room.player1 && room.player1.ip === ip) {
-        alert('無法加入：與房間內的玩家IP地址相同。');
-        return;
-    }
-
-    if (room.player2) {
-        alert('戰場已滿');
-        return;
-    }
+    document.getElementById('waitingArea').style.display = 'block';
+    document.getElementById('displayRoomId').textContent = currentRoomId;
 
     const user = auth.currentUser;
-    await roomRef.update({
-        player2: {
-            name: user ? user.displayName : '匿名玩家',
-            ip: ip, // 記錄IP地址
+if (user) {
+    database.ref('rooms/' + currentRoomId).set({
+        player1: {
+            userId: user.uid,
+            name: user.displayName || '未知玩家',
+            level: playerLevel || 1,
             health: 100,
             class: null,
-            reentered: true
-        }
+            currentQuestion: null
+        },
+        player2: null,
+        gameStarted: false,
+        gameEnded: false,
+        winner: null
     });
-
-    currentRoomId = roomId;
-    isHost = false;
-
-    document.getElementById('roomControl').style.display = 'none';
-    document.getElementById('waitingArea').style.display = 'block';
-    document.getElementById('displayRoomId').textContent = roomId;
-
-    listenToRoomChanges();
-    document.getElementById('classSelection').style.display = 'block';
+} else {
+    alert('請先登入！');
+    return;
 }
-
-   function createRoomWithId(roomId) {
-    const deviceFingerprint = generateDeviceFingerprint();
-    getLocalIP((localIP) => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert('請先登入！');
-            return;
-        }
-
-        const playerData = {
-            uid: user.uid,
-            name: user.displayName || '匿名玩家',
-            health: 100,
-            deviceFingerprint: deviceFingerprint,
-            localIP: localIP,
-            reentered: false,
-            createdAt: Date.now()
-        };
-
-        const roomRef = database.ref('rooms/' + roomId);
-        roomRef.once('value').then(snapshot => {
-            if (snapshot.exists()) {
-                const room = snapshot.val();
-                const players = [room.player1, room.player2].filter(Boolean);
-                const sameDevice = players.some(player => player.deviceFingerprint === deviceFingerprint);
-                const sameIP = players.some(player => player.localIP === localIP);
-                if (sameDevice || sameIP) {
-                    alert('此設備或網絡已有一個玩家在房間中！');
-                    return;
-                }
-            }
-
-            roomRef.set({
-                player1: playerData,
-                player2: null,
-                createdAt: Date.now()
-            }).then(() => {
-                currentRoomId = roomId;
-                isHost = true;
-                document.getElementById('roomControl').style.display = 'none';
-                document.getElementById('waitingArea').style.display = 'block';
-                document.getElementById('displayRoomId').textContent = roomId;
-                document.getElementById('classSelection').style.display = 'block';
-                listenToRoomChanges();
-            }).catch(error => {
-                console.error('創建房間失敗:', error);
-                alert('創建房間失敗，請重試！');
-            });
-        });
-    });
+    listenToRoomChanges();
 }
 
 function joinRoomWithId(roomId) {
-    const deviceFingerprint = generateDeviceFingerprint();
-    getLocalIP((localIP) => {
-        const user = auth.currentUser;
-        if (!user) {
-            alert('請先登入！');
-            return;
-        }
-
-        const playerData = {
-            uid: user.uid,
-            name: user.displayName || '匿名玩家',
+    currentRoomId = roomId;
+    isHost = false;
+    document.getElementById('roomControl').style.display = 'none';
+    document.getElementById('classSelection').style.display = 'block';
+    listenToRoomChanges();
+    const user = auth.currentUser;
+    if (user) {
+        const player2Ref = database.ref('rooms/' + currentRoomId + '/player2');
+        player2Ref.set({
+            userId: user.uid,
+            name: user.displayName || '未知玩家',
+            level: playerLevel || 1,
             health: 100,
-            deviceFingerprint: deviceFingerprint,
-            localIP: localIP,
-            reentered: false
-        };
-
-        const roomRef = database.ref('rooms/' + roomId);
-        roomRef.once('value').then(snapshot => {
-            const room = snapshot.val();
-            if (!room) {
-                alert('房間不存在！');
-                return;
-            }
-
-            const players = [room.player1, room.player2].filter(Boolean);
-            const sameDevice = players.some(player => player.deviceFingerprint === deviceFingerprint);
-            const sameIP = players.some(player => player.localIP === localIP);
-            if (sameDevice || sameIP) {
-                alert('此設備或網絡已有一個玩家在房間中！');
-                return;
-            }
-
-            if (room.player2) {
-                alert('房間已滿！');
-                return;
-            }
-
-            roomRef.update({
-                player2: playerData
-            }).then(() => {
-                currentRoomId = roomId;
-                isHost = false;
-                document.getElementById('roomControl').style.display = 'none';
-                document.getElementById('waitingArea').style.display = 'block';
-                document.getElementById('displayRoomId').textContent = roomId;
-                document.getElementById('classSelection').style.display = 'block';
-                listenToRoomChanges();
-            }).catch(error => {
-                console.error('加入房間失敗:', error);
-                alert('加入房間失敗，請重試！');
-            });
+            class: null,
+            currentQuestion: null
+        }).catch((error) => {
+            console.error("設置 player2 失敗:", error);
         });
-    });
+    } else {
+        alert('請先登入！');
+        return;
+    }
 }
 
     function joinWaitingQueue() {
@@ -2811,7 +2679,7 @@ function handleGameEnd(winnerType) {
             if (isWinner) {
                 userData.exp += 50; // 獲勝增加 50 經驗值
                 userData.score += 100; // 贏家增加 100 積分
-            } else {
+           } else {
                 userData.exp += 20;  // 輸家增加 20 經驗值
                 userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
             }
@@ -2822,7 +2690,8 @@ function handleGameEnd(winnerType) {
             }
             return userData;
         }).then(() => {
-            userRef.once('value', (snapshot) => {
+
+userRef.once('value', (snapshot) => {
                 const userData = snapshot.val();
                 playerLevel = userData.level;
                 playerExp = userData.exp;
@@ -2832,10 +2701,9 @@ function handleGameEnd(winnerType) {
                     name: user.displayName,
                     score: userData.score
                 });
-                // 重置 currentRoom
-                database.ref('users/' + user.uid).update({ currentRoom: null });
             });
 
+            
             // 創建彈出視窗顯示經驗值 BAR
             statsOverlay = document.createElement('div');
             statsOverlay.style.cssText = `
