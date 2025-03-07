@@ -2286,11 +2286,7 @@ function joinRoomWithId(roomId) {
 }
 
     function joinWaitingQueue() {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-        alert("請先登入！");
-        return;
-    }
+   
 
     const waitingRef = database.ref('waitingRooms');
     const userId = user.uid;
