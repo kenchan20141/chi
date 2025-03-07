@@ -2671,9 +2671,8 @@ function calculateScoreChange(playerLevel, opponentLevel, isWin) {
     return scoreChange;
 }
 
-
     
-function handleGameEnd(winnerType) {
+async function handleGameEnd(winnerType) {
     if (gameOver) return;
     gameOver = true;
 
@@ -2707,7 +2706,7 @@ function handleGameEnd(winnerType) {
         const userRef = database.ref('users/' + user.uid);
         userRef.transaction((userData) => {
             if (!userData) userData = { level: 1, exp: 0, score: 0 };
-            // 獲取玩家的等級和對手的等級
+           // 獲取玩家的等級和對手的等級
 const userRef = database.ref('users/' + user.uid);
 let playerLevel = 1;
 let opponentLevel = 1;
