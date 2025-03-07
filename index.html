@@ -2344,11 +2344,7 @@ function startGameSession() {
 
 
   function randomMatch() {
-    const user = auth.currentUser;
-    if (!user) {
-        alert('請先登入！');
-        return;
-    }
+    joinWaitingQueue(); // 直接執行匹配，不檢查登入
 
     console.log("randomMatch called");
     const waitingRef = database.ref('waitingRooms');
