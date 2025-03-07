@@ -2149,52 +2149,98 @@ function toggleMusic() {
 }
 
 function createRoom() {
-    const roomIdInput = document.getElementById('roomId').value.trim();
-    if (roomIdInput.length !== 4) {
-        alert('請輸入四位戰場編號');
+    const roomId = document.getElementById('roomId').value.trim();
+    if (!roomId) {
+        alert('請輸入房間ID');
         return;
     }
-    const userId = generateUserId();
-    const player1Ref = database.ref('rooms/' + roomIdInput + '/player1');
-    player1Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
-    player1Ref.onDisconnect().remove();
-    currentRoomId = roomIdInput;
-    isHost = true;
-    document.getElementById('roomControl').style.display = 'none';
-    document.getElementById('waitingArea').style.display = 'block';
-    document.getElementById('displayRoomId').textContent = roomIdInput;
-    document.getElementById('classSelection').style.display = 'block';
-    listenToRoomChanges();
+    const user = auth.currentUser;
+    if (!user) {
+        alert('請先登錄');
+        return;
+    }
+    // 檢查用戶是否已經在房間中
+    database.ref('users/' + user.uid + '/currentRoom').once('value', (snapshot) => {
+        const currentRoom = snapshot.val();
+        if (currentRoom) {
+            alert('您已經在一個房間中，請先離開該房間');
+            return;
+        }
+        // 創建房間邏輯
+        database.ref('rooms/' + roomId).set({
+            player1: {
+                uid: user.uid,
+                name: user.displayName,
+                health: 100,
+                class: null
+            },
+            player2: null,
+            gameStarted: false,
+            gameEnded: false,
+            createdAt: Date.now()
+        });
+        // 更新用戶的 currentRoom
+        database.ref('users/' + user.uid).update({ currentRoom: roomId });
+        currentRoomId = roomId;
+        isHost = true;
+        document.getElementById('roomControl').style.display = 'none';
+        document.getElementById('waitingArea').style.display = 'block';
+        document.getElementById('displayRoomId').textContent = roomId;
+        listenToRoomChanges();
+        // 設置斷線時清理
+        database.ref('rooms/' + roomId + '/player1').onDisconnect().remove();
+        database.ref('users/' + user.uid + '/currentRoom').onDisconnect().set(null);
+    });
 }
-
+    
 function joinRoom() {
     const roomId = document.getElementById('roomId').value.trim();
-    if (roomId.length !== 4) {
-        alert('請輸入四位戰場編號');
+    if (!roomId) {
+        alert('請輸入房間ID');
         return;
     }
-    const userId = generateUserId();
-    const roomRef = database.ref('rooms/' + roomId);
-    roomRef.once('value').then(snapshot => {
-        if (snapshot.exists()) {
+    const user = auth.currentUser;
+    if (!user) {
+        alert('請先登錄');
+        return;
+    }
+    // 檢查用戶是否已經在房間中
+    database.ref('users/' + user.uid + '/currentRoom').once('value', (snapshot) => {
+        const currentRoom = snapshot.val();
+        if (currentRoom && currentRoom !== roomId) {
+            alert('您已經在另一個房間中，請先離開該房間');
+            return;
+        }
+        // 加入房間邏輯
+        database.ref('rooms/' + roomId).once('value', (snapshot) => {
             const room = snapshot.val();
-            if (room.player2) {
-                alert('戰場已滿');
+            if (!room) {
+                alert('房間不存在');
                 return;
             }
-            const player2Ref = database.ref('rooms/' + roomId + '/player2');
-            player2Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
-            player2Ref.onDisconnect().remove();
+            if (room.player2) {
+                alert('房間已滿');
+                return;
+            }
+            // 更新用戶的 currentRoom
+            database.ref('users/' + user.uid).update({ currentRoom: roomId });
+            // 加入房間
+            database.ref('rooms/' + roomId + '/player2').set({
+                uid: user.uid,
+                name: user.displayName,
+                health: 100,
+                class: null
+            });
             currentRoomId = roomId;
             isHost = false;
             document.getElementById('roomControl').style.display = 'none';
             document.getElementById('waitingArea').style.display = 'block';
             document.getElementById('displayRoomId').textContent = roomId;
-            document.getElementById('classSelection').style.display = 'block';
             listenToRoomChanges();
-        } else {
-            alert('戰場不存在');
-        }
+            // 設置斷線時清理
+            database.ref('rooms/' + roomId + '/player2').onDisconnect().remove();
+            database.ref('users/' + user.uid + '/currentRoom').onDisconnect().set(null);
+        });
     });
 }
 
@@ -2755,7 +2801,7 @@ function handleGameEnd(winnerType) {
             if (isWinner) {
                 userData.exp += 50; // 獲勝增加 50 經驗值
                 userData.score += 100; // 贏家增加 100 積分
-           } else {
+            } else {
                 userData.exp += 20;  // 輸家增加 20 經驗值
                 userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
             }
@@ -2766,8 +2812,7 @@ function handleGameEnd(winnerType) {
             }
             return userData;
         }).then(() => {
-
-userRef.once('value', (snapshot) => {
+            userRef.once('value', (snapshot) => {
                 const userData = snapshot.val();
                 playerLevel = userData.level;
                 playerExp = userData.exp;
@@ -2777,9 +2822,10 @@ userRef.once('value', (snapshot) => {
                     name: user.displayName,
                     score: userData.score
                 });
+                // 重置 currentRoom
+                database.ref('users/' + user.uid).update({ currentRoom: null });
             });
 
-            
             // 創建彈出視窗顯示經驗值 BAR
             statsOverlay = document.createElement('div');
             statsOverlay.style.cssText = `
