@@ -2644,10 +2644,9 @@ function checkGameOver() {
 
 
 async function calculateNewScores(winner, loser) {
-    // 返回一個 Promise 以模擬可能的異步操作（如資料庫更新）
     return new Promise((resolve) => {
         // 定義常數
-        const K = 32;              // Elo 系統的調整因子
+        const K = 100;              // 調整 K 因子為 100
         const RATING_PER_LEVEL = 100; // 每級對應的評分值
 
         // 將等級轉換為評分
