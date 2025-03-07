@@ -1297,6 +1297,11 @@
     
 <script>
 
+    // 生成臨時用戶 ID
+function generateTempUserId() {
+    return 'temp_' + Math.random().toString(36).substr(2, 9);
+}
+
     // 在代码开头定义不同难度的经验奖励
 const expRewards = {
     easy: 10,
