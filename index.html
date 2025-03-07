@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html>
     
@@ -1057,7 +1058,7 @@
                 <li>🛡️ 金鐘罩：每回合自動恢復2點氣血</li>
             </ul>
             <div class="popup-image" style="display: none;">
-                <img src="https://i.ibb.co/ZR4Z2ZDT/image.pngg" alt="鐵甲宗全圖">
+                <img src="https://i.ibb.co/ZR4Z2ZDT/image.png" alt="鐵甲宗全圖">
             </div>
         </div>
         <!-- 刺客 -->
@@ -1190,7 +1191,7 @@
             </div>
         </div>
         <div class="difficulty-card" onclick="selectDifficulty('hard')">
-            <img src="https://i.ibb.co/8Lr9D01n/image.pngg" class="difficulty-icon">
+            <img src="https://i.ibb.co/8Lr9D01n/image.png" class="difficulty-icon">
             <div class="selected-tick">✓</div>
             <h3>鶴棲朔</h3>
             <p>敵方氣血: 2000</p>
@@ -1999,7 +2000,7 @@ firebase.initializeApp(firebaseConfig);
 // 「登入」按鈕事件
 document.getElementById('loginBtn').onclick = function() {
     const email = prompt("請輸入郵箱");
-    const password = prompt("請設置遊戲密碼");
+    const password = prompt("請輸入遊戲密碼");
     auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
             const user = userCredential.user;
@@ -2299,18 +2300,6 @@ function joinRoomWithId(roomId) {
     const waitingRef = database.ref('waitingRooms');
     const userId = user.uid;
 
-    // 檢查是否已在等待隊列中
-    waitingRef.child(userId).once('value', (snapshot) => {
-        if (!snapshot.exists()) {
-            // 加入等待隊列
-            waitingRef.child(userId).set({
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-            checkForMatch();
-        } else {
-            alert("您已在等待中，請稍候！");
-        }
-    });
 }
 
    
