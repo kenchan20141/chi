@@ -1,4 +1,4 @@
-
+我想強制禁止同一個玩家用同一個帳號開啟兩個視窗，請幫我修復問題。請告訴我應該刪甚麼、加甚麼及替代甚麼，以及代碼的具體位置：
 
 
 <!DOCTYPE html>
@@ -1297,31 +1297,6 @@
     
 <script>
 
-function registerUser() {
-    // 假設這是註冊邏輯的一部分
-    const user = auth.currentUser;
-    if (user) {
-        const userRef = database.ref('users/' + user.uid);
-        userRef.set({
-            name: user.displayName || '匿名用戶',
-            score: 0,
-            level: 1,
-            exp: 0,
-            isActive: false // 初始化為 false
-        });
-    }
-}
-
-
-    
-    window.onbeforeunload = function() {
-    const user = auth.currentUser;
-    if (user) {
-        const userRef = database.ref('users/' + user.uid);
-        userRef.update({ isActive: false });
-    }
-};
-
     // 在代码开头定义不同难度的经验奖励
 const expRewards = {
     easy: 10,
@@ -2005,29 +1980,6 @@ document.getElementById('registerBtn').onclick = function() {
         return;
     }
 
-document.getElementById('loginBtn').onclick = function() {
-    const user = auth.currentUser;
-    if (user) {
-        const userRef = database.ref('users/' + user.uid);
-        userRef.once('value', (snapshot) => {
-            const userData = snapshot.val();
-            if (userData && userData.isActive) {
-                alert('該帳號已在其他地方登入，請先登出。');
-            } else {
-                // 設置 isActive 為 true
-                userRef.update({ isActive: true });
-                // 繼續原有的登入邏輯（例如顯示用戶資訊等）
-                document.getElementById('logoutContainer').style.display = 'block';
-                document.getElementById('userInfo').style.display = 'block';
-                document.getElementById('userName').textContent = user.displayName || '匿名用戶';
-            }
-        });
-    } else {
-        // 若無用戶，提示需要先登入（根據原有邏輯）
-        alert('請先登入！');
-    }
-};
-    
     const displayNamesRef = database.ref('displayNames');
     displayNamesRef.child(displayName).once('value')
         .then((snapshot) => {
@@ -2084,20 +2036,6 @@ document.getElementById('logoutBtn').onclick = function() {
             alert("登出失敗：" + error.message);
         });
 };
-
-document.getElementById('logoutBtn').onclick = function() {
-    const user = auth.currentUser;
-    if (user) {
-        const userRef = database.ref('users/' + user.uid);
-        userRef.update({ isActive: false });
-        // 繼續原有的登出邏輯
-        auth.signOut().then(() => {
-            document.getElementById('logoutContainer').style.display = 'none';
-            document.getElementById('userInfo').style.display = 'none';
-        });
-    }
-};
-
 
     
 
