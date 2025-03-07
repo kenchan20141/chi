@@ -3398,11 +3398,11 @@ function showDamageAnimation(damage, target) {
     damageText.style.fontWeight = 'bold';
     damageText.style.textShadow = '0 0 5px rgba(255, 0, 0, 0.5)';
     damageText.style.zIndex = '9999';
-    damageText.style.animation = 'damageFloat 1s ease-out forwards';
+    damageText.style.animation = 'damageFloat 1s ease-out forwards, damageScale 1s ease-out, damageRotate 1s ease-out';
 
-    // 計算隨機水平位置（在氣血條寬度範圍內）
+    // 计算随机水平位置（在气血条宽度范围内）
     const randomLeft = rect.left + Math.random() * rect.width;
-    // 垂直位置：敵方顯示在氣血條上方，己方顯示在氣血條下方
+    // 垂直位置：敌方显示在气血条上方，己方显示在气血条下方
     const topPosition = target === 'enemy' ? rect.top - 30 : rect.bottom + 10;
     damageText.style.left = `${randomLeft}px`;
     damageText.style.top = `${topPosition}px`;
@@ -3410,6 +3410,22 @@ function showDamageAnimation(damage, target) {
     document.body.appendChild(damageText);
     setTimeout(() => damageText.remove(), 1000);
 }
+
+// 添加新的动画关键帧
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes damageScale {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  @keyframes damageRotate {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(10deg); }
+    100% { transform: rotate(0deg); }
+  }
+`;
+document.head.appendChild(style);
 
     
 
