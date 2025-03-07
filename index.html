@@ -2669,19 +2669,66 @@ function handleGameEnd(winnerType) {
     const resultSound = isWinner ? soundEffects.victory : soundEffects.defeat;
     resultSound.play();
 
-    // 添加經驗值和升級邏輯
+    // 房主負責更新雙方玩家的積分
+    if (isHost) {
+        const roomRef = database.ref('rooms/' + currentRoomId);
+        roomRef.once('value').then(snapshot => {
+            const room = snapshot.val();
+            if (room.scoresUpdated) return; // 避免重複更新
+
+            const player1Uid = room.player1.uid;
+            const player2Uid = room.player2.uid;
+            const player1Level = room.player1.level || 1;
+            const player2Level = room.player2.level || 1;
+
+            const player1ScoreRef = database.ref('users/' + player1Uid + '/score');
+            const player2ScoreRef = database.ref('users/' + player2Uid + '/score');
+
+            Promise.all([player1ScoreRef.once('value'), player2ScoreRef.once('value')]).then(([player1ScoreSnap, player2ScoreSnap]) => {
+                const player1Score = player1ScoreSnap.val() || 0;
+                const player2Score = player2ScoreSnap.val() || 0;
+
+                // Elo 計算：考慮等級差距和積分差距
+                const c = 100; // 每級差距相當於 100 分積分
+                const diff = (player2Score - player1Score) + c * (player2Level - player1Level);
+                const E_player1 = 1 / (1 + Math.pow(10, diff / 400)); // 玩家1的預期勝率
+                const E_player2 = 1 - E_player1; // 玩家2的預期勝率
+
+                const K = 32; // 積分變化幅度係數
+
+                let deltaPlayer1, deltaPlayer2;
+                if (winnerType === 'player1') {
+                    deltaPlayer1 = K * (1 - E_player1); // 玩家1贏
+                    deltaPlayer2 = K * (0 - E_player2); // 玩家2輸
+                } else if (winnerType === 'player2') {
+                    deltaPlayer1 = K * (0 - E_player1); // 玩家1輸
+                    deltaPlayer2 = K * (1 - E_player2); // 玩家2贏
+                } else { // 平局
+                    deltaPlayer1 = K * (0.5 - E_player1);
+                    deltaPlayer2 = K * (0.5 - E_player2);
+                }
+
+                // 更新積分（允許負分，無上限）
+                player1ScoreRef.transaction(current => (current || 0) + Math.round(deltaPlayer1));
+                player2ScoreRef.transaction(current => (current || 0) + Math.round(deltaPlayer2));
+
+                // 標記積分已更新
+                roomRef.update({ scoresUpdated: true });
+            });
+        });
+    }
+
+    // 更新當前玩家的經驗值
     const user = auth.currentUser;
-    let statsOverlay; // 定義 statsOverlay
+    let statsOverlay;
     if (user) {
         const userRef = database.ref('users/' + user.uid);
         userRef.transaction((userData) => {
             if (!userData) userData = { level: 1, exp: 0, score: 0 };
             if (isWinner) {
-                userData.exp += 50; // 獲勝增加 50 經驗值
-                userData.score += 100; // 贏家增加 100 積分
-           } else {
-                userData.exp += 20;  // 輸家增加 20 經驗值
-                userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
+                userData.exp += 50; // 贏家加 50 經驗值
+            } else {
+                userData.exp += 20; // 輸家加 20 經驗值
             }
             const expRequired = 100 * userData.level;
             if (userData.exp >= expRequired) {
@@ -2690,31 +2737,27 @@ function handleGameEnd(winnerType) {
             }
             return userData;
         }).then(() => {
-
-userRef.once('value', (snapshot) => {
+            userRef.once('value', (snapshot) => {
                 const userData = snapshot.val();
                 playerLevel = userData.level;
                 playerExp = userData.exp;
+
                 // 更新排行榜
                 const leaderboardRef = database.ref('leaderboard/' + user.uid);
                 leaderboardRef.set({
                     name: user.displayName,
                     score: userData.score
                 });
-            });
 
-            
-            // 創建彈出視窗顯示經驗值 BAR
-            statsOverlay = document.createElement('div');
-            statsOverlay.style.cssText = `
-                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
-                border-radius: 15px; z-index: 10000; color: white; text-align: center;
-                width: 80%; max-width: 400px;
-            `;
+                // 顯示經驗值與積分變化
+                statsOverlay = document.createElement('div');
+                statsOverlay.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+                    border-radius: 15px; z-index: 10000; color: white; text-align: center;
+                    width: 80%; max-width: 400px;
+                `;
 
-            userRef.once('value', (snapshot) => {
-                const userData = snapshot.val();
                 const expRequired = 100 * userData.level;
                 const expPercentage = (userData.exp / expRequired) * 100;
 
@@ -2736,7 +2779,7 @@ userRef.once('value', (snapshot) => {
         });
     }
 
-    // 重賽按鈕邏輯
+    // 重賽按鈕
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'rematch-buttons';
     const rematchBtn = document.createElement('button');
