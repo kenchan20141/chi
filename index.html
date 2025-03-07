@@ -1296,6 +1296,9 @@
     
 <script>
 
+let currentSessionToken = null; // 用於儲存當前會話的 token
+
+    
     // 在代码开头定义不同难度的经验奖励
 const expRewards = {
     easy: 10,
@@ -1373,6 +1376,42 @@ window.onload = function() {
         document.getElementById('roomControl').style.display = 'block';
     };
 };
+
+function checkSession() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    database.ref(`sessions/${user.uid}`).once('value', (snapshot) => {
+        const sessionData = snapshot.val();
+        if (!sessionData || !sessionData.active) {
+            alert('您的帳號已在其他地方登入或會話已失效，請重新登入');
+            logoutUser();
+            return;
+        }
+
+        if (sessionData.token !== currentSessionToken) {
+            alert('檢測到新登入，當前會話已失效');
+            logoutUser();
+            return;
+        }
+
+        console.log('會話有效');
+    });
+}
+
+// 在頁面載入時檢查
+window.addEventListener('load', function() {
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            checkSession();
+            // 每隔一段時間檢查一次（例如每 5 秒）
+            setInterval(checkSession, 5000);
+        }
+    });
+});
+
+
+
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
 let singlePlayerClass = null; // 單機模式選中的職業
@@ -1418,6 +1457,39 @@ joinRoomBtn.onclick = function() {
     } else {
         joinWaitingQueue();
     }
+};
+
+
+function loginUser() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert('請先進行 Firebase Authentication 登入');
+        return;
+    }
+
+    // 生成唯一 token（這裡簡單使用時間戳+隨機數）
+    const newToken = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    currentSessionToken = newToken;
+
+    // 儲存 token 到資料庫
+    database.ref(`sessions/${user.uid}`).set({
+        token: newToken,
+        timestamp: Date.now(),
+        active: true
+    }).then(() => {
+        console.log('登入成功，token 已儲存');
+        document.getElementById('logoutContainer').style.display = 'block';
+        document.getElementById('userInfo').style.display = 'block';
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('registerBtn').style.display = 'none';
+    }).catch(error => {
+        console.error('儲存 token 失敗:', error);
+    });
+}
+
+// 綁定到登入按鈕
+document.getElementById('loginBtn').onclick = function() {
+    loginUser(); // 假設已完成 Firebase Authentication 登入
 };
 
     
@@ -2125,7 +2197,44 @@ function toggleMusic() {
     document.querySelector('.music-control').textContent = isMusicPlaying ? '🎵' : '';
 }
 
+function logoutUser() {
+    const user = auth.currentUser;
+    if (user && currentSessionToken) {
+        database.ref(`sessions/${user.uid}`).update({
+            active: false
+        }).then(() => {
+            currentSessionToken = null;
+            document.getElementById('logoutContainer').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('registerBtn').style.display = 'block';
+            console.log('已登出');
+        });
+    }
+}
+
+// 綁定到登出按鈕
+document.getElementById('logoutBtn').onclick = function() {
+    logoutUser();
+};
+
+    
 function createRoom() {
+
+const user = auth.currentUser;
+    if (!user || !currentSessionToken) {
+        alert('請先登入');
+        return;
+    }
+
+    checkSession(); // 檢查會話有效性
+    const roomId = roomIdInput.value.trim();
+    if (roomId !== "") {
+        createRoomWithId(roomId);
+    } else {
+        joinWaitingQueue();
+    }
+    
     const roomIdInput = document.getElementById('roomId').value.trim();
     if (roomIdInput.length !== 4) {
         alert('請輸入四位戰場編號');
