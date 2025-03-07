@@ -2642,6 +2642,37 @@ function checkGameOver() {
     });
 }
 
+
+function calculateScoreChange(winnerLevel, loserLevel) {
+    let levelDifference = Math.abs(winnerLevel - loserLevel);
+    let winnerScoreChange, loserScoreChange;
+
+    if (levelDifference <= 2) {
+        winnerScoreChange = 100;
+        loserScoreChange = -50;
+    } else if (levelDifference >= 3 && levelDifference <= 5) {
+        if (winnerLevel >= loserLevel) {
+            winnerScoreChange = 50;
+            loserScoreChange = -20;
+        } else {
+            winnerScoreChange = 150;
+            loserScoreChange = -150;
+        }
+    } else if (levelDifference >= 6) {
+        if (winnerLevel > loserLevel) {
+            winnerScoreChange = 10;
+            loserScoreChange = -10;
+        } else {
+            winnerScoreChange = 200;
+            loserScoreChange = -200;
+        }
+    }
+
+    return { winnerScoreChange, loserScoreChange };
+}
+
+
+    
 function handleGameEnd(winnerType) {
     if (gameOver) return;
     gameOver = true;
@@ -2674,22 +2705,31 @@ function handleGameEnd(winnerType) {
     let statsOverlay; // 定義 statsOverlay
     if (user) {
         const userRef = database.ref('users/' + user.uid);
-        userRef.transaction((userData) => {
-            if (!userData) userData = { level: 1, exp: 0, score: 0 };
-            if (isWinner) {
-                userData.exp += 50; // 獲勝增加 50 經驗值
-                userData.score += 100; // 贏家增加 100 積分
-           } else {
-                userData.exp += 20;  // 輸家增加 20 經驗值
-                userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
-            }
-            const expRequired = 100 * userData.level;
-            if (userData.exp >= expRequired) {
-                userData.level += 1;
-                userData.exp -= expRequired;
-            }
-            return userData;
-        }).then(() => {
+       userRef.transaction((userData) => {
+    if (!userData) userData = { level: 1, exp: 0, score: 0 };
+    
+    // 獲取勝者和敗者的等級
+    const winnerLevel = isWinner ? playerLevel : (room[isHost ? 'player2' : 'player1'].level || 1);
+    const loserLevel = isWinner ? (room[isHost ? 'player2' : 'player1'].level || 1) : playerLevel;
+    
+    // 計算積分變化
+    const { winnerScoreChange, loserScoreChange } = calculateScoreChange(winnerLevel, loserLevel);
+    
+    if (isWinner) {
+        userData.exp += 50; // 獲勝增加 50 經驗值
+        userData.score += winnerScoreChange; // 使用新的積分變化
+    } else {
+        userData.exp += 20;  // 輸家增加 20 經驗值
+        userData.score = Math.max(0, userData.score + loserScoreChange); // 使用新的積分變化，確保最低為0
+    }
+    
+    const expRequired = 100 * userData.level;
+    if (userData.exp >= expRequired) {
+        userData.level += 1;
+        userData.exp -= expRequired;
+    }
+    return userData;
+}).then(() => {
 
 userRef.once('value', (snapshot) => {
                 const userData = snapshot.val();
