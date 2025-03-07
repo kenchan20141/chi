@@ -2266,13 +2266,28 @@ if (user) {
 }
 
 function joinRoomWithId(roomId) {
-    currentRoomId = roomId;
-    isHost = false;
-    document.getElementById('roomControl').style.display = 'none';
-    document.getElementById('classSelection').style.display = 'block';
-    listenToRoomChanges();
     const user = auth.currentUser;
-    if (user) {
+    if (!user) {
+        alert('請先登入！');
+        return;
+    }
+    const userId = user.uid;
+    const roomRef = database.ref('rooms/' + roomId);
+    roomRef.once('value', (snapshot) => {
+        const room = snapshot.val();
+        if (!room) {
+            alert('房間不存在！');
+            return;
+        }
+        if (room.player1 && room.player1.userId === userId) {
+            alert('您不能與自己對戰！');
+            return;
+        }
+        currentRoomId = roomId;
+        isHost = false;
+        document.getElementById('roomControl').style.display = 'none';
+        document.getElementById('classSelection').style.display = 'block';
+        listenToRoomChanges();
         const player2Ref = database.ref('rooms/' + currentRoomId + '/player2');
         player2Ref.set({
             userId: user.uid,
@@ -2284,10 +2299,9 @@ function joinRoomWithId(roomId) {
         }).catch((error) => {
             console.error("設置 player2 失敗:", error);
         });
-    } else {
-        alert('請先登入！');
-        return;
-    }
+    }).catch((error) => {
+        console.error("獲取房間數據失敗:", error);
+    });
 }
 
     function joinWaitingQueue() {
