@@ -5,7 +5,6 @@
     
 <head>
 
-
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -16,11 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
 
-<!-- 添加 particles.js -->
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <!-- 後續樣式和其他代碼 -->
-
-    
     <style>  
 
 .difficulty-icon {
@@ -1302,99 +1297,6 @@
     
     
 <script>
-
-// 引入 particles.js 库
-function showSwordParticles() {
-    particlesJS.load('gameArea', {
-        "particles": {
-            "number": {
-                "value": 30,
-                "density": {
-                    "enable": true,
-                    "value_area": 800
-                }
-            },
-            "color": {
-                "value": "#ffd700"
-            },
-            "shape": {
-                "type": "circle",
-                "stroke": {
-                    "width": 0,
-                    "color": "#000000"
-                },
-                "polygon": {
-                    "nb_sides": 5
-                },
-                "image": {
-                    "src": "img/github.svg",
-                    "width": 100,
-                    "height": 100
-                }
-            },
-            "opacity": {
-                "value": 0.7,
-                "random": false,
-                "anim": {
-                    "enable": true,
-                    "speed": 1,
-                    "opacity_min": 0.1,
-                    "sync": false
-                }
-            },
-            "size": {
-                "value": 3,
-                "random": true,
-                "anim": {
-                    "enable": true,
-                    "speed": 4,
-                    "size_min": 0.1,
-                    "sync": false
-                }
-            },
-            "line_linked": {
-                "enable": false
-            },
-            "move": {
-                "enable": true,
-                "speed": 6,
-                "direction": "none",
-                "random": false,
-                "straight": false,
-                "out_mode": "out",
-                "bounce": false,
-                "attract": {
-                    "enable": false,
-                    "rotateX": 600,
-                    "rotateY": 1200
-                }
-            }
-        },
-        "interactivity": {
-            "detect_on": "canvas",
-            "events": {
-                "onhover": {
-                    "enable": false
-                },
-                "onclick": {
-                    "enable": false
-                },
-                "resize": true
-            }
-        },
-        "retina_detect": true
-    }, function () {
-        console.log('particles.js loaded - callback');
-        // 一段时间后移除粒子效果
-        setTimeout(() => {
-            const particlesCanvas = document.querySelector('.particles-js-canvas-el');
-            if (particlesCanvas) {
-                particlesCanvas.remove();
-            }
-        }, 500);
-    });
-}
-    
 
     // 在代码开头定义不同难度的经验奖励
 const expRewards = {
@@ -3404,11 +3306,11 @@ function showDamageAnimation(damage, target) {
     damageText.style.fontWeight = 'bold';
     damageText.style.textShadow = '0 0 5px rgba(255, 0, 0, 0.5)';
     damageText.style.zIndex = '9999';
-    damageText.style.animation = 'damageFloat 1s ease-out forwards, damageScale 1s ease-out, damageRotate 1s ease-out';
+    damageText.style.animation = 'damageFloat 1s ease-out forwards';
 
-    // 计算随机水平位置（在气血条宽度范围内）
+    // 計算隨機水平位置（在氣血條寬度範圍內）
     const randomLeft = rect.left + Math.random() * rect.width;
-    // 垂直位置：敌方显示在气血条上方，己方显示在气血条下方
+    // 垂直位置：敵方顯示在氣血條上方，己方顯示在氣血條下方
     const topPosition = target === 'enemy' ? rect.top - 30 : rect.bottom + 10;
     damageText.style.left = `${randomLeft}px`;
     damageText.style.top = `${topPosition}px`;
@@ -3417,7 +3319,7 @@ function showDamageAnimation(damage, target) {
     setTimeout(() => damageText.remove(), 1000);
 }
 
-    function showSwordParticles() {
+ function showSwordParticles() {
     particlesJS.load('gameArea', {
         "particles": {
             "number": {
@@ -3506,24 +3408,7 @@ function showDamageAnimation(damage, target) {
             }
         }, 500);
     });
-}
-
-// 添加新的动画关键帧
-const style = document.createElement('style');
-style.innerHTML = `
-  @keyframes damageScale {
-    0% { transform: scale(0); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-  }
-  @keyframes damageRotate {
-    0% { transform: rotate(0deg); }
-    50% { transform: rotate(10deg); }
-    100% { transform: rotate(0deg); }
-  }
-`;
-document.head.appendChild(style);
-
+}   
     
 
 // 輔助函數：顯示特效
