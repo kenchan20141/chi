@@ -2799,7 +2799,18 @@ function handleGameEnd(winnerType) {
     setTimeout(() => {
         if (statsOverlay) statsOverlay.remove();
     }, 5000);
+
+if (user) {
+    const userRef = database.ref('users/' + user.uid);
+    userRef.once('value', (snapshot) => {
+        const userData = snapshot.val();
+        document.getElementById('userScore').textContent = userData.score || 0;
+    });
 }
+    
+}
+
+    
 
 
     // 啟動單機模式
