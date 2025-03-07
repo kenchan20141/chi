@@ -2642,23 +2642,37 @@ function checkGameOver() {
     });
 }
 
-function calculateScoreChange(isWinner, playerLevel, opponentLevel) {
-    const d = playerLevel - opponentLevel; // 等級差距
-    let f, g;
+ function updateScore(winner, loser) {
+    // 獲取玩家的積分和等級
+    const R_winner = winner.score || 1000; // 若無積分，預設為1000
+    const R_loser = loser.score || 1000;
+    const level_winner = winner.level || 1; // 若無等級，預設為1
+    const level_loser = loser.level || 1;
 
-    if (d >= 0) {
-        f = Math.max(0.1, 1 - 0.15 * d); // 贏時乘數，最低 0.1
-        g = 1 + 0.1 * d; // 輸時乘數
-    } else {
-        f = 1 + 0.15 * (-d); // 贏時乘數（低等級挑戰高等級）
-        g = 1 - 0.1 * (-d); // 輸時乘數
-    }
+    // 計算K值
+    const K_winner = Math.max(10, 32 - (level_winner - 1) * 2);
+    const K_loser = Math.max(10, 32 - (level_loser - 1) * 2);
 
-    const winPoints = Math.max(10, Math.round(100 * f / 10) * 10); // 贏時積分
-    const losePoints = Math.max(10, Math.round(50 * g / 10) * 10); // 輸時積分
+    // 計算預期勝率
+    const E_winner = 1 / (1 + Math.pow(10, (R_loser - R_winner) / 400));
+    const E_loser = 1 / (1 + Math.pow(10, (R_winner - R_loser) / 400));
 
-    return isWinner ? winPoints : -losePoints; // 贏返回正數，輸返回負數
+    // 計算積分變化
+    let delta_winner = K_winner * (1 - E_winner);
+    let delta_loser = K_loser * (0 - E_loser);
+
+    // 調整到10的倍數並確保最小變化為10
+    const adjusted_delta_winner = Math.max(10, Math.round(delta_winner / 10) * 10);
+    const adjusted_delta_loser = Math.min(-10, Math.round(delta_loser / 10) * 10);
+
+    // 更新積分，確保不低於0
+    winner.score = Math.max(0, R_winner + adjusted_delta_winner);
+    loser.score = Math.max(0, R_loser + adjusted_delta_loser);
+
+    return { winnerScore: winner.score, loserScore: loser.score };
 }
+
+
 
     
 function handleGameEnd(winnerType) {
@@ -2668,20 +2682,6 @@ function handleGameEnd(winnerType) {
     clearInterval(timer);
     timeLeft = 0;
     document.getElementById('timer').textContent = '🕒0秒';
-
-    const playerPath = isHost ? 'player1' : 'player2';
-const opponentPath = isHost ? 'player2' : 'player1';
-const roomRef = database.ref('rooms/' + currentRoomId);
-let playerLevel = 1; // 預設等級
-let opponentLevel = 1; // 預設等級
-
-roomRef.once('value').then(snapshot => {
-    const room = snapshot.val();
-    if (room) {
-        playerLevel = room[playerPath].level || 1;
-        opponentLevel = room[opponentPath].level || 1;
-    }
-    const scoreChange = calculateScoreChange(isWinner, playerLevel, opponentLevel);
 
     document.querySelectorAll('#options button').forEach(btn => {
         btn.style.pointerEvents = 'none';
@@ -2702,69 +2702,85 @@ roomRef.once('value').then(snapshot => {
     const resultSound = isWinner ? soundEffects.victory : soundEffects.defeat;
     resultSound.play();
 
-    // 添加經驗值和升級邏輯
+    // 添加經驗值和積分邏輯
     const user = auth.currentUser;
-    let statsOverlay; // 定義 statsOverlay
+    let statsOverlay;
     if (user) {
         const userRef = database.ref('users/' + user.uid);
-        userRef.transaction((userData) => {
-    if (!userData) userData = { level: 1, exp: 0, score: 0 };
-    if (isWinner) {
-        userData.exp += 50; // 獲勝增加 50 經驗值
-    } else {
-        userData.exp += 20; // 輸家增加 20 經驗值
-    }
-    const scoreChange = calculateScoreChange(isWinner, playerLevel, opponentLevel);
-    userData.score = Math.max(0, (userData.score || 0) + scoreChange); // 更新積分
-    const expRequired = 100 * userData.level;
-    if (userData.exp >= expRequired) {
-        userData.level += 1;
-        userData.exp -= expRequired;
-    }
-    return userData;
-}).then(() => {
-            
-userRef.once('value', (snapshot) => {
-                const userData = snapshot.val();
-                playerLevel = userData.level;
-                playerExp = userData.exp;
-                // 更新排行榜
-                const leaderboardRef = database.ref('leaderboard/' + user.uid);
-                leaderboardRef.set({
-                    name: user.displayName,
-                    score: userData.score
-                });
-            });
+        userRef.once('value', (snapshot) => {
+            let userData = snapshot.val() || { level: 1, exp: 0, score: 1000 }; // 初始積分設為1000
 
-            
-            // 創建彈出視窗顯示經驗值 BAR
-            statsOverlay = document.createElement('div');
-            statsOverlay.style.cssText = `
-                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
-                border-radius: 15px; z-index: 10000; color: white; text-align: center;
-                width: 80%; max-width: 400px;
-            `;
+            // 獲取對手資料
+            const roomRef = database.ref('rooms/' + currentRoomId);
+            roomRef.once('value').then(roomSnapshot => {
+                const room = roomSnapshot.val();
+                const opponentPath = isHost ? 'player2' : 'player1';
+                const opponentData = room[opponentPath] || { score: 1000, level: 1 };
 
-            userRef.once('value', (snapshot) => {
-                const userData = snapshot.val();
-                const expRequired = 100 * userData.level;
-                const expPercentage = (userData.exp / expRequired) * 100;
+                // 準備勝者和輸者的資料
+                const winner = isWinner ? userData : opponentData;
+                const loser = isWinner ? opponentData : userData;
 
-                statsOverlay.innerHTML = `
-                    <h2>遊戲結束</h2>
-                    <p>等級: ${userData.level}</p>
-                    <p>經驗值: ${userData.exp} / ${expRequired}</p>
-                    <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
-                        <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
-                    </div>
-                    <p>積分: ${userData.score || 0}</p>
-                `;
+                // 計算新的積分
+                const { winnerScore, loserScore } = updateScore(winner, loser);
 
-                if (userData.exp >= expRequired) {
-                    statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
+                // 更新玩家自己的資料
+                if (isWinner) {
+                    userData.exp += 50; // 獲勝增加 50 經驗值
+                    userData.score = winnerScore;
+                } else {
+                    userData.exp += 20; // 輸家增加 20 經驗值
+                    userData.score = loserScore;
                 }
-                document.body.appendChild(statsOverlay);
+
+                const expRequired = 100 * userData.level;
+                if (userData.exp >= expRequired) {
+                    userData.level += 1;
+                    userData.exp -= expRequired;
+                }
+
+                // 更新資料庫
+                userRef.set(userData).then(() => {
+                    // 更新排行榜
+                    const leaderboardRef = database.ref('leaderboard/' + user.uid);
+                    leaderboardRef.set({
+                        name: user.displayName,
+                        score: userData.score
+                    });
+
+                    playerLevel = userData.level;
+                    playerExp = userData.exp;
+
+                    // 顯示統計彈窗
+                    statsOverlay = document.createElement('div');
+                    statsOverlay.style.cssText = `
+                        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                        background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+                        border-radius: 15px; z-index: 10000; color: white; text-align: center;
+                        width: 80%; max-width: 400px;
+                    `;
+
+                    const expPercentage = (userData.exp / expRequired) * 100;
+                    statsOverlay.innerHTML = `
+                        <h2>遊戲結束</h2>
+                        <p>等級: ${userData.level}</p>
+                        <p>經驗值: ${userData.exp} / ${expRequired}</p>
+                        <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
+                            <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
+                        </div>
+                        <p>積分: ${userData.score}</p>
+                    `;
+
+                    if (userData.exp >= expRequired) {
+                        statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
+                    }
+                    document.body.appendChild(statsOverlay);
+
+                    // 5秒後移除彈窗
+                    setTimeout(() => {
+                        if (statsOverlay) statsOverlay.remove();
+                    }, 5000);
+                });
             });
         });
     }
@@ -2790,6 +2806,7 @@ userRef.once('value', (snapshot) => {
         if (statsOverlay) statsOverlay.remove();
     }, 5000);
 }
+
 
 
     // 啟動單機模式
