@@ -16,6 +16,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+
+<!-- 添加 particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- 後續樣式和其他代碼 -->
+
+    
     <style>  
 
 .difficulty-icon {
@@ -1723,9 +1729,9 @@ function checkAnswer(isCorrect, questionId) {
 
     // 鐵甲宗治療代碼
     if (playerClass.type === 'tank' && !hasHealedThisTurn) {
-    hasHealedThisTurn = true;
-    const maxHealth = room[playerPath].maxHealth;  // 從資料庫獲取最大氣血
-    const healAmount = Math.round(maxHealth * playerClass.healPercentage);
+        hasHealedThisTurn = true;
+        const maxHealth = room[playerPath].maxHealth;  // 從資料庫獲取最大氣血
+        const healAmount = Math.round(maxHealth * playerClass.healPercentage);
         const newHealth = Math.min(room[playerPath].health + healAmount, maxHealth);  // 應用恢復
         const playerPath = isHost ? 'player1' : 'player2';
         database.ref(`rooms/${currentRoomId}/${playerPath}/health`).set(
@@ -1765,44 +1771,45 @@ function checkAnswer(isCorrect, questionId) {
         }
     }, 50);
 
-   // 傷害計算與動畫
-let baseDamage;
+    // 傷害計算與動畫
+    let baseDamage;
     if (isCorrect) {
         baseDamage = Math.floor(Math.random() * 31) + 50;  // 隨機生成50至80點
     } else {
         baseDamage = Math.floor(Math.random() * 31) + 50;  // 答錯時隨機生成50至80點
     }
 
-// 霸刀門雙倍攻擊判定（30%概率）
-if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
-    baseDamage *= 2;
-    const swordFlash = document.createElement('div');
-    swordFlash.className = 'sword-flash';
-    swordFlash.style.top = `${Math.random() * 40 + 30}%`;
-    document.body.appendChild(swordFlash);
-    setTimeout(() => swordFlash.remove(), 400);
-}
-
-// 影流教閃避判定（30%概率）
-if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
-    baseDamage = 0;
-    const dodgeDisplay = document.getElementById('dodgeText');
-    dodgeDisplay.style.display = 'block';
-    setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
-}
-
-let damage;
-if (isCorrect) {
-    damage = Math.floor(baseDamage * playerClass.attack / opponentDefense);
-} else {
-    damage = Math.floor(baseDamage / playerClass.defense);
-    if (playerClass.type === 'mage') {
-        damage = Math.floor(damage * 0.7);
-        const reduceDisplay = document.getElementById('reduceDamageText');
-        reduceDisplay.style.display = 'block';
-        setTimeout(() => reduceDisplay.style.display = 'none', 1200);
+    // 霸刀門雙倍攻擊判定（30%概率）
+    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
+        baseDamage *= 2;
+        const swordFlash = document.createElement('div');
+        swordFlash.className = 'sword-flash';
+        swordFlash.style.top = `${Math.random() * 40 + 30}%`;
+        document.body.appendChild(swordFlash);
+        setTimeout(() => swordFlash.remove(), 400);
+        showSwordParticles(); // 添加粒子效果
     }
-}
+
+    // 影流教閃避判定（30%概率）
+    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
+        baseDamage = 0;
+        const dodgeDisplay = document.getElementById('dodgeText');
+        dodgeDisplay.style.display = 'block';
+        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
+    }
+
+    let damage;
+    if (isCorrect) {
+        damage = Math.floor(baseDamage * playerClass.attack / opponentDefense);
+    } else {
+        damage = Math.floor(baseDamage / playerClass.defense);
+        if (playerClass.type === 'mage') {
+            damage = Math.floor(damage * 0.7);
+            const reduceDisplay = document.getElementById('reduceDamageText');
+            reduceDisplay.style.display = 'block';
+            setTimeout(() => reduceDisplay.style.display = 'none', 1200);
+        }
+    }
 
     const targetElement = isCorrect 
         ? document.getElementById('opponentHealthBar')
@@ -3409,6 +3416,97 @@ function showDamageAnimation(damage, target) {
 
     document.body.appendChild(damageText);
     setTimeout(() => damageText.remove(), 1000);
+}
+
+    function showSwordParticles() {
+    particlesJS.load('gameArea', {
+        "particles": {
+            "number": {
+                "value": 30,
+                "density": {
+                    "enable": true,
+                    "value_area": 800
+                }
+            },
+            "color": {
+                "value": "#ffd700"
+            },
+            "shape": {
+                "type": "circle",
+                "stroke": {
+                    "width": 0,
+                    "color": "#000000"
+                },
+                "polygon": {
+                    "nb_sides": 5
+                },
+                "image": {
+                    "src": "img/github.svg",
+                    "width": 100,
+                    "height": 100
+                }
+            },
+            "opacity": {
+                "value": 0.7,
+                "random": false,
+                "anim": {
+                    "enable": true,
+                    "speed": 1,
+                    "opacity_min": 0.1,
+                    "sync": false
+                }
+            },
+            "size": {
+                "value": 3,
+                "random": true,
+                "anim": {
+                    "enable": true,
+                    "speed": 4,
+                    "size_min": 0.1,
+                    "sync": false
+                }
+            },
+            "line_linked": {
+                "enable": false
+            },
+            "move": {
+                "enable": true,
+                "speed": 6,
+                "direction": "none",
+                "random": false,
+                "straight": false,
+                "out_mode": "out",
+                "bounce": false,
+                "attract": {
+                    "enable": false,
+                    "rotateX": 600,
+                    "rotateY": 1200
+                }
+            }
+        },
+        "interactivity": {
+            "detect_on": "canvas",
+            "events": {
+                "onhover": {
+                    "enable": false
+                },
+                "onclick": {
+                    "enable": false
+                },
+                "resize": true
+            }
+        },
+        "retina_detect": true
+    }, function () {
+        console.log('particles.js loaded - callback');
+        // 一段时间后移除粒子效果
+        setTimeout(() => {
+            const particlesCanvas = document.querySelector('.particles-js-canvas-el');
+            if (particlesCanvas) {
+                particlesCanvas.remove();
+            }
+        }, 500);
+    });
 }
 
 // 添加新的动画关键帧
