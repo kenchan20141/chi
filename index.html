@@ -2270,6 +2270,12 @@ function joinRoomWithId(roomId) {
     });
 }
 
+
+    // 假設的函數，用於獲取當前玩家的 IP 地址（實際實現需服務器端支持）
+function getPlayerIP() {
+    // 此處應由服務器端實現，例如通過 WebSocket 或 API 返回 IP
+    return "mock-ip-" + auth.currentUser.uid; // 模擬實現，實際應替換為真實 IP
+}
     
     async function joinWaitingQueue() {
     const user = firebase.auth().currentUser;
@@ -2287,17 +2293,71 @@ function joinRoomWithId(roomId) {
     const waitingRef = database.ref('waitingRooms');
     const userId = user.uid;
 
-    // 存儲玩家的 userId 和 IP 地址
-    waitingRef.set({
-        userId: userId,
-        ip: playerIP,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
+    waitingRef.transaction((waitingRooms) => {
+        if (!waitingRooms) waitingRooms = [];
+
+        // 尋找第一個 IP 地址不同的玩家
+        const opponentIndex = waitingRooms.findIndex(player => player.ip !== playerIP);
+        if (opponentIndex !== -1) {
+            const opponent = waitingRooms[opponentIndex];
+            waitingRooms.splice(opponentIndex, 1); // 移除匹配的對手
+
+            // 創建新房間
+            const roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            database.ref('rooms/' + roomId).set({
+                player1: { 
+                    userId: userId, 
+                    health: 100, 
+                    class: null, 
+                    currentQuestion: null, 
+                    name: user.displayName || '未知玩家',
+                    ip: playerIP
+                },
+                player2: { 
+                    userId: opponent.userId, 
+                    health: 100, 
+                    class: null, 
+                    currentQuestion: null, 
+                    name: '未知玩家', // 等待後續更新
+                    ip: opponent.ip
+                },
+                gameStarted: false,
+                gameEnded: false,
+                winner: null,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                waitingRef.onDisconnect().remove(); // 斷線時移除等待數據
+            }).catch((error) => {
+                console.error("設置房間失敗:", error);
+            });
+
+            currentRoomId = roomId;
+            isHost = true;
+            localStorage.setItem('playerId', userId);
+            document.getElementById('roomControl').style.display = 'none';
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('displayRoomId').textContent = '等待角色選擇...';
+            document.getElementById('classSelection').style.display = 'block';
+            enterRoom(roomId); // 假設此函數已定義，用於進入房間
+            listenToRoomChanges(); // 監聽房間變化
+            return waitingRooms;
+        } else {
+            // 無不同 IP 的對手，加入等待隊列
+            waitingRooms.push({ 
+                userId: userId, 
+                ip: playerIP,
+                createdAt: firebase.database.ServerValue.TIMESTAMP 
+            });
+            waitingRef.onDisconnect().remove(); // 斷線時移除等待數據
+            localStorage.setItem('playerId', userId);
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('displayRoomId').textContent = '等待對手...';
+            return waitingRooms;
+        }
+    }).catch((error) => {
+        console.error("等待隊列交易失敗:", error);
     });
-
-    localStorage.setItem('playerId', userId);
-    document.getElementById('waitingArea').style.display = 'block';
 }
-
    
 
 function checkForMatch() {
@@ -2409,6 +2469,9 @@ function randomMatch() {
             document.getElementById('displayRoomId').textContent = '等待對手...';
             document.getElementById('classSelection').style.display = 'block';
 
+joinWaitingQueue();
+
+            
             listenToRoomChanges();
         } else {
             const waitingPlayerId = waitingData.userId;
