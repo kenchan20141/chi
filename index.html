@@ -145,7 +145,6 @@
 }
         
         
-/* 傷害文字浮動效果 */
 @keyframes damageFloat {
     0% { transform: translateY(0); opacity: 1; }
     100% { transform: translateY(-50px); opacity: 0; }
@@ -174,21 +173,9 @@
 
         /* 优化原有血条动画 */
 .health-fill {
-    height: 100%;
     transition: width 0.5s ease, background-color 0.3s ease;
 }
-
-        .health-fill.low-health {
-    background: linear-gradient(90deg, #ff0000 0%, #ff3333 100%);
-    animation: flash 0.5s infinite;
-}
-
-        @keyframes flash {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
-    
+    }
 
     /* 答題命中特效 */
     @keyframes hitMarker {
@@ -261,27 +248,19 @@
     100% { opacity: 0; left: 100%; }
 }
 
-/* 坦克金鐘罩 - 護盾效果 */
 @keyframes shieldEffect {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(1); opacity: 0; }
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.sword-animation {
+    animation: swordEffect 0.8s ease-out;
 }
 
 .shield-animation {
-    position: fixed;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, rgba(0,255,0,0.5) 0%, rgba(0,255,0,0) 70%);
-    pointer-events: none;
-    z-index: 999;
     animation: shieldEffect 0.5s ease-out;
-    top: 70%;
-    left: 50%;
-    transform: translateX(-50%);
 }
-
-
 
     /* 修改现有元素样式 */
     #roomControl {
@@ -876,43 +855,51 @@
         }
 
 
-/* 戰士裂空擊 - 劍光效果 */
 @keyframes swordSwipe {
-    0% { opacity: 0; left: -100px; transform: rotate(-45deg) scaleX(0); }
-    50% { opacity: 0.8; left: 50%; transform: rotate(-45deg) scaleX(1.2); }
-    100% { opacity: 0; left: 100%; transform: rotate(-45deg) scaleX(0); }
+    0% { 
+        opacity: 0;
+        left: -100px;
+        transform: rotate(-45deg) scaleX(0);
+    }
+    50% { 
+        opacity: 0.8;
+        left: 50%;
+        transform: rotate(-45deg) scaleX(1.2);
+    }
+    100% { 
+        opacity: 0;
+        left: 100%;
+        transform: rotate(-45deg) scaleX(0);
+    }
 }
 
 .sword-flash {
     position: fixed;
     width: 150px;
     height: 30px;
-    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(100,255,100,0.7) 50%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(100,255,100,0.7) 50%,
+        rgba(255,255,255,0) 100%
+    );
     pointer-events: none;
     z-index: 999;
     animation: swordSwipe 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     filter: brightness(1.5);
-    top: 50%;
+    top: 50%; /* 初始垂直居中 */
 }
 
-/* 刺客鬼影步 - 閃避效果 */
+/* 新增闪避提示动画 */
 @keyframes dodgeFade {
-    0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
-    50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
-    100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
+  0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+  50% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
 }
 
-.dodge-text {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 3rem;
-    color: #00ff00;
-    text-shadow: 0 0 10px rgba(0,255,0,0.5);
-    animation: dodgeFade 1s ease-out;
-    pointer-events: none;
-}
+#dodgeText {
+  animation: dodgeFade 1s ease-out;
+  pointer-events: none;
 
         /* 新增治疗提示动画 */
 @keyframes healFade {
@@ -937,24 +924,16 @@
     margin-left: 5px; /* 调整图标与气血文字的间距 */
 }
 
- /* 法師離火訣 - 火焰效果 */
-@keyframes flameBurst {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.5); opacity: 1; }
-    100% { transform: scale(1); opacity: 0; }
+    /* 新增减伤提示动画 */
+@keyframes reduceDamageFade {
+  0% { opacity: 0; transform: translate(-50%,-50%) translateY(20px); }
+  50% { opacity: 1; transform: translate(-50%,-50%) translateY(0); }
+  100% { opacity: 0; transform: translate(-50%,-50%) translateY(-20px); }
 }
 
-.flame-effect {
-    position: fixed;
-    width: 80px;
-    height: 80px;
-    background: radial-gradient(circle, rgba(255,69,0,0.7) 0%, rgba(255,69,0,0) 70%);
-    pointer-events: none;
-    z-index: 999;
-    animation: flameBurst 0.6s ease-out;
-    top: 60%;
-    left: 50%;
-    transform: translateX(-50%);
+#reduceDamageText {
+  animation: reduceDamageFade 1.2s ease-out;
+  pointer-events: none;
 }
         
     </style>
