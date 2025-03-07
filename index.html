@@ -1306,6 +1306,24 @@ const expRewards = {
 
     let damageInterval;
 
+
+// 生成或獲取玩家標識符
+let playerIdentifier = localStorage.getItem('playerIdentifier');
+if (!playerIdentifier) {
+    playerIdentifier = uuidv4(); // 使用UUID生成函數
+    localStorage.setItem('playerIdentifier', playerIdentifier);
+}
+
+// UUID生成函數
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+
+    
 // Canvas 動畫代碼
 window.onload = function() {
     const canvas = document.getElementById('animationCanvas');
@@ -2188,7 +2206,7 @@ function joinRoom() {
     });
 }
 
-   function createRoomWithId(roomId) {
+  function createRoomWithId(roomId) {
     const user = auth.currentUser;
     if (!user) {
         alert('請先登入！');
@@ -2201,6 +2219,13 @@ function joinRoom() {
     document.getElementById('classSelection').style.display = 'block';
     document.getElementById('waitingArea').style.display = 'block';
     document.getElementById('displayRoomId').textContent = currentRoomId;
+
+    // 獲取或生成玩家標識符
+    let playerIdentifier = localStorage.getItem('playerIdentifier');
+    if (!playerIdentifier) {
+        playerIdentifier = uuidv4(); // 使用 UUID 生成唯一標識符
+        localStorage.setItem('playerIdentifier', playerIdentifier);
+    }
 
     database.ref('rooms/' + currentRoomId).set({
         player1: {
@@ -2215,7 +2240,8 @@ function joinRoom() {
         gameStarted: false,
         gameEnded: false,
         winner: null,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        identifier: playerIdentifier // 存儲玩家標識符
     }).then(() => {
         // 將房間加入 waitingRooms 並記錄 hostId
         database.ref('waitingRooms').set({
@@ -2237,14 +2263,28 @@ function joinRoomWithId(roomId) {
         return;
     }
 
-    // 先獲取房間資料以檢查 UID
+    // 先獲取房間資料以檢查標識符
     database.ref('rooms/' + roomId).once('value').then(snapshot => {
         const room = snapshot.val();
-        if (room && room.player1 && room.player1.userId === user.uid) {
+        if (!room) {
+            alert('戰場不存在！');
+            return;
+        }
+
+        // 獲取本地玩家標識符
+        let playerIdentifier = localStorage.getItem('playerIdentifier');
+        if (!playerIdentifier) {
+            playerIdentifier = uuidv4();
+            localStorage.setItem('playerIdentifier', playerIdentifier);
+        }
+
+        // 檢查房間的標識符與本地標識符是否相同
+        if (room.identifier === playerIdentifier) {
             alert('不能加入自己創建的房間');
             return;
         }
-        // UID 不同，繼續加入房間
+
+        // 標識符不同，繼續加入房間
         currentRoomId = roomId;
         isHost = false;
         document.getElementById('roomControl').style.display = 'none';
