@@ -2374,6 +2374,27 @@ function startGameSession() {
             listenToRoomChanges();
         }
     });
+
+      database.ref('waitingRooms').once('value').then(snapshot => {
+        const waitingRooms = snapshot.val();
+        if (waitingRooms) {
+            for (let roomId in waitingRooms) {
+                const room = waitingRooms[roomId];
+                // 檢查顯示名稱是否相同
+                if (room.player1.name !== user.displayName) {
+                    joinRoomWithId(roomId);
+                    return;
+                }
+            }
+        }
+        // 沒有合適的房間，創建新房間
+        createRoomWithId(generateRoomId());
+    }).catch(error => {
+        console.error('隨機匹配失敗:', error);
+        alert('隨機匹配失敗，請重試！');
+    });
+
+      
 }
     
 
