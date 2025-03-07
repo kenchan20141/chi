@@ -2740,6 +2740,7 @@ function handleGameEnd(winnerType) {
                     leaderboardRef.set({
                         name: user.displayName,
                         score: userData.score
+                        level: userData.level
                     });
                 });
 
@@ -3368,7 +3369,7 @@ document.getElementById('showLeaderboardBtn').onclick = function() {
         // 顯示排行榜
         let leaderboardHTML = '<h2 style="text-align: center; color: var(--gold);">🏆 排行榜 - 前十名</h2><ul>';
         leaderboard.forEach((entry, index) => {
-            leaderboardHTML += `<li style="font-size: 1.2rem; padding: 0.5rem;">${index + 1}. ${entry.name} - ${entry.score} 分</li>`;
+            leaderboardHTML += `<li style="font-size: 1.2rem; padding: 0.5rem;">${index + 1}. ${entry.name} - 等級: ${entry.level} - 積分: ${entry.score}</li>`;
         });
         leaderboardHTML += '</ul>';
         
