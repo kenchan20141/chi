@@ -1,3 +1,8 @@
+現在遊戲系統漏洞如下：
+
+現時積分榜的分數設定是固定的，即勝出則得100點，而落敗則扣50點，但玩家的等級並不一樣，請重新設計一個合理的積分數值系統。積分最低為0分，最高沒有上限，以10分為最少所得積分點。等級差距在0至2級仍然算相近，3級到5級，算是差距較大，6級以上則是差距十分懸殊。計算贏時所得積分及輸時所失積分時，你需要將等級差距考慮在內。我希望將基數設定為100點。距6級以上的話，等級較高的玩家贏出後所得應只有10點。
+
+請明確指引我要刪甚麼、加甚麼、替代甚麼，我是一位新手，請你在修復後將該函數的代碼100%完整地貼出來，方便我直接貼上。
 
 
 <!DOCTYPE html>
@@ -1319,6 +1324,34 @@ window.onload = function() {
     img.src = 'https://i.ibb.co/RWW0Xqc/image.png';
     img.crossOrigin = 'Anonymous';
 
+    // 定義粒子類
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.startX = x;
+            this.startY = y;
+            this.color = color;
+            this.vx = (Math.random() - 0.5) * 6; // 增加速度範圍
+            this.vy = (Math.random() - 0.5) * 6;
+            this.size = Math.random() * 4 + 1; // 隨機大小
+            this.alpha = 1;
+            this.life = 0; // 粒子生命週期
+        }
+        update(progress) {
+            this.life = progress;
+            this.x = this.startX + this.vx * progress * 30; // 調整分散距離
+            this.y = this.startY + this.vy * progress * 30;
+            this.alpha = 1 - progress; // 透明度隨進度減少
+        }
+        draw() {
+            ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
     img.onload = function() {
         // 全屏調整圖片大小（保持比例，覆蓋螢幕）
         let imgWidth, imgHeight, imgX, imgY;
@@ -1326,11 +1359,13 @@ window.onload = function() {
         const canvasRatio = canvas.width / canvas.height;
 
         if (aspectRatio > canvasRatio) {
+            // 圖片寬度超出畫布，按高度縮放
             imgHeight = canvas.height;
             imgWidth = imgHeight * aspectRatio;
             imgX = (canvas.width - imgWidth) / 2;
             imgY = 0;
         } else {
+            // 圖片高度超出畫布，按寬度縮放
             imgWidth = canvas.width;
             imgHeight = imgWidth / aspectRatio;
             imgX = 0;
@@ -1339,6 +1374,21 @@ window.onload = function() {
 
         // 初始繪製全屏圖片
         ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+
+        // 創建粒子，覆蓋圖片區域
+        const particles = [];
+        const particleCount = 3000; // 增加粒子數量以模擬破碎效果
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        for (let i = 0; i < particleCount; i++) {
+            const x = imgX + Math.random() * imgWidth;
+            const y = imgY + Math.random() * imgHeight;
+            const pixelX = Math.floor(x);
+            const pixelY = Math.floor(y);
+            const pixelIndex = (pixelY * canvas.width + pixelX) * 4;
+            const color = `${imageData[pixelIndex]}, ${imageData[pixelIndex + 1]}, ${imageData[pixelIndex + 2]}`;
+            particles.push(new Particle(x, y, color));
+        }
 
         // 動畫邏輯
         let startTime = Date.now();
@@ -1351,10 +1401,24 @@ window.onload = function() {
             // 清除畫布
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 繪製圖片並漸變透明度
-            ctx.globalAlpha = 1 - progress; // 透明度從 1 到 0
-            ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-            ctx.globalAlpha = 1; // 重置透明度
+            // 分階段控制圖片消失和粒子出現
+            if (progress < 0.3) {
+                // 前0.6秒顯示完整圖片
+                ctx.globalAlpha = 1;
+                ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+            } else if (progress < 0.7) {
+                // 0.6-1.4秒模擬破碎（圖片部分顯示）
+                ctx.globalAlpha = 1 - (progress - 0.3) / 0.4; // 透明度從1到0
+                ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+            }
+            // 後1.4秒只顯示粒子，圖片完全消失
+
+            // 更新並繪製粒子
+            ctx.globalAlpha = 1; // 恢復全局透明度
+            particles.forEach(particle => {
+                particle.update(progress);
+                particle.draw();
+            });
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
@@ -2642,47 +2706,6 @@ function checkGameOver() {
     });
 }
 
- function updateScore(winner, loser) {
-    // 獲取玩家的積分和等級
-    const R_winner = winner.score || 1000; // 若無積分，預設為1000
-    const R_loser = loser.score || 1000;
-    const level_winner = winner.level || 1; // 若無等級，預設為1
-    const level_loser = loser.level || 1;
-
-    // 檢查等級是否相同
-    if (level_winner === level_loser) {
-        // 等級相同，贏家加100，輸家減100
-        winner.score = R_winner + 100;
-        loser.score = Math.max(0, R_loser - 100); // 確保積分不低於0
-    } else {
-        // 等級不同，使用原有的積分計算邏輯
-        // 計算K值
-        const K_winner = Math.max(10, 32 - (level_winner - 1) * 2);
-        const K_loser = Math.max(10, 32 - (level_loser - 1) * 2);
-
-        // 計算預期勝率
-        const E_winner = 1 / (1 + Math.pow(10, (R_loser - R_winner) / 400));
-        const E_loser = 1 / (1 + Math.pow(10, (R_winner - R_loser) / 400));
-
-        // 計算積分變化
-        let delta_winner = K_winner * (1 - E_winner);
-        let delta_loser = K_loser * (0 - E_loser);
-
-        // 調整到10的倍數並確保最小變化為10
-        const adjusted_delta_winner = Math.max(10, Math.round(delta_winner / 10) * 10);
-        const adjusted_delta_loser = Math.min(-10, Math.round(delta_loser / 10) * 10);
-
-        // 更新積分，確保不低於0
-        winner.score = Math.max(0, R_winner + adjusted_delta_winner);
-        loser.score = Math.max(0, R_loser + adjusted_delta_loser);
-    }
-
-    return { winnerScore: winner.score, loserScore: loser.score };
-}
-
-
-
-    
 function handleGameEnd(winnerType) {
     if (gameOver) return;
     gameOver = true;
@@ -2710,85 +2733,69 @@ function handleGameEnd(winnerType) {
     const resultSound = isWinner ? soundEffects.victory : soundEffects.defeat;
     resultSound.play();
 
-    // 添加經驗值和積分邏輯
+    // 添加經驗值和升級邏輯
     const user = auth.currentUser;
-    let statsOverlay;
+    let statsOverlay; // 定義 statsOverlay
     if (user) {
         const userRef = database.ref('users/' + user.uid);
-        userRef.once('value', (snapshot) => {
-            let userData = snapshot.val() || { level: 1, exp: 0, score: 1000 }; // 初始積分設為1000
+        userRef.transaction((userData) => {
+            if (!userData) userData = { level: 1, exp: 0, score: 0 };
+            if (isWinner) {
+                userData.exp += 50; // 獲勝增加 50 經驗值
+                userData.score += 100; // 贏家增加 100 積分
+           } else {
+                userData.exp += 20;  // 輸家增加 20 經驗值
+                userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
+            }
+            const expRequired = 100 * userData.level;
+            if (userData.exp >= expRequired) {
+                userData.level += 1;
+                userData.exp -= expRequired;
+            }
+            return userData;
+        }).then(() => {
 
-            // 獲取對手資料
-            const roomRef = database.ref('rooms/' + currentRoomId);
-            roomRef.once('value').then(roomSnapshot => {
-                const room = roomSnapshot.val();
-                const opponentPath = isHost ? 'player2' : 'player1';
-                const opponentData = room[opponentPath] || { score: 1000, level: 1 };
-
-                // 準備勝者和輸者的資料
-                const winner = isWinner ? userData : opponentData;
-                const loser = isWinner ? opponentData : userData;
-
-                // 計算新的積分
-                const { winnerScore, loserScore } = updateScore(winner, loser);
-
-                // 更新玩家自己的資料
-                if (isWinner) {
-                    userData.exp += 50; // 獲勝增加 50 經驗值
-                    userData.score = winnerScore;
-                } else {
-                    userData.exp += 20; // 輸家增加 20 經驗值
-                    userData.score = loserScore;
-                }
-
-                const expRequired = 100 * userData.level;
-                if (userData.exp >= expRequired) {
-                    userData.level += 1;
-                    userData.exp -= expRequired;
-                }
-
-                // 更新資料庫
-                userRef.set(userData).then(() => {
-                    // 更新排行榜
-                    const leaderboardRef = database.ref('leaderboard/' + user.uid);
-                    leaderboardRef.set({
-                        name: user.displayName,
-                        score: userData.score
-                    });
-
-                    playerLevel = userData.level;
-                    playerExp = userData.exp;
-
-                    // 顯示統計彈窗
-                    statsOverlay = document.createElement('div');
-                    statsOverlay.style.cssText = `
-                        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                        background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
-                        border-radius: 15px; z-index: 10000; color: white; text-align: center;
-                        width: 80%; max-width: 400px;
-                    `;
-
-                    const expPercentage = (userData.exp / expRequired) * 100;
-                    statsOverlay.innerHTML = `
-                        <h2>遊戲結束</h2>
-                        <p>等級: ${userData.level}</p>
-                        <p>經驗值: ${userData.exp} / ${expRequired}</p>
-                        <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
-                            <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
-                        </div>
-                        <p>積分: ${userData.score}</p>
-                    `;
-
-                    if (userData.exp >= expRequired) {
-                        statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
-                    }
-                    document.body.appendChild(statsOverlay);
-
-                    // 5秒後移除彈窗
-                    setTimeout(() => {
-                        if (statsOverlay) statsOverlay.remove();
-                    }, 5000);
+userRef.once('value', (snapshot) => {
+                const userData = snapshot.val();
+                playerLevel = userData.level;
+                playerExp = userData.exp;
+                // 更新排行榜
+                const leaderboardRef = database.ref('leaderboard/' + user.uid);
+                leaderboardRef.set({
+                    name: user.displayName,
+                    score: userData.score
                 });
+            });
+
+            
+            // 創建彈出視窗顯示經驗值 BAR
+            statsOverlay = document.createElement('div');
+            statsOverlay.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+                border-radius: 15px; z-index: 10000; color: white; text-align: center;
+                width: 80%; max-width: 400px;
+            `;
+
+            userRef.once('value', (snapshot) => {
+                const userData = snapshot.val();
+                const expRequired = 100 * userData.level;
+                const expPercentage = (userData.exp / expRequired) * 100;
+
+                statsOverlay.innerHTML = `
+                    <h2>遊戲結束</h2>
+                    <p>等級: ${userData.level}</p>
+                    <p>經驗值: ${userData.exp} / ${expRequired}</p>
+                    <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
+                        <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
+                    </div>
+                    <p>積分: ${userData.score || 0}</p>
+                `;
+
+                if (userData.exp >= expRequired) {
+                    statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
+                }
+                document.body.appendChild(statsOverlay);
             });
         });
     }
@@ -2814,7 +2821,6 @@ function handleGameEnd(winnerType) {
         if (statsOverlay) statsOverlay.remove();
     }, 5000);
 }
-
 
 
     // 啟動單機模式
