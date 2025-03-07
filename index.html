@@ -2467,9 +2467,10 @@ function randomMatch() {
             document.getElementById('roomControl').style.display = 'none';
             document.getElementById('waitingArea').style.display = 'block';
             document.getElementById('displayRoomId').textContent = '等待對手...';
+            joinWaitingQueue();
             document.getElementById('classSelection').style.display = 'block';
 
-joinWaitingQueue();
+
 
             
             listenToRoomChanges();
