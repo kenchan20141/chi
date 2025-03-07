@@ -2649,25 +2649,33 @@ function checkGameOver() {
     const level_winner = winner.level || 1; // 若無等級，預設為1
     const level_loser = loser.level || 1;
 
-    // 計算K值
-    const K_winner = Math.max(10, 32 - (level_winner - 1) * 2);
-    const K_loser = Math.max(10, 32 - (level_loser - 1) * 2);
+    // 檢查等級是否相同
+    if (level_winner === level_loser) {
+        // 等級相同，贏家加100，輸家減100
+        winner.score = R_winner + 100;
+        loser.score = Math.max(0, R_loser - 100); // 確保積分不低於0
+    } else {
+        // 等級不同，使用原有的積分計算邏輯
+        // 計算K值
+        const K_winner = Math.max(10, 32 - (level_winner - 1) * 2);
+        const K_loser = Math.max(10, 32 - (level_loser - 1) * 2);
 
-    // 計算預期勝率
-    const E_winner = 1 / (1 + Math.pow(10, (R_loser - R_winner) / 400));
-    const E_loser = 1 / (1 + Math.pow(10, (R_winner - R_loser) / 400));
+        // 計算預期勝率
+        const E_winner = 1 / (1 + Math.pow(10, (R_loser - R_winner) / 400));
+        const E_loser = 1 / (1 + Math.pow(10, (R_winner - R_loser) / 400));
 
-    // 計算積分變化
-    let delta_winner = K_winner * (1 - E_winner);
-    let delta_loser = K_loser * (0 - E_loser);
+        // 計算積分變化
+        let delta_winner = K_winner * (1 - E_winner);
+        let delta_loser = K_loser * (0 - E_loser);
 
-    // 調整到10的倍數並確保最小變化為10
-    const adjusted_delta_winner = Math.max(10, Math.round(delta_winner / 10) * 10);
-    const adjusted_delta_loser = Math.min(-10, Math.round(delta_loser / 10) * 10);
+        // 調整到10的倍數並確保最小變化為10
+        const adjusted_delta_winner = Math.max(10, Math.round(delta_winner / 10) * 10);
+        const adjusted_delta_loser = Math.min(-10, Math.round(delta_loser / 10) * 10);
 
-    // 更新積分，確保不低於0
-    winner.score = Math.max(0, R_winner + adjusted_delta_winner);
-    loser.score = Math.max(0, R_loser + adjusted_delta_loser);
+        // 更新積分，確保不低於0
+        winner.score = Math.max(0, R_winner + adjusted_delta_winner);
+        loser.score = Math.max(0, R_loser + adjusted_delta_loser);
+    }
 
     return { winnerScore: winner.score, loserScore: loser.score };
 }
