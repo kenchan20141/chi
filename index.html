@@ -2778,10 +2778,6 @@ function handleGameEnd(winnerType) {
     buttonContainer.appendChild(mainMenuBtn);
     victoryOverlay.appendChild(buttonContainer);
 
-    // 5 秒後移除彈出視窗
-    setTimeout(() => {
-        if (statsOverlay) statsOverlay.remove();
-    }, 5000);
 }
 
 
