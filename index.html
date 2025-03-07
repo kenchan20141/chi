@@ -1297,11 +1297,6 @@
     
 <script>
 
-    // 生成臨時用戶 ID
-function generateTempUserId() {
-    return 'temp_' + Math.random().toString(36).substr(2, 9);
-}
-
     // 在代码开头定义不同难度的经验奖励
 const expRewards = {
     easy: 10,
@@ -2191,57 +2186,51 @@ function toggleMusic() {
 }
 
 function createRoom() {
-    let userId;
-    if (!auth.currentUser) {
-        // 未登入玩家：生成臨時 ID
-        userId = generateTempUserId();
-    } else {
-        // 已登入玩家：使用真實 UID
-        userId = auth.currentUser.uid;
+    const roomIdInput = document.getElementById('roomId').value.trim();
+    if (roomIdInput.length !== 4) {
+        alert('請輸入四位戰場編號');
+        return;
     }
-    const roomId = roomIdInput.value.trim() || Math.floor(1000 + Math.random() * 9000).toString();
+    const userId = generateUserId();
+    const player1Ref = database.ref('rooms/' + roomIdInput + '/player1');
+    player1Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
+    player1Ref.onDisconnect().remove();
+    currentRoomId = roomIdInput;
     isHost = true;
-    currentRoomId = roomId;
-    database.ref('rooms/' + roomId).set({
-        player1: { uid: userId, health: 100, class: null },
-        createdAt: Date.now()
-    });
     document.getElementById('roomControl').style.display = 'none';
     document.getElementById('waitingArea').style.display = 'block';
-    document.getElementById('displayRoomId').textContent = roomId;
+    document.getElementById('displayRoomId').textContent = roomIdInput;
+    document.getElementById('classSelection').style.display = 'block';
     listenToRoomChanges();
 }
 
 function joinRoom() {
-    let userId;
-    if (!auth.currentUser) {
-        // 未登入玩家：生成臨時 ID
-        userId = generateTempUserId();
-    } else {
-        // 已登入玩家：使用真實 UID
-        userId = auth.currentUser.uid;
-    }
-    const roomId = roomIdInput.value.trim();
-    if (!roomId) {
-        alert('請輸入戰場編號');
+    const roomId = document.getElementById('roomId').value.trim();
+    if (roomId.length !== 4) {
+        alert('請輸入四位戰場編號');
         return;
     }
-    database.ref('rooms/' + roomId).once('value').then(snapshot => {
-        const room = snapshot.val();
-        if (room && !room.player2) {
-            isHost = false;
+    const userId = generateUserId();
+    const roomRef = database.ref('rooms/' + roomId);
+    roomRef.once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const room = snapshot.val();
+            if (room.player2) {
+                alert('戰場已滿');
+                return;
+            }
+            const player2Ref = database.ref('rooms/' + roomId + '/player2');
+            player2Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
+            player2Ref.onDisconnect().remove();
             currentRoomId = roomId;
-            database.ref('rooms/' + roomId + '/player2').set({
-                uid: userId,
-                health: 100,
-                class: null,
-                reentered: true
-            });
+            isHost = false;
             document.getElementById('roomControl').style.display = 'none';
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('displayRoomId').textContent = roomId;
             document.getElementById('classSelection').style.display = 'block';
             listenToRoomChanges();
         } else {
-            alert('戰場不存在或已滿');
+            alert('戰場不存在');
         }
     });
 }
@@ -2380,13 +2369,10 @@ function startGameSession() {
 
 
   function randomMatch() {
-    let userId;
-    if (!auth.currentUser) {
-        // 未登入玩家：生成臨時 ID
-        userId = generateTempUserId();
-    } else {
-        // 已登入玩家：使用真實 UID
-        userId = auth.currentUser.uid;
+    const user = auth.currentUser;
+    if (!user) {
+        alert('請先登入！');
+        return;
     }
 
     console.log("randomMatch called");
