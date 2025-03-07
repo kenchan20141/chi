@@ -1296,6 +1296,8 @@
     
 <script>
 
+    const K = 32;
+
     // 在代码开头定义不同难度的经验奖励
 const expRewards = {
     easy: 10,
@@ -2669,72 +2671,104 @@ function handleGameEnd(winnerType) {
     const resultSound = isWinner ? soundEffects.victory : soundEffects.defeat;
     resultSound.play();
 
-    // 添加經驗值和升級邏輯
+    // 獲取當前玩家和對手的 UID
     const user = auth.currentUser;
-    let statsOverlay; // 定義 statsOverlay
-    if (user) {
-        const userRef = database.ref('users/' + user.uid);
-        userRef.transaction((userData) => {
-            if (!userData) userData = { level: 1, exp: 0, score: 0 };
-            if (isWinner) {
-                userData.exp += 50; // 獲勝增加 50 經驗值
-                userData.score += 100; // 贏家增加 100 積分
-           } else {
-                userData.exp += 20;  // 輸家增加 20 經驗值
-                userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
-            }
-            const expRequired = 100 * userData.level;
-            if (userData.exp >= expRequired) {
-                userData.level += 1;
-                userData.exp -= expRequired;
-            }
-            return userData;
-        }).then(() => {
+    const opponentUid = isHost ? room.player2.uid : room.player1.uid;
 
-userRef.once('value', (snapshot) => {
-                const userData = snapshot.val();
-                playerLevel = userData.level;
-                playerExp = userData.exp;
-                // 更新排行榜
-                const leaderboardRef = database.ref('leaderboard/' + user.uid);
-                leaderboardRef.set({
-                    name: user.displayName,
-                    score: userData.score
-                });
-            });
+    // 從數據庫獲取雙方玩家資料
+    const userRef = database.ref('users/' + user.uid);
+    const opponentRef = database.ref('users/' + opponentUid);
 
-            
-            // 創建彈出視窗顯示經驗值 BAR
-            statsOverlay = document.createElement('div');
-            statsOverlay.style.cssText = `
-                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
-                border-radius: 15px; z-index: 10000; color: white; text-align: center;
-                width: 80%; max-width: 400px;
-            `;
+    Promise.all([userRef.once('value'), opponentRef.once('value')]).then(([userSnapshot, opponentSnapshot]) => {
+        const userData = userSnapshot.val() || { level: 1, score: 0, exp: 0 };
+        const opponentData = opponentSnapshot.val() || { level: 1, score: 0 };
 
-            userRef.once('value', (snapshot) => {
-                const userData = snapshot.val();
-                const expRequired = 100 * userData.level;
-                const expPercentage = (userData.exp / expRequired) * 100;
+        // 計算總評分
+        const R_user = userData.score + 100 * userData.level;
+        const R_opponent = opponentData.score + 100 * opponentData.level;
 
-                statsOverlay.innerHTML = `
-                    <h2>遊戲結束</h2>
-                    <p>等級: ${userData.level}</p>
-                    <p>經驗值: ${userData.exp} / ${expRequired}</p>
-                    <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
-                        <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
-                    </div>
-                    <p>積分: ${userData.score || 0}</p>
-                `;
+        // 計算預期勝率
+        const E_user = 1 / (1 + Math.pow(10, (R_opponent - R_user) / 400));
+        const E_opponent = 1 - E_user;
 
-                if (userData.exp >= expRequired) {
-                    statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
-                }
-                document.body.appendChild(statsOverlay);
-            });
+        // 根據勝負計算積分調整
+        let delta_user, delta_opponent;
+        if (winnerType === 'draw') {
+            delta_user = K * (0.5 - E_user); // 平局按 0.5 計算
+            delta_opponent = K * (0.5 - E_opponent);
+        } else if (isWinner) {
+            delta_user = K * (1 - E_user); // 獲勝得 1 分
+            delta_opponent = K * (0 - E_opponent); // 落敗得 0 分
+        } else {
+            delta_user = K * (0 - E_user); // 落敗得 0 分
+            delta_opponent = K * (1 - E_opponent); // 獲勝得 1 分
+        }
+
+        // 更新積分，確保不低於 0
+        userData.score = Math.max(0, userData.score + Math.round(delta_user));
+        opponentData.score = Math.max(0, opponentData.score + Math.round(delta_opponent));
+
+        // 更新經驗值（保持原邏輯）
+        if (isWinner) {
+            userData.exp += 50;
+        } else {
+            userData.exp += 20;
+        }
+        const expRequired = 100 * userData.level;
+        if (userData.exp >= expRequired) {
+            userData.level += 1;
+            userData.exp -= expRequired;
+        }
+
+        // 保存到數據庫
+        userRef.update({
+            score: userData.score,
+            exp: userData.exp,
+            level: userData.level
         });
-    }
+        opponentRef.update({
+            score: opponentData.score
+        });
+
+        // 更新排行榜
+        const leaderboardRef = database.ref('leaderboard/' + user.uid);
+        leaderboardRef.set({
+            name: user.displayName,
+            score: userData.score
+        });
+
+        // 顯示統計彈窗
+        const statsOverlay = document.createElement('div');
+        statsOverlay.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+            border-radius: 15px; z-index: 10000; color: white; text-align: center;
+            width: 80%; max-width: 400px;
+        `;
+
+        const expPercentage = (userData.exp / expRequired) * 100;
+        statsOverlay.innerHTML = `
+            <h2>遊戲結束</h2>
+            <p>你的積分變化: ${Math.round(delta_user)}</p>
+            <p>你的新積分: ${userData.score}</p>
+            <p>對手積分變化: ${Math.round(delta_opponent)}</p>
+            <p>對手新積分: ${opponentData.score}</p>
+            <p>等級: ${userData.level}</p>
+            <p>經驗值: ${userData.exp} / ${expRequired}</p>
+            <div style="width: 100%; height: 20px; background: #333; border-radius: 5px; margin: 1rem 0;">
+                <div style="height: 100%; background: #4CAF50; width: ${expPercentage}%; transition: width 1s ease;"></div>
+            </div>
+        `;
+        if (userData.exp >= expRequired) {
+            statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
+        }
+        document.body.appendChild(statsOverlay);
+
+        // 5 秒後移除彈窗
+        setTimeout(() => {
+            statsOverlay.remove();
+        }, 5000);
+    });
 
     // 重賽按鈕邏輯
     const buttonContainer = document.createElement('div');
@@ -2751,6 +2785,7 @@ userRef.once('value', (snapshot) => {
     buttonContainer.appendChild(rematchBtn);
     buttonContainer.appendChild(mainMenuBtn);
     victoryOverlay.appendChild(buttonContainer);
+}
 
     // 5 秒後移除彈出視窗
     setTimeout(() => {
