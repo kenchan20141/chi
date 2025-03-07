@@ -2188,10 +2188,17 @@ function joinRoom() {
     });
 }
 
-   function createRoomWithId(roomId) {
+   async function createRoomWithId(roomId) {
     const user = auth.currentUser;
     if (!user) {
         alert('請先登入！');
+        return;
+    }
+
+    // 獲取創建者的 IP 地址
+    const playerIP = await getPlayerIP();
+    if (!playerIP) {
+        alert('無法獲取IP地址，請稍後再試。');
         return;
     }
 
@@ -2202,6 +2209,7 @@ function joinRoom() {
     document.getElementById('waitingArea').style.display = 'block';
     document.getElementById('displayRoomId').textContent = currentRoomId;
 
+    // 將房間數據存入數據庫，並包含 IP 地址
     database.ref('rooms/' + currentRoomId).set({
         player1: {
             userId: user.uid,
@@ -2209,7 +2217,8 @@ function joinRoom() {
             level: playerLevel || 1,
             health: 100,
             class: null,
-            currentQuestion: null
+            currentQuestion: null,
+            ip: playerIP // 新增 IP 地址
         },
         player2: null,
         gameStarted: false,
@@ -2230,26 +2239,54 @@ function joinRoom() {
     listenToRoomChanges();
 }
 
-function joinRoomWithId(roomId) {
+async function joinRoomWithId(roomId) {
     const user = auth.currentUser;
     if (!user) {
         alert('請先登入！');
         return;
     }
 
-    // 先獲取房間資料以檢查 UID
-    database.ref('rooms/' + roomId).once('value').then(snapshot => {
+    // 獲取加入者的 IP 地址
+    const playerIP = await getPlayerIP();
+    if (!playerIP) {
+        alert('無法獲取IP地址，請稍後再試。');
+        return;
+    }
+
+    const roomRef = database.ref('rooms/' + roomId);
+    roomRef.once('value').then(snapshot => {
         const room = snapshot.val();
-        if (room && room.player1 && room.player1.userId === user.uid) {
+        if (!room) {
+            alert('房間不存在');
+            return;
+        }
+
+        // 檢查是否是自己創建的房間（UID 檢查）
+        if (room.player1 && room.player1.userId === user.uid) {
             alert('不能加入自己創建的房間');
             return;
         }
-        // UID 不同，繼續加入房間
+
+        // 檢查房間是否已滿
+        if (room.player2) {
+            alert('房間已滿');
+            return;
+        }
+
+        // 比較創建者與加入者的 IP 地址
+        const creatorIP = room.player1.ip;
+        if (creatorIP === playerIP) {
+            alert('無法與相同IP的玩家配對');
+            return;
+        }
+
+        // UID 和 IP 檢查通過，繼續加入房間
         currentRoomId = roomId;
         isHost = false;
         document.getElementById('roomControl').style.display = 'none';
         document.getElementById('classSelection').style.display = 'block';
         listenToRoomChanges();
+        
         const player2Ref = database.ref('rooms/' + currentRoomId + '/player2');
         player2Ref.set({
             userId: user.uid,
@@ -2257,7 +2294,8 @@ function joinRoomWithId(roomId) {
             level: playerLevel || 1,
             health: 100,
             class: null,
-            currentQuestion: null
+            currentQuestion: null,
+            ip: playerIP // 新增 IP 地址
         }).then(() => {
             console.log('成功加入房間:', roomId);
             // 從 waitingRooms 移除該房間
