@@ -2661,9 +2661,15 @@ function checkGameOver() {
     let delta_winner = K_winner * (1 - E_winner);
     let delta_loser = K_loser * (0 - E_loser);
 
-    // 調整到10的倍數並確保最小變化為10
-    const adjusted_delta_winner = Math.max(10, Math.round(delta_winner / 10) * 10);
-    const adjusted_delta_loser = Math.min(-10, Math.round(delta_loser / 10) * 10);
+    // 添加獎勵和懲罰
+    const bonus = 34;
+    const penalty = 4;
+    const final_delta_winner = delta_winner + bonus;
+    const final_delta_loser = delta_loser - penalty;
+
+    // 調整到10的倍數
+    const adjusted_delta_winner = Math.round(final_delta_winner / 10) * 10;
+    const adjusted_delta_loser = Math.round(final_delta_loser / 10) * 10;
 
     // 更新積分，確保不低於0
     winner.score = Math.max(0, R_winner + adjusted_delta_winner);
