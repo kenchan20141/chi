@@ -1373,6 +1373,19 @@ window.onload = function() {
         document.getElementById('roomControl').style.display = 'block';
     };
 };
+
+
+async function getIpAddress() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error('Error fetching IP address:', error);
+        return null;
+    }
+}
+
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
 let singlePlayerClass = null; // 單機模式選中的職業
@@ -2323,7 +2336,7 @@ function startGameSession() {
 }
 
 
- function randomMatch() {
+ async function randomMatch() {
     const user = auth.currentUser;
     if (!user) {
         alert('請先登入！');
@@ -2334,22 +2347,32 @@ function startGameSession() {
     const waitingRef = database.ref('waitingRooms');
     const userId = user.uid; // 使用真實用戶 ID
 
-    waitingRef.once('value', (snapshot) => {
+    // 獲取當前玩家的 IP 地址
+    const ip = await getIpAddress();
+    if (!ip) {
+        alert('無法獲取IP地址，請檢查網絡連接。');
+        return;
+    }
+
+    waitingRef.once('value', async (snapshot) => {
         console.log("Waiting data:", snapshot.val());
         const waitingData = snapshot.val();
 
         if (!waitingData || !waitingData.roomId) {
+            // 沒有等待中的房間，創建新房間
             const roomId = Math.floor(1000 + Math.random() * 9000).toString();
             currentRoomId = roomId;
             isHost = true;
 
+            // 將 IP 地址存儲在房間數據中
             database.ref('rooms/' + roomId).set({
                 player1: { 
                     userId: userId, 
                     health: 100, 
                     class: null, 
                     currentQuestion: null, 
-                    name: user.displayName || '未知玩家' // 使用真實名稱
+                    name: user.displayName || '未知玩家',
+                    ip: ip // 新增 IP 地址
                 },
                 player2: null,
                 gameStarted: false,
@@ -2360,6 +2383,7 @@ function startGameSession() {
             waitingRef.set({
                 roomId: roomId,
                 hostId: userId,
+                hostIp: ip, // 新增 host 的 IP 地址
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             });
 
@@ -2374,6 +2398,13 @@ function startGameSession() {
 
             listenToRoomChanges();
         } else {
+            // 存在等待中的房間，檢查 IP 地址
+            const hostIp = waitingData.hostIp;
+            if (hostIp === ip) {
+                alert('不能加入自己創建的房間（IP地址相同）');
+                return;
+            }
+
             const roomId = waitingData.roomId;
             const hostId = waitingData.hostId;
 
@@ -2392,7 +2423,8 @@ function startGameSession() {
                 health: 100, 
                 class: null, 
                 currentQuestion: null, 
-                name: user.displayName || '未知玩家' // 使用真實名稱
+                name: user.displayName || '未知玩家',
+                ip: ip // 新增 IP 地址
             }).then(() => {
                 waitingRef.remove();
             }).catch((error) => {
