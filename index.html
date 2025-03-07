@@ -2285,15 +2285,6 @@ function joinRoomWithId(roomId) {
 }
 
     function joinWaitingQueue() {
-    const user = auth.currentUser;
-    if (!user) {
-        // 未登入玩家，加入等待隊列
-        joinWaitingQueue();
-    } else {
-        // 已登入玩家，檢查等待隊列
-        checkWaitingQueue();
-    }
-}
 
     const waitingRef = database.ref('waitingRooms');
     const userId = user.uid;
