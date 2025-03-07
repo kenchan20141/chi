@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html>
     
@@ -2374,27 +2375,6 @@ function startGameSession() {
             listenToRoomChanges();
         }
     });
-
-      database.ref('waitingRooms').once('value').then(snapshot => {
-        const waitingRooms = snapshot.val();
-        if (waitingRooms) {
-            for (let roomId in waitingRooms) {
-                const room = waitingRooms[roomId];
-                // 檢查顯示名稱是否相同
-                if (room.player1.name !== user.displayName) {
-                    joinRoomWithId(roomId);
-                    return;
-                }
-            }
-        }
-        // 沒有合適的房間，創建新房間
-        createRoomWithId(generateRoomId());
-    }).catch(error => {
-        console.error('隨機匹配失敗:', error);
-        alert('隨機匹配失敗，請重試！');
-    });
-
-      
 }
     
 
@@ -3390,6 +3370,7 @@ document.getElementById('showLeaderboardBtn').onclick = function() {
         // 顯示排行榜
         let leaderboardHTML = '<h2 style="text-align: center; color: var(--gold);">🏆 排行榜 - 前十名</h2><ul>';
         leaderboard.forEach((entry, index) => {
+            const levelText = entry.level ? `Lv.${entry.level}` : 'Lv.1'; // 確保 level 存在，否則顯示 Lv.1
             leaderboardHTML += `<li style="font-size: 1.2rem; padding: 0.5rem;">${index + 1}. ${entry.name} - ${levelText} - ${entry.score} 分</li>`;
         });
         leaderboardHTML += '</ul>';
