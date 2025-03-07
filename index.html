@@ -2642,6 +2642,37 @@ function checkGameOver() {
     });
 }
 
+function calculateScoreChange(playerLevel, opponentLevel, isWin) {
+    const baseScore = 50; // 基礎積分
+    const levelDiff = opponentLevel - playerLevel; // 等級差距
+    let scoreChange = baseScore;
+
+    // 根據等級差距調整積分
+    if (Math.abs(levelDiff) <= 3) {
+        scoreChange = baseScore; // 等級相近，無調整
+    } else if (Math.abs(levelDiff) <= 7) {
+        scoreChange = baseScore + (levelDiff > 0 ? 20 : -20); // 差距較大
+    } else {
+        scoreChange = baseScore + (levelDiff > 0 ? 40 : -40); // 差距懸殊
+    }
+
+    // 勝負影響
+    if (!isWin) {
+        scoreChange = -scoreChange; // 落敗時扣分
+    }
+
+    // 確保勝出時最少 10 分，落敗時最多扣到 0
+    if (isWin) {
+        scoreChange = Math.max(scoreChange, 10);
+    } else {
+        scoreChange = Math.min(scoreChange, -10);
+    }
+
+    return scoreChange;
+}
+
+
+    
 function handleGameEnd(winnerType) {
     if (gameOver) return;
     gameOver = true;
@@ -2676,13 +2707,29 @@ function handleGameEnd(winnerType) {
         const userRef = database.ref('users/' + user.uid);
         userRef.transaction((userData) => {
             if (!userData) userData = { level: 1, exp: 0, score: 0 };
-            if (isWinner) {
-                userData.exp += 50; // 獲勝增加 50 經驗值
-                userData.score += 100; // 贏家增加 100 積分
-           } else {
-                userData.exp += 20;  // 輸家增加 20 經驗值
-                userData.score = Math.max(0, userData.score - 50); // 輸家扣減 50 積分，最低為 0
-            }
+            // 獲取玩家的等級和對手的等級
+const userRef = database.ref('users/' + user.uid);
+let playerLevel = 1;
+let opponentLevel = 1;
+
+// 獲取當前玩家等級
+await userRef.once('value', (snapshot) => {
+    const userData = snapshot.val() || { level: 1, exp: 0, score: 0 };
+    playerLevel = userData.level || 1;
+});
+
+// 獲取對手等級
+const roomRef = database.ref('rooms/' + currentRoomId);
+await roomRef.once('value', (snapshot) => {
+    const room = snapshot.val();
+    const opponentPath = isHost ? 'player2' : 'player1';
+    opponentLevel = room[opponentPath]?.level || 1;
+});
+
+// 計算積分變化
+const scoreChange = calculateScoreChange(playerLevel, opponentLevel, isWinner);
+userData.score = Math.max(0, (userData.score || 0) + scoreChange); // 更新積分，確保不低於 0
+userData.exp += isWinner ? 50 : 20; // 經驗值保持不變
             const expRequired = 100 * userData.level;
             if (userData.exp >= expRequired) {
                 userData.level += 1;
