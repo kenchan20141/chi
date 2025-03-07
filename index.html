@@ -2646,8 +2646,8 @@ function checkGameOver() {
 async function calculateNewScores(winner, loser) {
     return new Promise((resolve) => {
         // 定義常數
-        const K = 100;              // 調整 K 因子為 100
-        const RATING_PER_LEVEL = 100; // 每級對應的評分值
+        const K = 200;              // 調整 K 因子為 100
+        const RATING_PER_LEVEL = 200; // 每級對應的評分值
 
         // 將等級轉換為評分
         const R_winner = winner.level * RATING_PER_LEVEL;
