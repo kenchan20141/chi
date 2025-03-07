@@ -3357,44 +3357,30 @@ clearInterval(damageInterval); // 添加：確保清除扣血計時器
 
 document.getElementById('showLeaderboardBtn').onclick = function() {
     const leaderboardRef = database.ref('leaderboard');
-    const database = firebase.database();
-
     leaderboardRef.orderByChild('score').limitToLast(10).once('value', (snapshot) => {
         const leaderboard = [];
         snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
-            leaderboard.push({ uid: childSnapshot.key, ...data });
+            leaderboard.push(data);
         });
-        leaderboard.reverse();
+        leaderboard.reverse(); // 降序排列
 
-        // 獲取所有玩家的等級
-        const userPromises = leaderboard.map(entry => 
-            database.ref('users/' + entry.uid).once('value').then(userSnapshot => {
-                const userData = userSnapshot.val() || { level: 1 };
-                return { ...entry, level: userData.level };
-            })
-        );
-
-        Promise.all(userPromises).then(leaderboardWithLevels => {
-            let leaderboardHTML = '<h2 style="text-align: center; color: var(--gold);">🏆 排行榜 - 前十名</h2><ul>';
-            leaderboardWithLevels.forEach((entry, index) => {
-                const levelText = entry.level ? `Lv.${entry.level}` : 'Lv.1';
-                leaderboardHTML += `<li style="font-size: 1.2rem; padding: 0.5rem;">${index + 1}. ${entry.name} - ${levelText} - ${entry.score} 分</li>`;
-            });
-            leaderboardHTML += '</ul>';
-
-            const leaderboardDiv = document.createElement('div');
-            leaderboardDiv.style.cssText = `
-                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
-                border-radius: 15px; width: 80%; max-width: 600px;
-                z-index: 10000; color: white;
-            `;
-            leaderboardDiv.innerHTML = leaderboardHTML + '<button onclick="this.parentElement.remove()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white;">關閉</button>';
-            document.body.appendChild(leaderboardDiv);
-        }).catch(error => {
-            console.error('獲取玩家等級失敗:', error);
+        // 顯示排行榜
+        let leaderboardHTML = '<h2 style="text-align: center; color: var(--gold);">🏆 排行榜 - 前十名</h2><ul>';
+        leaderboard.forEach((entry, index) => {
+            leaderboardHTML += `<li style="font-size: 1.2rem; padding: 0.5rem;">${index + 1}. ${entry.name} - ${entry.score} 分</li>`;
         });
+        leaderboardHTML += '</ul>';
+        
+        const leaderboardDiv = document.createElement('div');
+        leaderboardDiv.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+            border-radius: 15px; width: 80%; max-width: 600px; /* 使用百分比和最大宽度结合 */
+            z-index: 10000; color: white;
+        `;
+        leaderboardDiv.innerHTML = leaderboardHTML + '<button onclick="this.parentElement.remove()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white;">關閉</button>';
+        document.body.appendChild(leaderboardDiv);
     });
 };
     
