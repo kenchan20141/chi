@@ -2371,8 +2371,11 @@ function startGameSession() {
   function randomMatch() {
     const user = auth.currentUser;
     if (!user) {
-        alert('請先登入！');
-        return;
+        // 未登入玩家，加入等待隊列
+        joinWaitingQueue();
+    } else {
+        // 已登入玩家，檢查等待隊列
+        checkWaitingQueue();
     }
 
     console.log("randomMatch called");
