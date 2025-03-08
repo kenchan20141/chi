@@ -1649,10 +1649,9 @@ function checkAnswer(isCorrect, questionId) {
         setTimeout(() => swordFlash.remove(), 400);
         showSkillEffect(); // 添加 GIF 動畫展示
         soundEffects.warriorSkill.play(); // 播放裂空擊專屬音效
-        skillTriggered = true;
+    skillTriggered = true;
     } else {
         soundEffects.attack.play(); // 普通攻擊音效
-    }
     }
 
     // 影流教閃避判定（30%概率）
