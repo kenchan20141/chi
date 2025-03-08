@@ -1158,6 +1158,9 @@
     <div id="timer">🕒15</div>
 </div>
 
+<img id="swordSkillGif" src="https://i.ibb.co/d4GRwVzc/image.gif" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
+    
+
     <div class="victory-overlay">
         <div class="victory-text"></div>
     </div>
@@ -1635,13 +1638,16 @@ function checkAnswer(isCorrect, questionId) {
     }
 
     // 霸刀門雙倍攻擊判定（30%概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
+    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.9) {
         baseDamage *= 2;
         const swordFlash = document.createElement('div');
         swordFlash.className = 'sword-flash';
         swordFlash.style.top = `${Math.random() * 40 + 30}%`;
         document.body.appendChild(swordFlash);
         setTimeout(() => swordFlash.remove(), 400);
+       // 顯示 GIF 動畫
+    const gifElement = document.getElementById('swordSkillGif');
+    gifElement.style.display = 'block';
     }
 
     // 影流教閃避判定（30%概率）
@@ -2613,6 +2619,11 @@ function shuffleArray(array) {
 }
 
 function loadNewQuestion() {
+
+// 隱藏 GIF 動畫
+const gifElement = document.getElementById('swordSkillGif');
+gifElement.style.display = 'none';
+    
     hasHealedThisTurn = false; // 重置恢復狀態，確保每回合重新計算
 
     // 從數據庫獲取選擇的題庫
