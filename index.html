@@ -3336,13 +3336,7 @@ function showEffect(className) {
     setTimeout(() => effect.remove(), 400);
 }
 
-    function showSkillEffect() {
-    const skillEffectDiv = document.getElementById('skillEffect');
-    skillEffectDiv.style.display = 'flex'; // 顯示 GIF
-    setTimeout(() => {
-        skillEffectDiv.style.display = 'none'; // 2秒後隱藏
-    }, 2000);
-}
+   
 
     function handleSinglePlayerGameOver(isWinner) {
     if (gameOver) return; // 避免重複觸發
