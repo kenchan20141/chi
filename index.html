@@ -1154,11 +1154,6 @@
             <div class="health-bar"><div class="health-fill" id="myHealthBar"></div></div>
         </div>
     </div>
-
-<div id="healAnimation" style="display: none; position: fixed; z-index: 3;">
-    <img src="https://i.ibb.co/whrVCHph/e2cfb144378f4f3aa466c87319dc30-unscreen.gif" style="width: 100px; height: 100px;">
-</div>
-        
     
     <div id="timer">🕒15</div>
 </div>
@@ -1648,7 +1643,7 @@ function checkAnswer(isCorrect, questionId) {
 if (isCorrect) {
     
     // 霸刀門雙倍攻擊判定（30%概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.9) {
+    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
         baseDamage *= 2;
         const swordFlash = document.createElement('div');
         swordFlash.className = 'sword-flash';
@@ -1745,22 +1740,6 @@ if (isCorrect) {
         setTimeout(() => {
             shieldIcon.remove();
         }, 1000);
-
-// 動態設置動畫位置
-    const myHealthContainer = document.getElementById('myHealthContainer');
-    const containerRect = myHealthContainer.getBoundingClientRect();
-    const healAnimation = document.getElementById('healAnimation');
-    healAnimation.style.left = `${containerRect.right + 10}px`; // 氣血容器右側10px
-    healAnimation.style.top = `${containerRect.top}px`; // 與氣血容器頂部對齊
-    healAnimation.style.display = 'block';
-
-    document.getElementById('healText').style.display = 'block';
-    setTimeout(() => {
-        document.getElementById('healText').style.display = 'none';
-        document.getElementById('healAnimation').style.display = 'none';
-    }, 1000);
-
-        
     }
 
     database.ref('rooms/' + currentRoomId).update(updates, (error) => {
@@ -3751,7 +3730,8 @@ if (room.hostRematch && room.clientRematch) {
 
 </script>
 
-
+<!-- 新增治疗提示 -->
+<div id="healText" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">🛡️ 氣血恢復2點</div>
 
 <!-- 新增减伤提示 -->
 <div id="reduceDamageText" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ffff; text-shadow:0 0 10px rgba(0,255,255,0.5);">🔥 離火護體 傷害減少30%</div>
@@ -3766,5 +3746,3 @@ if (room.hostRematch && room.clientRematch) {
 
     
 </html>
-
-
