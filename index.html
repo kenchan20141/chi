@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html>
     
@@ -1636,7 +1635,7 @@ function checkAnswer(isCorrect, questionId) {
     }
 
     // 霸刀門雙倍攻擊判定（30%概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 1.0) {
+    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
         baseDamage *= 2;
         const swordFlash = document.createElement('div');
         swordFlash.className = 'sword-flash';
@@ -3216,19 +3215,9 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
             navigator.vibrate(200); // 答對震動 200ms
         }
         let attackMultiplier = singlePlayerClass.attack;
-        // 霸刀流裂空擊：30%機率雙倍傷害
-        if (singlePlayerClass.type === 'warrior' && Math.random() < 1.0) {
+        if (singlePlayerClass.type === 'warrior' && Math.random() < 0.3) {
             attackMultiplier *= 2;
             showEffect('sword-flash');
-
-            // 顯示GIF動畫
-            const skillAnimation = document.getElementById('skillAnimation');
-            skillAnimation.style.display = 'block';
-            // 假設GIF動畫時長為2秒，2秒後隱藏
-            setTimeout(() => {
-                skillAnimation.style.display = 'none';
-            }, 2000);
-            
         }
         const baseDamage = 50 + Math.random() * 30; // 基數 50-80
         const damageToEnemy = Math.round(baseDamage * attackMultiplier);
@@ -3691,7 +3680,7 @@ if (room.hostRematch && room.clientRematch) {
 <div id="reduceDamageText" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ffff; text-shadow:0 0 10px rgba(0,255,255,0.5);">🔥 離火護體 傷害減少30%</div>
 
 
-<img id="skillAnimation" src="https://i.ibb.co/d4GRwVzc/image.gif" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10000;">
+
     
 </body>
 
