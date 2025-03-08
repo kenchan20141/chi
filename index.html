@@ -2125,8 +2125,13 @@ bgMusic.volume = 0.3;
 const soundEffects = {
     attack: new Audio('https://taira-komori.jpn.org/sound_os2/jidaigeki01/Chinese_blade2.mp3'),
     victory: new Audio('https://taira-komori.jpn.org/sound_os2/event01/clapping_short2.mp3'),
-    defeat: new Audio('https://taira-komori.jpn.org/sound_os2/jidaigeki01/Chinese_blade2.mp3')
+    defeat: new Audio('https://taira-komori.jpn.org/sound_os2/jidaigeki01/Chinese_blade2.mp3'),
+    warriorSkill: new Audio('https://taira-komori.jpn.org/sound_os2/attack01/final_attack.mp3')
 };
+
+    document.addEventListener('DOMContentLoaded', () => {
+    soundEffects.warriorSkill.load();
+});
 
     const difficultySettings = {
     easy: { enemyHealth: 1000, damageChance: 0.3, damageInterval: 6000 },
