@@ -1841,14 +1841,44 @@ if (isCorrect) {
 }
 
 // 定義 showSkillEffect 函數，控制 GIF 顯示與隱藏
-function showSkillEffect() {
-    const skillEffect = document.getElementById('skillEffect');
-    skillEffect.innerHTML = '<img src="https://i.ibb.co/d4GRwVzc/image.gif" alt="Skill Effect">';
-    skillEffect.style.display = 'block';
+function showSkillEffect(damage) {
+    // 獲取敵方氣血條位置
+    const enemyHealthContainer = document.getElementById('enemyHealthContainer');
+    const rect = enemyHealthContainer.getBoundingClientRect();
+
+    // 創建GIF元素
+    const gifElement = document.createElement('img');
+    gifElement.src = 'assets/sword_effect.gif'; // 替換為你的GIF路徑
+    gifElement.style.position = 'fixed';
+    gifElement.style.left = `${rect.left + rect.width / 2}px`;
+    gifElement.style.top = `${rect.top - 50}px`; // 顯示在氣血條上方
+    gifElement.style.transform = 'translateX(-50%)';
+    gifElement.style.zIndex = '9999';
+    gifElement.style.width = '100px'; // 可根據需要調整大小
+
+    // 創建雙倍傷害數值元素
+    const damageText = document.createElement('div');
+    damageText.textContent = `-${damage} (雙倍)`;
+    damageText.style.position = 'fixed';
+    damageText.style.left = `${rect.left + rect.width / 2}px`;
+    damageText.style.top = `${rect.top - 80}px`; // 顯示在GIF上方
+    damageText.style.transform = 'translateX(-50%)';
+    damageText.style.color = '#ff0000';
+    damageText.style.fontSize = '2rem';
+    damageText.style.fontWeight = 'bold';
+    damageText.style.textShadow = '0 0 5px rgba(255, 0, 0, 0.5)';
+    damageText.style.zIndex = '9999';
+    damageText.style.animation = 'damageFloat 1s ease-out forwards';
+
+    // 添加到頁面
+    document.body.appendChild(gifElement);
+    document.body.appendChild(damageText);
+
+    // 1秒後移除元素
     setTimeout(() => {
-        skillEffect.style.display = 'none';
-        skillEffect.innerHTML = ''; // 清空內容以便下次使用
-    }, 1300); // 顯示 2 秒，可根據 GIF 時長調整
+        gifElement.remove();
+        damageText.remove();
+    }, 1000);
 }
     
     
