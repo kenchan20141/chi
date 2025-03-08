@@ -1640,7 +1640,7 @@ function checkAnswer(isCorrect, questionId) {
     }
 
     // 霸刀門雙倍攻擊判定（30%概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
+    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.9) {
         baseDamage *= 2;
         const swordFlash = document.createElement('div');
         swordFlash.className = 'sword-flash';
