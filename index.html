@@ -1845,16 +1845,6 @@ function showSkillEffect() {
     const skillEffect = document.getElementById('skillEffect');
     skillEffect.innerHTML = '<img src="https://i.ibb.co/d4GRwVzc/image.gif" alt="Skill Effect">';
     skillEffect.style.display = 'block';
-    const gifElement = document.createElement('img');
-    gifElement.src = 'https://i.ibb.co/d4GRwVzc/image.gif'; // 替換為你的GIF路徑
-    gifElement.style.position = 'fixed';
-    gifElement.style.left = `${rect.left + rect.width / 2}px`;
-    gifElement.style.top = `${rect.top - 50}px`; // 顯示在氣血條上方
-    gifElement.style.transform = 'translateX(-50%)';
-    gifElement.style.zIndex = '9999';
-    gifElement.style.width = '100px'; // 可根據需要調整大小
-
-    
     setTimeout(() => {
         skillEffect.style.display = 'none';
         skillEffect.innerHTML = ''; // 清空內容以便下次使用
