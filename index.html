@@ -1640,33 +1640,34 @@ function checkAnswer(isCorrect, questionId) {
         baseDamage = Math.floor(Math.random() * 31) + 50; // 答錯時隨機生成50至80點
     }
 
-if (isCorrect) {
-    
-    // 霸刀門雙倍攻擊判定（30%概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.9) {
-        baseDamage *= 2;
-        const swordFlash = document.createElement('div');
-        swordFlash.className = 'sword-flash';
-        swordFlash.style.top = `${Math.random() * 40 + 30}%`;
-        document.body.appendChild(swordFlash);
-        setTimeout(() => swordFlash.remove(), 400);
-        showSkillEffect(); // 添加 GIF 動畫展示
-        soundEffects.warriorSkill.play(); // 播放裂空擊專屬音效
-    skillTriggered = true;
-    } else {
-        soundEffects.attack.play(); // 普通攻擊音效
-    }
+    let skillTriggered = false; // 初始化 skillTriggered 變數
 
-    // 答對時震動
-    if (navigator.vibrate) {
-        navigator.vibrate(200); // 震動 200ms
+    if (isCorrect) {
+        // 霸刀門雙倍攻擊判定（您設為90%概率，我保留您的設定）
+        if (playerClass.type === 'warrior' && Math.random() < 0.9) {
+            baseDamage *= 2;
+            skillTriggered = true;
+            const swordFlash = document.createElement('div');
+            swordFlash.className = 'sword-flash';
+            swordFlash.style.top = `${Math.random() * 40 + 30}%`;
+            document.body.appendChild(swordFlash);
+            setTimeout(() => swordFlash.remove(), 400);
+            showSkillEffectGif(); // 顯示 GIF 動畫
+            soundEffects.warriorSkill.play(); // 播放裂空擊專屬音效
+        } else {
+            soundEffects.attack.play(); // 普通攻擊音效
+        }
+
+        // 答對時震動
+        if (navigator.vibrate) {
+            navigator.vibrate(200); // 震動 200ms
+        }
+    } else {
+        // 答錯時不播放音效，只震動
+        if (navigator.vibrate) {
+            navigator.vibrate(200); // 震動 200ms
+        }
     }
-} else {
-    // 答錯時不播放音效，只震動
-    if (navigator.vibrate) {
-        navigator.vibrate(200); // 震動 200ms
-    }
-}
 
     // 影流教閃避判定（30%概率）
     if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
@@ -1821,34 +1822,28 @@ if (isCorrect) {
     healthBar.appendChild(wave);
     setTimeout(() => wave.remove(), 500);
 
-    const hitText = document.createElement('div');
-    hitText.className = 'hit-marker';
-    hitText.textContent = `-${damage}`;
-    if (isCorrect) {
-        const opponentHealthContainer = document.getElementById('enemyHealthContainer');
-        hitText.style.position = 'absolute';
-        hitText.style.left = `${Math.random() * opponentHealthContainer.offsetWidth + opponentHealthContainer.offsetLeft}px`;
-        hitText.style.top = `${opponentHealthContainer.offsetTop + opponentHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-        opponentHealthContainer.appendChild(hitText);
-    } else {
-        const myHealthContainer = document.getElementById('myHealthContainer');
-        hitText.style.position = 'absolute';
-        hitText.style.left = `${Math.random() * myHealthContainer.offsetWidth + myHealthContainer.offsetLeft}px`;
-        hitText.style.top = `${myHealthContainer.offsetTop + myHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-        myHealthContainer.appendChild(hitText);
-    }
-    setTimeout(() => hitText.remove(), 300);
+    // 顯示傷害動畫（取代原有的 hitText 邏輯）
+    showDamageAnimation(damage, isCorrect ? 'enemy' : 'player', skillTriggered);
 }
 
+    
 // 定義 showSkillEffect 函數，控制 GIF 顯示與隱藏
 function showSkillEffect() {
     const skillEffect = document.getElementById('skillEffect');
     skillEffect.innerHTML = '<img src="https://i.ibb.co/d4GRwVzc/image.gif" alt="Skill Effect">';
     skillEffect.style.display = 'block';
+
+// 顯示 GIF 效果
+function showSkillEffectGif() {
+    const gif = document.getElementById('skillEffectGif');
+    const enemyHealthContainer = document.getElementById('enemyHealthContainer');
+    const rect = enemyHealthContainer.getBoundingClientRect();
+    gif.style.left = `${rect.left + rect.width / 2 - gif.width / 2}px`;
+    gif.style.top = `${rect.top - gif.height}px`;
+    gif.style.display = 'block';
     setTimeout(() => {
-        skillEffect.style.display = 'none';
-        skillEffect.innerHTML = ''; // 清空內容以便下次使用
-    }, 1300); // 顯示 2 秒，可根據 GIF 時長調整
+        gif.style.display = 'none';
+    }, 1000);
 }
     
     
@@ -2146,6 +2141,7 @@ const soundEffects = {
     defeat: new Audio('https://taira-komori.jpn.org/sound_os2/jidaigeki01/Chinese_blade2.mp3'),
     warriorSkill: new Audio('https://taira-komori.jpn.org/sound_os2/attack01/final_attack.mp3')
 };
+    soundEffects.warriorSkill.volume = 0.5; // 音量設為 50%
 
     document.addEventListener('DOMContentLoaded', () => {
     soundEffects.warriorSkill.load();
@@ -3323,7 +3319,8 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
 }
 
     
-function showDamageAnimation(damage, target) {
+// 更新傷害動畫
+function showDamageAnimation(damage, target, isSkillTriggered = false) {
     const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
     const healthContainer = document.getElementById(healthContainerId);
     const healthBar = healthContainer.querySelector('.health-bar');
@@ -3333,23 +3330,26 @@ function showDamageAnimation(damage, target) {
     damageText.textContent = `-${damage}`;
     damageText.style.position = 'fixed';
     damageText.style.color = target === 'enemy' ? '#ff0000' : '#ff5555';
-    damageText.style.fontSize = '2rem';
+    damageText.style.fontSize = isSkillTriggered ? '3rem' : '2rem';
     damageText.style.fontWeight = 'bold';
     damageText.style.textShadow = '0 0 5px rgba(255, 0, 0, 0.5)';
     damageText.style.zIndex = '9999';
     damageText.style.animation = 'damageFloat 1s ease-out forwards';
 
-    // 計算隨機水平位置（在氣血條寬度範圍內）
+    if (isSkillTriggered) {
+        damageText.style.color = '#ffcc00';
+        damageText.style.textShadow = '0 0 10px rgba(255, 204, 0, 0.8)';
+        damageText.style.animation = 'damageFloat 1.5s ease-out forwards, pulse 0.5s infinite';
+    }
+
     const randomLeft = rect.left + Math.random() * rect.width;
-    // 垂直位置：敵方顯示在氣血條上方，己方顯示在氣血條下方
     const topPosition = target === 'enemy' ? rect.top - 30 : rect.bottom + 10;
     damageText.style.left = `${randomLeft}px`;
     damageText.style.top = `${topPosition}px`;
 
     document.body.appendChild(damageText);
-    setTimeout(() => damageText.remove(), 1000);
+    setTimeout(() => damageText.remove(), 1500);
 }
-
     
 
 // 輔助函數：顯示特效
