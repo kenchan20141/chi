@@ -1852,7 +1852,7 @@ function showSkillEffect(damage) {
     // 設置 skillEffect 的位置為絕對定位，移到敵方氣血附近
     skillEffect.style.position = 'absolute';
     skillEffect.style.top = `${rect.top + window.scrollY}px`; // 考慮滾動偏移
-    skillEffect.style.left = `${rect.left + window.scrollX}px`;
+    skillEffect.style.center = `${rect.center + window.scrollX}px`;
     
     // 顯示 GIF
     skillEffect.innerHTML = '<img src="https://i.ibb.co/d4GRwVzc/image.gif" alt="Skill Effect">';
