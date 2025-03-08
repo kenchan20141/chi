@@ -149,7 +149,7 @@
     100% { transform: translateY(-50px); opacity: 0; }
 }
 
-        @keyframes pulse {
+@keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
     100% { transform: scale(1); }
@@ -1832,14 +1832,7 @@ function checkAnswer(isCorrect, questionId) {
     showDamageAnimation(damage, isCorrect ? 'enemy' : 'player', skillTriggered);
 }
 
-    
-// 定義 showSkillEffect 函數，控制 GIF 顯示與隱藏
-function showSkillEffect() {
-    const skillEffect = document.getElementById('skillEffect');
-    skillEffect.innerHTML = '<img src="https://i.ibb.co/d4GRwVzc/image.gif" alt="Skill Effect">';
-    skillEffect.style.display = 'block';
-
-// 顯示 GIF 效果
+/ 顯示 GIF 效果
 function showSkillEffectGif() {
     const gif = document.getElementById('skillEffectGif');
     const enemyHealthContainer = document.getElementById('enemyHealthContainer');
@@ -1851,6 +1844,8 @@ function showSkillEffectGif() {
         gif.style.display = 'none';
     }, 1000);
 }
+
+    
     
     
 // 修改 updateHealthDisplay 函數
