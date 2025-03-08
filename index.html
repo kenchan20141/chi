@@ -1392,6 +1392,7 @@ async function getIpAddress() {
 
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
+    let skillTriggered = false; // 在外部聲明 skillTriggered
 let singlePlayerClass = null; // 單機模式選中的職業
 let singlePlayerSelectedGrade = null; // 單機模式選中的年級
     let selectedDifficulty = null;
@@ -1653,6 +1654,17 @@ function checkAnswer(isCorrect, questionId) {
     } else {
         soundEffects.attack.play(); // 普通攻擊音效
     }
+
+    // 答對時震動
+    if (navigator.vibrate) {
+        navigator.vibrate(200); // 震動 200ms
+    }
+} else {
+    // 答錯時不播放音效，只震動
+    if (navigator.vibrate) {
+        navigator.vibrate(200); // 震動 200ms
+    }
+}
 
     // 影流教閃避判定（30%概率）
     if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
