@@ -1607,19 +1607,16 @@ function displayQuestion(question) {
 }
 
 function checkAnswer(isCorrect, questionId) {
-    if (answeredQuestions.has(questionId)) return; // 如果已回答，則不執行
-    answeredQuestions.add(questionId); // 記錄已回答的問題ID
-
+    if (answeredQuestions.has(questionId)) return;
+    answeredQuestions.add(questionId);
     if (answered || gameOver) return;
     answered = true;
-
     clearInterval(timer);
 
-    // 樣式處理
     const buttons = document.querySelectorAll('#options button');
     const correctIndex = window.currentQuestion.correctIndex;
     buttons.forEach((btn, index) => {
-        btn.style.pointerEvents = 'none'; // 禁用按鈕點選
+        btn.style.pointerEvents = 'none';
         if (index === correctIndex) {
             btn.style.cssText = `
                 background: #2ecc71 !important;
@@ -1629,12 +1626,11 @@ function checkAnswer(isCorrect, questionId) {
         }
     });
 
-    // 傷害計算
     let baseDamage;
     if (isCorrect) {
-        baseDamage = Math.floor(Math.random() * 31) + 50; // 隨機生成50至80點
+        baseDamage = Math.floor(Math.random() * 31) + 50;
     } else {
-        baseDamage = Math.floor(Math.random() * 31) + 50; // 答錯時隨機生成50至80點
+        baseDamage = Math.floor(Math.random() * 31) + 50;
     }
 
     // 霸刀門雙倍攻擊判定（30%概率）
@@ -1645,9 +1641,10 @@ function checkAnswer(isCorrect, questionId) {
         swordFlash.style.top = `${Math.random() * 40 + 30}%`;
         document.body.appendChild(swordFlash);
         setTimeout(() => swordFlash.remove(), 400);
-       // 顯示 GIF 動畫
-    const gifElement = document.getElementById('swordSkillGif');
-    gifElement.style.display = 'block';
+
+        // 顯示 GIF 動畫
+        const gifElement = document.getElementById('swordSkillGif');
+        gifElement.style.display = 'block';
     }
 
     // 影流教閃避判定（30%概率）
@@ -1672,10 +1669,7 @@ function checkAnswer(isCorrect, questionId) {
     }
 
     // 動畫效果
-    const targetElement = isCorrect
-        ? document.getElementById('opponentHealthBar')
-        : document.getElementById('myHealthBar');
-
+    const targetElement = isCorrect ? document.getElementById('opponentHealthBar') : document.getElementById('myHealthBar');
     targetElement.classList.add('damage-flash');
     document.getElementById('gameArea').classList.add('screen-shake');
     document.querySelectorAll('.health-fill').forEach(bar => bar.classList.add('damage-effect'));
@@ -1701,7 +1695,6 @@ function checkAnswer(isCorrect, questionId) {
     const updates = {};
     const playerPath = isHost ? 'player1' : 'player2';
     const opponentPath = isHost ? 'player2' : 'player1';
-
     if (isCorrect) {
         updates[`${opponentPath}/health`] = firebase.database.ServerValue.increment(-damage);
     } else {
@@ -1711,8 +1704,8 @@ function checkAnswer(isCorrect, questionId) {
     // 鐵甲宗恢復邏輯
     if (playerClass.type === 'tank' && !hasHealedThisTurn) {
         hasHealedThisTurn = true;
-        const maxHealth = room[playerPath].maxHealth; // 從資料庫獲取最大氣血
-        const healAmount = Math.round(maxHealth * 0.02); // 恢復2%氣血
+        const maxHealth = room[playerPath].maxHealth;
+        const healAmount = Math.round(maxHealth * 0.02);
         updates[`${playerPath}/health`] = firebase.database.ServerValue.increment(healAmount);
         const myHealthElement = document.getElementById('myHealth');
         const shieldIcon = document.createElement('span');
@@ -1756,7 +1749,6 @@ function checkAnswer(isCorrect, questionId) {
         effectElement.style.left = '50%';
         effectElement.style.transform = 'translateX(-50%)';
     }
-
     if (effectElement.className) {
         document.body.appendChild(effectElement);
         setTimeout(() => effectElement.remove(), 1000);
@@ -1782,14 +1774,8 @@ function checkAnswer(isCorrect, questionId) {
     flash.style.top = `${Math.random() * 40 + 30}%`;
     document.body.appendChild(flash);
     setTimeout(() => flash.remove(), 400);
-
     if (!isCorrect) {
-        flash.style.background = `linear-gradient(
-            90deg,
-            rgba(255,255,255,0) 0%,
-            rgba(255,100,100,0.7) 50%,
-            rgba(255,255,255,0) 100%
-        )`;
+        flash.style.background = `linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,100,100,0.7) 50%, rgba(255,255,255,0) 100%)`;
     }
 
     const gameArea = document.getElementById('gameArea');
