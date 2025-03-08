@@ -1857,19 +1857,6 @@ function showSkillEffect(damage) {
     // 顯示 GIF
     skillEffect.innerHTML = '<img src="https://i.ibb.co/d4GRwVzc/image.gif" alt="Skill Effect">';
     
-    // 創建顯示扣減氣血的元素
-    const damageText = document.createElement('div');
-    damageText.textContent = `-${damage}`; // 顯示扣減數值，例如 "-50"
-    damageText.style.position = 'absolute';
-    damageText.style.top = `${rect.top + window.scrollY + 50}px`; // 在 GIF 下方 50px
-    damageText.style.left = `${rect.left + window.scrollX + 50}px`; // 在 GIF 右方 50px
-    damageText.style.color = 'red'; // 紅色文字
-    damageText.style.fontSize = '24px'; // 字體大小
-    damageText.style.fontWeight = 'bold'; // 粗體
-    
-    // 將 damageText 添加到 skillEffect 中
-    skillEffect.appendChild(damageText);
-    
     // 顯示效果
     skillEffect.style.display = 'block';
     
