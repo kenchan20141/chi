@@ -3237,9 +3237,9 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
             return;
         }
     } else {
-    if (navigator.vibrate) {
-        navigator.vibrate(200); // 答錯震動 200ms
-    }
+        if (navigator.vibrate) {
+            navigator.vibrate(200); // 答錯震動 200ms
+        }
         const baseDamage = 50 + Math.random() * 30;
         const difficultyMultiplier = {
             easy: 0.8,
@@ -3266,16 +3266,17 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         }
     }
 
-    // 後續代碼保持不變
+    // 鐵甲宗恢復效果
     if (singlePlayerClass.type === 'tank' && !hasHealedThisTurn) {
-    hasHealedThisTurn = true;  // 確保每回合只恢復一次
-    const maxHealth = 1000 + (playerLevel - 1) * 100;  // 假設的最大氣血計算方式
-    const healAmount = Math.round(maxHealth * singlePlayerClass.healPercentage);  // 計算2%的恢復量
-    singlePlayerHealth = Math.min(singlePlayerHealth + healAmount, maxHealth);  // 應用恢復並限制不超過最大氣血
-    updateSinglePlayerHealthDisplay();  // 更新氣血顯示
-    document.getElementById('healText').style.display = 'block';  // 顯示恢復效果
-    setTimeout(() => document.getElementById('healText').style.display = 'none', 1000);  // 1秒後隱藏
-}
+        hasHealedThisTurn = true; // 確保每回合只恢復一次
+        const maxHealth = 1000 + (playerLevel - 1) * 100; // 假設的最大氣血計算方式
+        const healPercentage = singlePlayerClass.healPercentage || 0; // 防錯，默認為 0
+        const healAmount = Math.round(maxHealth * healPercentage); // 計算 2% 的恢復量
+        singlePlayerHealth = Math.min(singlePlayerHealth + healAmount, maxHealth); // 應用恢復並限制不超過最大氣血
+        updateSinglePlayerHealthDisplay(); // 更新氣血顯示
+        document.getElementById('healText').style.display = 'block'; // 顯示恢復效果
+        setTimeout(() => document.getElementById('healText').style.display = 'none', 1000); // 1秒後隱藏
+    }
 
     setTimeout(() => {
         buttons.forEach(btn => {
@@ -3289,6 +3290,7 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
     }, 700);
 }
 
+    
 function showDamageAnimation(damage, target) {
     const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
     const healthContainer = document.getElementById(healthContainerId);
