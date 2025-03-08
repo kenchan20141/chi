@@ -171,18 +171,20 @@
     filter: blur(2px); /* 添加模糊效果 */
 }
 
-        @keyframes iconFlash {
-    0% { opacity: 0; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.2); }
-    100% { opacity: 0; transform: scale(0.8); }
-}
-
         /* 优化原有血条动画 */
 .health-fill {
     transition: width 0.5s ease, background-color 0.3s ease;
 }
     }
 
+@keyframes iconFlash {
+    0% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0; transform: scale(0.8); }
+}
+
+
+        
     /* 答題命中特效 */
     @keyframes hitMarker {
         0% { transform: scale(0); opacity: 0; }
@@ -3220,7 +3222,7 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
 }
 
     // 鐵甲宗恢復效果
-   // 鐵甲宗恢復效果
+  // 鐵甲宗恢復效果
 if (singlePlayerClass.type === 'tank' && !hasHealedThisTurn) {
     hasHealedThisTurn = true;
     const maxHealth = 1000 + (playerLevel - 1) * 100;
@@ -3242,6 +3244,18 @@ if (singlePlayerClass.type === 'tank' && !hasHealedThisTurn) {
         healIcon.style.display = 'none';
         healIcon.style.animation = ''; // 重置動畫
     }, 1000);
+}
+
+    setTimeout(() => {
+        buttons.forEach(btn => {
+            btn.style.cssText = '';
+            btn.style.pointerEvents = 'auto';
+        });
+        answered = false;
+        if (!gameOver) {
+            loadNewQuestionSinglePlayer();
+        }
+    }, 700);
 }
 
     
