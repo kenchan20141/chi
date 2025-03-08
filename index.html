@@ -1714,13 +1714,20 @@ function checkAnswer(isCorrect, questionId) {
         shieldIcon.className = 'shield-icon';
         shieldIcon.innerHTML = '🛡️';
         myHealthElement.appendChild(shieldIcon);
-        setTimeout(() => {
-            shieldIcon.remove();
-        }, 1000);
+        setTimeout(() => shieldIcon.remove(), 1000);
+
+        // 更新恢復提示文字
+        const healText = document.getElementById('healText');
+        healText.textContent = `🛡️ 氣血恢復 ${healAmount} 點`;
+        healText.style.display = 'block';
+        setTimeout(() => healText.style.display = 'none', 1000);
     }
 
     database.ref('rooms/' + currentRoomId).update(updates, (error) => {
-        if (error) return;
+        if (error) {
+            console.error('更新資料庫失敗:', error);
+            return;
+        }
         checkGameOver();
         if (!gameOver) {
             setTimeout(() => {
