@@ -1641,7 +1641,7 @@ function checkAnswer(isCorrect, questionId) {
     let skillTriggered = false;
     if (isCorrect) {
         // 霸刀流雙倍攻擊判定（30%概率）
-        if (playerClass.type === 'warrior' && Math.random() < 0.3) {
+        if (playerClass.type === 'warrior' && Math.random() < 0.9) {
             baseDamage *= 2;
             skillTriggered = true;
             soundEffects.warriorSkill.play();
