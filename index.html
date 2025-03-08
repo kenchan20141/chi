@@ -1640,7 +1640,7 @@ function checkAnswer(isCorrect, questionId) {
     }
 
     // 霸刀門雙倍攻擊判定（30%概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
+    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.9) {
         baseDamage *= 2;
         const swordFlash = document.createElement('div');
         swordFlash.className = 'sword-flash';
@@ -1825,7 +1825,7 @@ function checkAnswer(isCorrect, questionId) {
 // 定義 showSkillEffect 函數，控制 GIF 顯示與隱藏
 function showSkillEffect() {
     const skillEffect = document.getElementById('skillEffect');
-    skillEffect.innerHTML = '<img src="path/to/your/gif.gif" alt="Skill Effect">';
+    skillEffect.innerHTML = '<img src="https://i.ibb.co/d4GRwVzc/image.gif" alt="Skill Effect">';
     skillEffect.style.display = 'block';
     setTimeout(() => {
         skillEffect.style.display = 'none';
