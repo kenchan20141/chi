@@ -1648,6 +1648,7 @@ function checkAnswer(isCorrect, questionId) {
         document.body.appendChild(swordFlash);
         setTimeout(() => swordFlash.remove(), 400);
         showSkillEffect(); // 添加 GIF 動畫展示
+        soundEffects.warriorSkill.play(); // 添加霸刀流技能音效
     }
 
     // 影流教閃避判定（30%概率）
