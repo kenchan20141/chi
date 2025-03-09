@@ -1656,7 +1656,7 @@ function checkAnswer(isCorrect, questionId) {
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
-    // 影流教閃避（30% 概率）
+    // 影流教閃避（30% 概率），在答錯時
     if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
         baseDamage = 0;
         const dodgeDisplay = document.getElementById('dodgeText');
@@ -1674,12 +1674,23 @@ function checkAnswer(isCorrect, questionId) {
         const maxHealth = playerData.maxHealth;
 
         if (isCorrect) {
-            const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
-            database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
-                const newHealth = Math.max(0, currentHealth - damageToOpponent);
-                showDamageAnimation(damageToOpponent, 'enemy');
-                return newHealth;
-            });
+            let damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
+            // 新增：影流教答對時有90%機率不造成傷害
+            if (playerClass.type === 'assassin' && Math.random() < 0.9) {
+                damageToOpponent = 0;
+                // 記錄閃避事件以通知對方顯示閃避提示
+                database.ref(`rooms/${currentRoomId}/dodgeEvent`).set({
+                    target: opponentPath, // 目標是對方
+                    timestamp: Date.now()
+                });
+            }
+            if (damageToOpponent > 0) {
+                database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
+                    const newHealth = Math.max(0, currentHealth - damageToOpponent);
+                    showDamageAnimation(damageToOpponent, 'enemy');
+                    return newHealth;
+                });
+            }
         } else {
             // 動態調整防禦力：鐵甲宗錯答時使用1.0，其他職業使用原始防禦力
             const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
@@ -1795,6 +1806,17 @@ function checkAnswer(isCorrect, questionId) {
         loadNewQuestion();
     }, 700);
 }
+
+function showDodgeText() {
+    const dodgeText = document.getElementById('dodgeText');
+    dodgeText.style.display = 'block';
+    setTimeout(() => {
+        dodgeText.style.display = 'none';
+    }, 1000);
+}
+
+
+    
 
 // 將資料庫更新邏輯提取為獨立函數
 function performDatabaseUpdate(updates) {
@@ -3674,64 +3696,62 @@ function listenToRoomChanges() {
         updateHealthDisplay(room);
 
         if (room.topicSelected && !room.gameStarted && !room.countdownStarted) {
-    // 移除等待消息並開始倒數計時
-    const waitingForTopic = document.getElementById('waitingForTopic');
-    if (waitingForTopic) waitingForTopic.remove();
-    startCountdown();
-}
+            // 移除等待消息並開始倒數計時
+            const waitingForTopic = document.getElementById('waitingForTopic');
+            if (waitingForTopic) waitingForTopic.remove();
+            startCountdown();
+        }
 
-if (room.gameStarted) {
-    document.getElementById('waitingArea').style.display = 'none';
-    document.getElementById('classSelection').style.display = 'none';
-    document.getElementById('topicSelection').style.display = 'none';
-    const waitingForTopic = document.getElementById('waitingForTopic');
-    if (waitingForTopic) waitingForTopic.remove();
-    startGame(room);
-}
+        if (room.gameStarted) {
+            document.getElementById('waitingArea').style.display = 'none';
+            document.getElementById('classSelection').style.display = 'none';
+            document.getElementById('topicSelection').style.display = 'none';
+            const waitingForTopic = document.getElementById('waitingForTopic');
+            if (waitingForTopic) waitingForTopic.remove();
+            startGame(room);
+        }
 
         // 在 listenToRoomChanges 內替換重開相關邏輯
-if (room.hostRematch && room.clientRematch) {
-    
+        if (room.hostRematch && room.clientRematch) {
+            // 重置重開標誌並進入職業選擇
+            database.ref('rooms/' + currentRoomId).update({
+                hostRematch: false,
+                clientRematch: false
+            });
 
-    // 重置重開標誌並進入職業選擇
-    database.ref('rooms/' + currentRoomId).update({
-        hostRematch: false,
-        clientRematch: false
-    });
+            // 顯示職業選擇界面
+            document.getElementById('classSelection').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'none';
 
-    // 顯示職業選擇界面
-    document.getElementById('classSelection').style.display = 'block';
-    document.getElementById('gameArea').style.display = 'none';
-
-    // 雙方都選擇職業後進入題庫選擇
-    if (room.player1?.class && room.player2?.class) {
-        document.getElementById('classSelection').style.display = 'none';
-        if (!room.topicSelected) {
-            const selector = room.topicSelector;
-            if ((isHost && selector === 'player1') || (!isHost && selector === 'player2')) {
-                document.getElementById('topicSelection').style.display = 'block';
-                document.getElementById('gradeSelection').style.display = 'grid'; // 顯示年級選擇
+            // 雙方都選擇職業後進入題庫選擇
+            if (room.player1?.class && room.player2?.class) {
+                document.getElementById('classSelection').style.display = 'none';
+                if (!room.topicSelected) {
+                    const selector = room.topicSelector;
+                    if ((isHost && selector === 'player1') || (!isHost && selector === 'player2')) {
+                        document.getElementById('topicSelection').style.display = 'block';
+                        document.getElementById('gradeSelection').style.display = 'grid'; // 顯示年級選擇
                         document.getElementById('topicDetail').style.display = 'none';    // 隱藏題庫選擇
-            } else {
-                let waitingMessage = document.createElement('div');
-                waitingMessage.id = 'waitingForTopic';
-                waitingMessage.style.position = 'fixed';
-                waitingMessage.style.top = '50%';
-                waitingMessage.style.left = '50%';
-                waitingMessage.style.transform = 'translate(-50%, -50%)';
-                waitingMessage.style.background = 'rgba(45, 41, 38, 0.95)';
-                waitingMessage.style.color = 'var(--gold)';
-                waitingMessage.style.fontSize = '2rem';
-                waitingMessage.style.padding = '2rem';
-                waitingMessage.style.border = '3px solid var(--gold)';
-                waitingMessage.style.borderRadius = '15px';
-                waitingMessage.style.zIndex = '10000';
-                waitingMessage.textContent = '等待玩家選擇題庫...';
-                document.body.appendChild(waitingMessage);
+                    } else {
+                        let waitingMessage = document.createElement('div');
+                        waitingMessage.id = 'waitingForTopic';
+                        waitingMessage.style.position = 'fixed';
+                        waitingMessage.style.top = '50%';
+                        waitingMessage.style.left = '50%';
+                        waitingMessage.style.transform = 'translate(-50%, -50%)';
+                        waitingMessage.style.background = 'rgba(45, 41, 38, 0.95)';
+                        waitingMessage.style.color = 'var(--gold)';
+                        waitingMessage.style.fontSize = '2rem';
+                        waitingMessage.style.padding = '2rem';
+                        waitingMessage.style.border = '3px solid var(--gold)';
+                        waitingMessage.style.borderRadius = '15px';
+                        waitingMessage.style.zIndex = '10000';
+                        waitingMessage.textContent = '等待玩家選擇題庫...';
+                        document.body.appendChild(waitingMessage);
+                    }
+                }
             }
         }
-    }
-}
 
         // 玩家重新進入提示保持不變
         const opponentReentered = isHost ? room.player2?.reentered : room.player1?.reentered;
@@ -3750,6 +3770,13 @@ if (room.hostRematch && room.clientRematch) {
                 opponentJoinedMessage.remove();
                 opponentJoinedMessage = null;
             }, 3000);
+        }
+
+        // 新增：監聽閃避事件
+        if (room.dodgeEvent && room.dodgeEvent.target === (isHost ? 'player1' : 'player2')) {
+            showDodgeText();
+            // 清除閃避事件
+            database.ref(`rooms/${currentRoomId}/dodgeEvent`).remove();
         }
     });
 }
