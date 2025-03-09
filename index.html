@@ -279,21 +279,17 @@
 
        
 /* 敵方血條定位 */
-#enemyHealthContainer {
-    position: absolute;
-    top: 20px;
-    left: 1rem;
-    right: 1rem;
-    z-index: 2;
+#enemyHealthContainer, #myHealthContainer {
+    position: relative;
 }
 
-/* 己方血條定位 */
-#myHealthContainer {
+.hit-marker {
     position: absolute;
-    bottom: 80px; /* 根據答案區高度調整 */
-    left: 1rem;
-    right: 1rem;
-    z-index: 2;
+    color: #ff0000;
+    font-size: 3rem;
+    animation: hitMarker 0.3s ease-out;
+    text-shadow: 0 0 10px rgba(255,0,0,0.5);
+    z-index: 1000;
 }
 
 /* 問題區增加底部間距 */
@@ -1798,29 +1794,37 @@ function checkAnswer(isCorrect, questionId) {
 
 // 展示傷害效果
 function showDamageEffect(target, damage) {
+    console.log(`Showing damage effect for ${target}: ${damage}`);
     const hitText = document.createElement('div');
     hitText.className = 'hit-marker';
     hitText.textContent = `-${damage}`;
-    const healthContainer = target === 'player' ? document.getElementById('myHealthContainer') : document.getElementById('enemyHealthContainer');
-    hitText.style.position = 'absolute';
-    hitText.style.left = `${Math.random() * healthContainer.offsetWidth + healthContainer.offsetLeft}px`;
-    hitText.style.top = `${healthContainer.offsetTop + healthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
+    const healthContainer = target === 'player' ? 
+        document.getElementById('myHealthContainer') : 
+        document.getElementById('enemyHealthContainer');
+    
     healthContainer.appendChild(hitText);
+    hitText.style.position = 'absolute';
+    hitText.style.left = `${Math.random() * healthContainer.offsetWidth}px`;
+    hitText.style.top = `${healthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
+    
     setTimeout(() => hitText.remove(), 300);
 }
 
-// 展示恢復效果
-function showHealEffect(target, healAmount) {
-    const healText = document.createElement('div');
-    healText.className = 'heal-marker';
-    healText.textContent = `+${healAmount}`;
-    healText.style.color = 'green';
-    const healthContainer = target === 'player' ? document.getElementById('myHealthContainer') : document.getElementById('enemyHealthContainer');
-    healText.style.position = 'absolute';
-    healText.style.left = `${Math.random() * healthContainer.offsetWidth + healthContainer.offsetLeft}px`;
-    healText.style.top = `${healthContainer.offsetTop + healthContainer.offsetHeight / 2 - healText.offsetHeight / 2}px`;
-    healthContainer.appendChild(healText);
-    setTimeout(() => healText.remove(), 300);
+function showDamageAnimation(damage, target) {
+    console.log(`Showing damage animation for ${target}: ${damage}`);
+    const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
+    const healthContainer = document.getElementById(healthContainerId);
+    
+    const damageText = document.createElement('div');
+    damageText.className = 'hit-marker';
+    damageText.textContent = `-${damage}`;
+    
+    healthContainer.appendChild(damageText);
+    damageText.style.position = 'absolute';
+    damageText.style.left = `${Math.random() * healthContainer.offsetWidth}px`;
+    damageText.style.top = `${healthContainer.offsetHeight / 2 - damageText.offsetHeight / 2}px`;
+    
+    setTimeout(() => damageText.remove(), 300);
 }
 
 // 將資料庫更新邏輯提取為獨立函數
