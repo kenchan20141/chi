@@ -1579,7 +1579,9 @@ function checkAnswer(isCorrect, questionId) {
     if (isCorrect) {
         baseDamage = Math.floor(Math.random() * 31) + 50; // 50-80 點
     } else {
-        baseDamage = Math.floor(Math.random() * 31) + 50; // 答錯時 50-80 點
+        // 修改部分：根據玩家等級調整錯答傷害
+        const levelAdjustedBaseDamage = 50 + (playerLevel - 1) * 5; // 每級增加 5 點
+        baseDamage = Math.floor(Math.random() * 31) + levelAdjustedBaseDamage; // 保持隨機範圍
     }
     // 霸刀門雙倍攻擊（30% 概率）
     if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
