@@ -1018,12 +1018,41 @@
 
     <!-- 新增頁腳 -->
     <div class="footer">
-        <div class="decor-line"></div>
-        <p>⚔️ 選擇你的征戰之路 ⚔️</p>
-        <button id="showLeaderboardBtn" class="action-btn" style="background: linear-gradient(45deg, #f1c40f, #f39c12); margin-top: 1rem;">
-            <i class="fas fa-trophy"></i>
-            <span>查看排行榜</span>
-        </button>
+    <div class="decor-line"></div>
+    <p>⚔️ 選擇你的征戰之路 ⚔️</p>
+    <button id="showLeaderboardBtn" class="action-btn" style="background: linear-gradient(45deg, #f1c40f, #f39c12); margin-top: 1rem;">
+        <i class="fas fa-trophy"></i>
+        <span>查看排行榜</span>
+    </button>
+    <button id="showStoryBtn" class="action-btn" style="background: linear-gradient(45deg, #3498db, #2980b9); margin-top: 1rem;">
+        <i class="fas fa-book"></i>
+        <span>故事背景</span>
+    </button>
+</div>
+
+<!-- 故事背景彈出視窗 -->
+<div id="storyModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10001; overflow-y: auto;">
+    <div style="background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold); border-radius: 15px; max-width: 800px; margin: 2rem auto; color: white;">
+        <h2 style="text-align: center; color: var(--gold);">《語弈錄》故事背景</h2>
+        <p style="font-size: 1.2rem; line-height: 1.6;">江湖百年，武林紛爭不斷，天下武學終歸四脈——<strong>霸刀流</strong>以力破巧，<strong>鐵甲宗</strong>固若金湯，<strong>影流教</strong>身法詭譎，<strong>玄天閣</strong>術法通玄。四派因一卷《語弈錄》秘典重現，掀起滔天巨浪。</p>
+        <p style="font-size: 1.2rem; line-height: 1.6;">此書暗藏「以言為刃、以心為棋」的絕世武學，能窺破招式破綻，操縱人心，卻落入「幽冥四煞」手中——</p>
+        <ul style="list-style-type: none; padding: 0;">
+            <li style="margin: 1rem 0; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <strong style="color: #e74c3c;">布魯貓</strong>：霸刀流叛徒，刀法暴烈，江湖稱「血面閻羅」。
+            </li>
+            <li style="margin: 1rem 0; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <strong style="color: #3498db;">雪羽千央</strong>：影流教奇才，身形如鬼魅，袖藏冰魄針。
+            </li>
+            <li style="margin: 1rem 0; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <strong style="color: #9b59b6;">鶴棲朔</strong>：玄天閣棄徒，笛聲惑心，擅佈殺陣。
+            </li>
+            <li style="margin: 1rem 0; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <strong style="color: #e67e22;">赤淵綾音</strong>：四煞之首，座下獄龍，手持歃血骨鞭。
+            </li>
+        </ul>
+        <p style="font-size: 1.2rem; line-height: 1.6;">四煞盤踞四地，江湖腥風血雨，正派屢敗。四派掌門推「鐵甲宗」宗主嶽擎山為盟主，其子嶽長河與「玄天閣」雲無月聯手，欲破敵奇招。</p>
+        <p style="font-size: 1.2rem; line-height: 1.6; color: #d4af37;">驚人真相：《語弈錄》乃封印邪龍之術，赤淵綾音欲血祭喚龍，四派弟子命運交織，亂世棋局已開……</p>
+        <button onclick="document.getElementById('storyModal').style.display='none'" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white; cursor: pointer;">關閉</button>
     </div>
 </div>
 
