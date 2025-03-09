@@ -1807,31 +1807,11 @@ function checkAnswer(isCorrect, questionId) {
     }, 700);
 }
 
-function showDodgeEffect() {
-    // 獲取 dodgeText 元素
+function showDodgeText() {
     const dodgeText = document.getElementById('dodgeText');
-    
-    // 創建 GIF 元素
-    const dodgeGif = document.createElement('img');
-    dodgeGif.src = 'https://i.ibb.co/zTRVPR2Q/unscreen.gif';
-    dodgeGif.style.position = 'fixed';
-    dodgeGif.style.top = '50%';
-    dodgeGif.style.left = '60%'; // 稍微偏移，避免與 dodgeText 重疊
-    dodgeGif.style.transform = 'translate(-50%, -50%)';
-    dodgeGif.style.zIndex = '10000';
-    dodgeGif.style.width = '200px'; // 設置GIF大小
-    dodgeGif.style.height = '200px';
-
-    // 添加 GIF 到頁面
-    document.body.appendChild(dodgeGif);
-    
-    // 顯示 dodgeText
     dodgeText.style.display = 'block';
-
-    // 1秒後同步隱藏
     setTimeout(() => {
-        dodgeGif.remove(); // 移除 GIF
-        dodgeText.style.display = 'none'; // 隱藏 dodgeText
+        dodgeText.style.display = 'none';
     }, 1000);
 }
 
