@@ -3358,6 +3358,18 @@ function showDamageAnimation(damage, target) {
 }
 
     function showHealAnimation(healAmount, target) {
+
+const healAnimation = document.createElement('img');
+    healAnimation.src = 'https://i.ibb.co/CrGK4CR/image.gif';
+    healAnimation.style.position = 'fixed';
+    healAnimation.style.bottom = '100px'; // 根據己方血條位置調整，與 #myHealthContainer 的 bottom: 80px 相近
+    healAnimation.style.right = '1rem';   // 靠右顯示，與氣血文字對齊
+    healAnimation.style.width = '100px';  // GIF 寬度
+    healAnimation.style.height = '100px'; // GIF 高度
+    healAnimation.style.zIndex = '10000'; // 確保顯示在其他元素之上
+    document.body.appendChild(healAnimation);
+    setTimeout(() => healAnimation.remove(), 2000); // 2秒後移除
+        
     const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
     const healthContainer = document.getElementById(healthContainerId);
     const healthBar = healthContainer.querySelector('.health-bar');
