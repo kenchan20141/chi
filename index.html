@@ -1661,7 +1661,10 @@ function checkAnswer(isCorrect, questionId) {
         baseDamage = 0;
         const dodgeDisplay = document.getElementById('dodgeText');
         dodgeDisplay.style.display = 'block';
-        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
+        showDodgeAnimation(); // 新增：顯示閃避動畫
+        setTimeout(() => {
+            dodgeDisplay.style.display = 'none';
+        }, 1000);
     }
     // 從資料庫獲取房間數據並處理氣血更新
     database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
@@ -1796,6 +1799,7 @@ function checkAnswer(isCorrect, questionId) {
     }, 700);
 }
 
+    
 // 將資料庫更新邏輯提取為獨立函數
 function performDatabaseUpdate(updates) {
     console.log('Performing database update with:', updates);
@@ -3405,6 +3409,19 @@ function showEffect(className) {
     setTimeout(() => effect.remove(), 400);
 }
 
+
+function showDodgeAnimation() {
+    const dodgeAnimation = document.getElementById('dodgeAnimation');
+    const dodgePNG = document.getElementById('dodgePNG');
+    dodgeAnimation.style.display = 'block';
+    dodgePNG.style.display = 'block';
+    setTimeout(() => {
+        dodgeAnimation.style.display = 'none';
+        dodgePNG.style.display = 'none';
+    }, 1000); // 顯示1秒後隱藏
+}
+
+    
     function handleSinglePlayerGameOver(isWinner) {
     if (gameOver) return; // 避免重複觸發
     gameOver = true;
@@ -3771,6 +3788,16 @@ if (room.hostRematch && room.clientRematch) {
 
 <div id="dodgeText" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:3rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">閃避成功！</div>
 
+<div id="dodgeText" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:3rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">閃避成功！</div>
 
+<div id="dodgeAnimation" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10000;">
+    <img src="https://i.ibb.co/zTRVPR2Q/unscreen.gif" style="width:200px; height:200px;">
+</div>
+<div id="dodgePNG" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10000;">
+    <img src="https://i.ibb.co/Y453Kt0R/image.png" style="width:200px; height:200px; margin-left:220px;">
+</div>
+
+</body>
+</html>
     
 </html>
