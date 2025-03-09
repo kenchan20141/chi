@@ -2250,11 +2250,29 @@ function toggleMusic() {
 }
 
 function createRoom() {
+
+
+
+    
     const roomIdInput = document.getElementById('roomId').value.trim();
     if (roomIdInput.length !== 4) {
         alert('請輸入四位戰場編號');
         return;
     }
+
+// 設置斷線處理
+            const player1Ref = roomRef.child('player1/disconnected');
+            player1Ref.onDisconnect().set(true);
+
+            currentRoomId = roomId;
+            isHost = true;
+            document.getElementById('roomControl').style.display = 'none';
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('displayRoomId').textContent = roomId;
+            listenToRoomChanges();
+
+
+    
     const userId = generateUserId();
     const player1Ref = database.ref('rooms/' + roomIdInput + '/player1');
     player1Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
@@ -2269,6 +2287,19 @@ function createRoom() {
 }
 
 function joinRoom() {
+
+// 設置斷線處理
+            const player2Ref = roomRef.child('player2/disconnected');
+            player2Ref.onDisconnect().set(true);
+
+            currentRoomId = roomId;
+            isHost = false;
+            document.getElementById('roomControl').style.display = 'none';
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('displayRoomId').textContent = roomId;
+            listenToRoomChanges();
+
+    
     const roomId = document.getElementById('roomId').value.trim();
     if (roomId.length !== 4) {
         alert('請輸入四位戰場編號');
@@ -2874,6 +2905,14 @@ function handleGameEnd(winnerType) {
         btn.style.opacity = '0.5';
     });
 
+
+// 清理斷線處理
+    const roomRef = database.ref('rooms/' + currentRoomId);
+    const playerPath = isHost ? 'player1' : 'player2';
+    const disconnectRef = roomRef.child(`${playerPath}/disconnected`);
+    disconnectRef.onDisconnect().cancel(); // 取消斷線觸發器
+
+    
     const victoryOverlay = document.querySelector('.victory-overlay');
     const victoryText = document.querySelector('.victory-text');
     const isWinner = (winnerType === 'player1' && isHost) || (winnerType === 'player2' && !isHost);
@@ -3779,6 +3818,43 @@ function listenToRoomChanges() {
     roomRef.on('value', (snapshot) => {
         const room = snapshot.val();
         if (!room) return;
+
+        // 檢測對手是否斷線並懲罰
+        const opponentPath = isHost ? 'player2' : 'player1';
+        const opponent = room[opponentPath];
+        if (opponent && opponent.disconnected && room.gameStarted && !room.gameEnded) {
+            const opponentUid = opponent.uid;
+            const userRef = database.ref('users/' + opponentUid);
+
+            // 檢查是否已懲罰過，避免重複扣除
+            if (!opponent.penalized) {
+                userRef.transaction((userData) => {
+                    if (!userData) return userData;
+                    userData.exp = Math.max(0, (userData.exp || 0) - 200); // 扣200經驗值，最低為0
+                    return userData;
+                }).then(() => {
+                    // 標記已懲罰
+                    roomRef.child(`${opponentPath}/penalized`).set(true);
+                    console.log(`玩家 ${opponentUid} 中途離場，已扣除200經驗值`);
+                });
+
+                // 提示對手離場並結束遊戲
+                const disconnectMessage = document.createElement('div');
+                disconnectMessage.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; 
+                    border-radius: 10px; z-index: 9999; font-size: 2rem; text-align: center;
+                `;
+                disconnectMessage.textContent = '對手已棄戰，你勝出！';
+                document.body.appendChild(disconnectMessage);
+
+                // 設置勝利者並結束遊戲
+                roomRef.update({
+                    gameEnded: true,
+                    winner: isHost ? 'player1' : 'player2'
+                });
+
+                setTimeout(() => disconnectMessage.remove(), 3000);
 
         if (isHost) {
             opponentDefense = room.player2?.defense || 1.0;
