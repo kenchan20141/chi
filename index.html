@@ -1335,6 +1335,7 @@ async function getIpAddress() {
 
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
+    let playerLevel = 1; // 預設等級為 1
     let skillTriggered = false; // 在外部聲明 skillTriggered
 let singlePlayerClass = null; // 單機模式選中的職業
 let singlePlayerSelectedGrade = null; // 單機模式選中的年級
@@ -1578,9 +1579,15 @@ function checkAnswer(isCorrect, questionId) {
     let baseDamage;
     if (isCorrect) {
         baseDamage = Math.floor(Math.random() * 31) + 50; // 50-80 點
-    } else {
-        baseDamage = Math.floor(Math.random() * 31) + 50; // 答錯時 50-80 點
-    }
+    } 
+
+if (!isCorrect) {
+        // 修改傷害計算，加入等級影響
+        const baseDamage = (50 + Math.random() * 30) * (1 + (playerLevel - 1) * 0.1);
+        let damageToPlayer = baseDamage * difficultyMultiplier * (1 - totalDefenseAdjustment);
+        damageToPlayer = Math.max(Math.round(damageToPlayer), 0); // 確保傷害不為負數
+
+    
     // 霸刀門雙倍攻擊（30% 概率）
     if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
         baseDamage *= 2;
