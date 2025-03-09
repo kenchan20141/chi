@@ -1675,7 +1675,7 @@ function checkAnswer(isCorrect, questionId) {
 
         if (isCorrect) {
             let damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
-            // 新增：影流教答對時有90%機率不造成傷害，並顯示閃避效果
+            // 新增：影流教答對時有90%機率不造成傷害
             if (playerClass.type === 'assassin' && Math.random() < 0.9) {
                 damageToOpponent = 0;
                 // 記錄閃避事件以通知對方顯示閃避提示
@@ -1683,8 +1683,6 @@ function checkAnswer(isCorrect, questionId) {
                     target: opponentPath, // 目標是對方
                     timestamp: Date.now()
                 });
-                // 顯示 GIF 和 dodgeText
-                showDodgeEffect();
             }
             if (damageToOpponent > 0) {
                 database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
@@ -1808,6 +1806,7 @@ function checkAnswer(isCorrect, questionId) {
         loadNewQuestion();
     }, 700);
 }
+
 function showDodgeEffect() {
     // 獲取 dodgeText 元素
     const dodgeText = document.getElementById('dodgeText');
@@ -1835,6 +1834,7 @@ function showDodgeEffect() {
         dodgeText.style.display = 'none'; // 隱藏 dodgeText
     }, 1000);
 }
+
 
     
 
