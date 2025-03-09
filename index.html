@@ -1702,9 +1702,21 @@ function checkAnswer(isCorrect, questionId) {
                 }, 2000);
                 damageToPlayer = Math.floor(damageToPlayer * 0.7);
             }
+            // 1. 先扣減玩家的氣血
             playerHealth = Math.max(0, playerHealth - damageToPlayer);
             showDamageAnimation(damageToPlayer, 'player');
-            // 鐵甲宗恢復邏輯：單獨處理恢復
+
+            // 2. 檢查遊戲是否因玩家氣血低於或等於0而結束
+            if (playerHealth <= 0) {
+                const updates = {
+                    gameEnded: true,
+                    winner: opponentPath // 對手獲勝
+                };
+                database.ref('rooms/' + currentRoomId).update(updates);
+                return; // 終止後續邏輯
+            }
+
+            // 3. 如果遊戲未結束，應用鐵甲宗的恢復效果
             if (playerClass.type === 'tank' && !hasHealedThisTurn) {
                 hasHealedThisTurn = true;
                 const healAmount = Math.round(maxHealth * 0.02);
@@ -1726,11 +1738,10 @@ function checkAnswer(isCorrect, questionId) {
         updates[`${playerPath}/health`] = playerHealth;
         updates[`${opponentPath}/health`] = opponentHealth;
 
-        // 檢查遊戲是否結束
-        if (playerHealth <= 0 || opponentHealth <= 0) {
-            const winner = playerHealth > opponentHealth ? playerPath : opponentPath;
+        // 再次檢查遊戲是否結束（例如，對手氣血降至0）
+        if (opponentHealth <= 0) {
             updates['gameEnded'] = true;
-            updates['winner'] = winner;
+            updates['winner'] = playerPath; // 玩家獲勝
         }
 
         database.ref('rooms/' + currentRoomId).update(updates).then(() => {
