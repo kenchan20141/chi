@@ -1808,11 +1808,29 @@ function checkAnswer(isCorrect, questionId) {
 }
 
 function showDodgeText() {
+    // 獲取閃避文字元素
     const dodgeText = document.getElementById('dodgeText');
-    dodgeText.style.display = 'block';
+    dodgeText.style.display = 'block'; // 顯示文字
+
+    // 創建 GIF 元素
+    const dodgeGif = document.createElement('img');
+    dodgeGif.src = 'https://i.ibb.co/zTRVPR2Q/unscreen.gif'; // GIF 的 URL
+    dodgeGif.style.position = 'fixed'; // 固定定位
+    dodgeGif.style.top = '50%'; // 垂直居中
+    dodgeGif.style.left = 'calc(50% + 150px)'; // 放在文字右側（調整距離）
+    dodgeGif.style.transform = 'translate(-50%, -50%)'; // 居中調整
+    dodgeGif.style.zIndex = '10000'; // 確保在最上層
+    dodgeGif.style.width = '200px'; // GIF 寬度
+    dodgeGif.style.height = 'auto'; // 保持比例
+
+    // 將 GIF 添加到頁面
+    document.body.appendChild(dodgeGif);
+
+    // 設置定時器，1秒後同時移除文字和 GIF
     setTimeout(() => {
-        dodgeText.style.display = 'none';
-    }, 1000);
+        dodgeText.style.display = 'none'; // 隱藏文字
+        dodgeGif.remove(); // 移除 GIF
+    }, 1000); // 顯示時間為 1 秒，與動畫時長一致
 }
 
 
