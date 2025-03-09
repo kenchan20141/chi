@@ -1702,11 +1702,9 @@ function checkAnswer(isCorrect, questionId) {
                     const healAmount = Math.round(maxHealth * 0.02);
                     database.ref('rooms/' + currentRoomId + '/' + playerPath + '/health').transaction(currentHealth => {
                         const newHealth = Math.min(maxHealth, currentHealth + healAmount);
-                        showHealAnimation(healAmount, 'player'); // 顯示恢復數值動畫
+                        showHealAnimation(healAmount, 'player'); // 顯示恢復動畫
                         return newHealth;
                     });
-                    // **顯示GIF動畫**
-                    showHealEffect(playerPath === 'player1' ? 'my' : 'enemy');
                     // UI 更新：顯示護盾圖標
                     const myHealthElement = document.getElementById('myHealth');
                     const shieldIcon = document.createElement('span');
@@ -1782,7 +1780,7 @@ function checkAnswer(isCorrect, questionId) {
         wave.style.background = `linear-gradient(90deg, transparent 0%, ${isCorrect ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'} 50%, transparent 100%)`;
         healthBar.appendChild(wave);
         setTimeout(() => wave.remove(), 500);
-
+       
     }).catch(error => {
         console.error('Failed to fetch room data:', error);
     });
@@ -3314,6 +3312,9 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         const healPercentage = singlePlayerClass.healPercentage || 0; // 防錯，默認為 0
         const healAmount = Math.round(maxHealth * healPercentage); // 計算 2% 的恢復量
         singlePlayerHealth = Math.min(singlePlayerHealth + healAmount, maxHealth); // 應用恢復並限制不超過最大氣血
+        // **顯示GIF動畫**
+            showHealEffect(playerPath === 'player1' ? 'my' : 'enemy');
+            showHealAnimation(healAmount, playerPath === 'player1' ? 'my' : 'enemy');
         updateSinglePlayerHealthDisplay(); // 更新氣血顯示
         document.getElementById('healText').style.display = 'block'; // 顯示恢復效果
         setTimeout(() => document.getElementById('healText').style.display = 'none', 1000); // 1秒後隱藏
@@ -3329,6 +3330,21 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
             loadNewQuestionSinglePlayer();
         }
     }, 700);
+
+    roomRef.child(playerPath).update({ health: myHealth }, () => {
+            checkGameOver();
+            setTimeout(() => {
+                buttons.forEach(btn => {
+                    btn.style.cssText = '';
+                    btn.style.pointerEvents = 'auto';
+                });
+                answered = false;
+                if (!gameOver) loadNewQuestion();
+            }, 700);
+        });
+    });
+
+    
 }
 
     
@@ -3362,6 +3378,28 @@ function showDamageAnimation(damage, target) {
     function showHealAnimation(healAmount, target) {
     const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
     const healthContainer = document.getElementById(healthContainerId);
+
+// 創建 GIF 元素
+    const gifElement = document.createElement('img');
+    gifElement.src = 'https://i.ibb.co/CrGK4CR/image.gif';
+    gifElement.style.position = 'absolute';
+    gifElement.style.width = '50px';  // 設置 GIF 大小
+    gifElement.style.height = '50px';
+    gifElement.style.zIndex = '1000'; // 確保顯示在氣血條上方
+
+    // 定位 GIF 到氣血條右側
+    const rect = healthContainer.getBoundingClientRect();
+    gifElement.style.left = `${rect.right + 10}px`; // 右側偏移 10px
+    gifElement.style.top = `${rect.top}px`;         // 與氣血條頂部對齊
+
+    // 添加到頁面
+    document.body.appendChild(gifElement);
+
+    // 2 秒後移除 GIF
+    setTimeout(() => {
+        gifElement.remove();
+    }, 2000);
+        
     const healthBar = healthContainer.querySelector('.health-bar');
     const rect = healthBar.getBoundingClientRect();
 
