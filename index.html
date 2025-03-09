@@ -333,7 +333,7 @@
         }
 
         body {
-            font-family: 'WangHanZhongWeiBei', cursive;
+            font-family: 'Times New Roman','WangHanZhongWeiBei', cursive;
             background: url('https://i.ibb.co/kgdHCJX8/image.png') center/cover fixed;
             color: white;
             min-height: 100vh;
@@ -3552,22 +3552,46 @@ document.getElementById('showLeaderboardBtn').onclick = function() {
         });
         leaderboard.reverse(); // 降序排列
 
-        // 顯示排行榜
-        let leaderboardHTML = '<h2 style="text-align: center; color: var(--gold);">🏆 排行榜 - 前十名</h2><ul>';
+        // 使用表格顯示排行榜
+        let leaderboardHTML = `
+            <h2 style="text-align: center; color: var(--gold);">🏆 排行榜 - 前十名</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr style="background: rgba(255,255,255,0.1);">
+                        <th style="padding: 0.5rem; border-bottom: 2px solid var(--gold);">排名</th>
+                        <th style="padding: 0.5rem; border-bottom: 2px solid var(--gold);">用戶名稱</th>
+                        <th style="padding: 0.5rem; border-bottom: 2px solid var(--gold);">等級</th>
+                        <th style="padding: 0.5rem; border-bottom: 2px solid var(--gold);">積分</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
         leaderboard.forEach((entry, index) => {
-            const levelText = entry.level ? `Lv.${entry.level}` : 'Lv.1'; // 確保 level 存在，否則顯示 Lv.1
-            leaderboardHTML += `<li style="font-size: 1.2rem; padding: 0.5rem;">${index + 1}. ${entry.name} - ${levelText} - ${entry.score} 分</li>`;
+            const levelText = entry.level ? `Lv.${entry.level}` : 'Lv.1';
+            leaderboardHTML += `
+                <tr>
+                    <td style="padding: 0.5rem; text-align: center;">${index + 1}</td>
+                    <td style="padding: 0.5rem; text-align: center;">${entry.name}</td>
+                    <td style="padding: 0.5rem; text-align: center;">${levelText}</td>
+                    <td style="padding: 0.5rem; text-align: center;">${entry.score}</td>
+                </tr>
+            `;
         });
-        leaderboardHTML += '</ul>';
-        
+        leaderboardHTML += `
+                </tbody>
+            </table>
+        `;
+
         const leaderboardDiv = document.createElement('div');
         leaderboardDiv.style.cssText = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
-            border-radius: 15px; width: 80%; max-width: 600px; /* 使用百分比和最大宽度结合 */
+            border-radius: 15px; width: 80%; max-width: 600px;
             z-index: 10000; color: white;
         `;
-        leaderboardDiv.innerHTML = leaderboardHTML + '<button onclick="this.parentElement.remove()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white;">關閉</button>';
+        leaderboardDiv.innerHTML = leaderboardHTML + `
+            <button onclick="this.parentElement.remove()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white;">關閉</button>
+        `;
         document.body.appendChild(leaderboardDiv);
     });
 };
