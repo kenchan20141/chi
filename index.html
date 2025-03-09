@@ -3368,7 +3368,7 @@ const healAnimation = document.createElement('img');
     healAnimation.style.height = '100px'; // GIF 高度
     healAnimation.style.zIndex = '10000'; // 確保顯示在其他元素之上
     document.body.appendChild(healAnimation);
-    setTimeout(() => healAnimation.remove(), 2000); // 2秒後移除
+    setTimeout(() => healAnimation.remove(), 1000); // 2秒後移除
         
     const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
     const healthContainer = document.getElementById(healthContainerId);
