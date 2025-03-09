@@ -1656,6 +1656,13 @@ function checkAnswer(isCorrect, questionId) {
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
+    // 影流教閃避（30% 概率）
+    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
+        baseDamage = 0;
+        const dodgeDisplay = document.getElementById('dodgeText');
+        dodgeDisplay.style.display = 'block';
+        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
+    }
     // 從資料庫獲取房間數據並處理氣血更新
     database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
         const room = snapshot.val();
@@ -1668,21 +1675,11 @@ function checkAnswer(isCorrect, questionId) {
 
         if (isCorrect) {
             const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
-
-            // 檢查對手是否為影流教並嘗試閃避
-            if (opponentData.class === 'assassin' && Math.random() < opponentData.dodge) { // 使用 opponentData.dodge 作為閃避率
-                // 閃避成功，不扣減氣血，並觸發動畫
-                const dodgeDisplay = document.getElementById('dodgeText');
-                dodgeDisplay.style.display = 'block';
-                setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
-            } else {
-                // 正常扣減對手氣血
-                database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
-                    const newHealth = Math.max(0, currentHealth - damageToOpponent);
-                    showDamageAnimation(damageToOpponent, 'enemy');
-                    return newHealth;
-                });
-            }
+            database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
+                const newHealth = Math.max(0, currentHealth - damageToOpponent);
+                showDamageAnimation(damageToOpponent, 'enemy');
+                return newHealth;
+            });
         } else {
             // 動態調整防禦力：鐵甲宗錯答時使用1.0，其他職業使用原始防禦力
             const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
@@ -1783,7 +1780,7 @@ function checkAnswer(isCorrect, questionId) {
         wave.style.background = `linear-gradient(90deg, transparent 0%, ${isCorrect ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'} 50%, transparent 100%)`;
         healthBar.appendChild(wave);
         setTimeout(() => wave.remove(), 500);
-
+       
     }).catch(error => {
         console.error('Failed to fetch room data:', error);
     });
@@ -1798,7 +1795,7 @@ function checkAnswer(isCorrect, questionId) {
         loadNewQuestion();
     }, 700);
 }
-    
+
 // 將資料庫更新邏輯提取為獨立函數
 function performDatabaseUpdate(updates) {
     console.log('Performing database update with:', updates);
@@ -3005,7 +3002,7 @@ function selectSinglePlayerClass(className) {
     const classData = {
         warrior: { attack: 1.2, defense: 0.9, dodge: 0, skill: 'doubleDamage' },
         tank: { attack: 0.9, defense: 1.2, dodge: 0, skill: 'heal' },
-        assassin: { attack: 1.0, defense: 0.9, dodge: 0.9, skill: 'dodge' },
+        assassin: { attack: 1.0, defense: 0.9, dodge: 0.3, skill: 'dodge' },
         mage: { attack: 1.1, defense: 1.0, dodge: 0, skill: 'counter' }
     };
 
@@ -3398,13 +3395,7 @@ const healAnimation = document.createElement('img');
     setTimeout(() => healText.remove(), 1000);
 }
 
-    function showDodgeAnimation() {
-    const dodgeText = document.getElementById('dodgeText');
-    dodgeText.style.display = 'block';
-    setTimeout(() => {
-        dodgeText.style.display = 'none';
-    }, 1000);
-}
+    
 
 // 輔助函數：顯示特效
 function showEffect(className) {
