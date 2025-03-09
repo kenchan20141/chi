@@ -1109,6 +1109,12 @@
     ">0000</span> 已開啟，靜候來者...
 </div>
 
+
+<div id="vsAnimation" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:black; z-index:10002;">
+  <img src="https://i.ibb.co/W4K1x37y/VS-unscreen.gif" style="width:100%; height:100%; object-fit:contain;">
+</div>
+
+    
     <div id="gameArea">
         <div class="decorative-border"></div>
         <!-- 敵方血條移至頂部 -->
@@ -1528,57 +1534,60 @@ function selectTopic(topic) {
     });
 }
     
- function startCountdown() {
-    database.ref(`rooms/${currentRoomId}`).once('value').then(snapshot => {
-        const room = snapshot.val();
-        // 添加檢查：確保題庫已選擇且遊戲未開始
-        if (!room || room.countdownStarted || room.gameStarted || !room.topicSelected) {
-            console.log('未滿足倒數條件：', {
-                countdownStarted: room?.countdownStarted,
-                gameStarted: room?.gameStarted,
-                topicSelected: room?.topicSelected
-            });
-            return;
-        }
+function startCountdown() {
+  database.ref(`rooms/${currentRoomId}`).once('value').then(snapshot => {
+    const room = snapshot.val();
+    if (!room || room.countdownStarted || room.gameStarted || !room.topicSelected) {
+      console.log('未滿足倒數條件：', {
+        countdownStarted: room?.countdownStarted,
+        gameStarted: room?.gameStarted,
+        topicSelected: room?.topicSelected
+      });
+      return;
+    }
 
-        // 設置倒數計時開始標誌
-        database.ref(`rooms/${currentRoomId}`).update({ countdownStarted: true });
+    // 設置倒數計時開始標誌
+    database.ref(`rooms/${currentRoomId}`).update({ countdownStarted: true });
 
-        let countdown = 3;
-        const countdownElement = document.createElement('div');
-        countdownElement.id = 'countdown';
-        countdownElement.style.position = 'fixed';
-        countdownElement.style.top = '0';
-        countdownElement.style.left = '0';
-        countdownElement.style.width = '100%';
-        countdownElement.style.height = '100%';
-        countdownElement.style.display = 'flex';
-        countdownElement.style.alignItems = 'center';
-        countdownElement.style.justifyContent = 'center';
-        countdownElement.style.background = 'rgba(45, 41, 38, 0.95)';
-        countdownElement.style.color = 'var(--gold)';
-        countdownElement.style.fontSize = '10rem';
-        countdownElement.style.zIndex = '10001';
-        document.body.appendChild(countdownElement);
+    let countdown = 3;
+    const countdownElement = document.createElement('div');
+    countdownElement.id = 'countdown';
+    countdownElement.style.position = 'fixed';
+    countdownElement.style.top = '0';
+    countdownElement.style.left = '0';
+    countdownElement.style.width = '100%';
+    countdownElement.style.height = '100%';
+    countdownElement.style.display = 'flex';
+    countdownElement.style.alignItems = 'center';
+    countdownElement.style.justifyContent = 'center';
+    countdownElement.style.background = 'rgba(45, 41, 38, 0.95)';
+    countdownElement.style.color = 'var(--gold)';
+    countdownElement.style.fontSize = '10rem';
+    countdownElement.style.zIndex = '10001';
+    document.body.appendChild(countdownElement);
 
-        function updateCountdown() {
-            if (countdown > 0) {
-                countdownElement.textContent = countdown;
-                countdown--;
-                setTimeout(updateCountdown, 1000);
-            } else {
-                countdownElement.remove();
-                // 結束後統一設置遊戲開始並重置倒數標誌
-                database.ref(`rooms/${currentRoomId}`).update({
-                    gameStarted: true,
-                    countdownStarted: false
-                });
-            }
-        }
-        updateCountdown();
-    });
+    function updateCountdown() {
+      if (countdown > 0) {
+        countdownElement.textContent = countdown;
+        countdown--;
+        setTimeout(updateCountdown, 1000);
+      } else {
+        countdownElement.remove();
+        // 顯示 VS 動畫
+        document.getElementById('vsAnimation').style.display = 'block';
+        // 設置動畫播放時間，例如 2 秒
+        setTimeout(() => {
+          document.getElementById('vsAnimation').style.display = 'none';
+          // 開始遊戲
+          startGame();
+        }, 2000);
+      }
+    }
+    updateCountdown();
+  });
 }
 
+    
 function displayQuestion(question) {
     
      // 重置答题状态
