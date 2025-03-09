@@ -935,7 +935,7 @@
     </style>
 </head>
 <body>
-    <canvas id="animationCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;"></canvas>
+    <div id="animationContainer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: url('https://i.ibb.co/RWW0Xqc/image.png') center/cover fixed; opacity: 1; transition: opacity 1.2s ease-out;"></div>
     <button class="music-control" onclick="toggleMusic()">🎵</button>
     
 
@@ -1309,70 +1309,16 @@ const expRewards = {
 
 // Canvas 動畫代碼
 window.onload = function() {
-    const canvas = document.getElementById('animationCanvas');
-    const ctx = canvas.getContext('2d');
+    const animationContainer = document.getElementById('animationContainer');
+    setTimeout(() => {
+        animationContainer.style.opacity = '0'; // 開始淡出
+    }, 0); // 立即觸發
 
-    // 設置 Canvas 大小為全屏
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const img = new Image();
-    img.src = 'https://i.ibb.co/RWW0Xqc/image.png';
-    img.crossOrigin = 'Anonymous';
-
-    img.onload = function() {
-        // 全屏調整圖片大小（保持比例，覆蓋螢幕）
-        let imgWidth, imgHeight, imgX, imgY;
-        const aspectRatio = img.width / img.height;
-        const canvasRatio = canvas.width / canvas.height;
-
-        if (aspectRatio > canvasRatio) {
-            imgHeight = canvas.height;
-            imgWidth = imgHeight * aspectRatio;
-            imgX = (canvas.width - imgWidth) / 2;
-            imgY = 0;
-        } else {
-            imgWidth = canvas.width;
-            imgHeight = imgWidth / aspectRatio;
-            imgX = 0;
-            imgY = (canvas.height - imgHeight) / 2;
-        }
-
-        // 初始繪製全屏圖片
-        ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-
-        // 動畫邏輯
-        let startTime = Date.now();
-        const duration = 2; // 2秒動畫
-
-        function animate() {
-            const elapsedTime = (Date.now() - startTime) / 1000;
-            const progress = Math.min(elapsedTime / duration, 1);
-
-            // 清除畫布
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 繪製圖片並漸變透明度
-            ctx.globalAlpha = 1 - progress; // 透明度從 1 到 0
-            ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-            ctx.globalAlpha = 1; // 重置透明度
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                canvas.style.display = 'none';
-                document.getElementById('roomControl').style.display = 'block';
-            }
-        }
-
-        requestAnimationFrame(animate);
-    };
-
-    img.onerror = function() {
-        console.error('圖片載入失敗，跳過動畫');
-        canvas.style.display = 'none';
+    // 2秒後隱藏動畫容器並顯示主頁
+    setTimeout(() => {
+        animationContainer.style.display = 'none';
         document.getElementById('roomControl').style.display = 'block';
-    };
+    }, 2000);
 };
 
 
