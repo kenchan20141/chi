@@ -1673,7 +1673,7 @@ function checkAnswer(isCorrect, questionId) {
         if (isCorrect) {
             let damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
             // 新增：影流教答對時有90%機率不造成傷害
-            if (playerClass.type === 'assassin' && Math.random() < 0.9) {
+            if (playerClass.type === 'assassin' && Math.random() < 0.3) {
                 damageToOpponent = 0;
                 // 記錄閃避事件以通知對方顯示閃避提示
                 database.ref(`rooms/${currentRoomId}/dodgeEvent`).set({
