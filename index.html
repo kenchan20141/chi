@@ -3692,6 +3692,21 @@ function listenToRoomChanges() {
 
         updateHealthDisplay(room);
 
+if (room.dodgeBy) {
+    const playerPath = isHost ? 'player1' : 'player2';
+    if (room.dodgeBy === playerPath) {
+        // 自己閃避了，觸發動畫
+        showDodgeAnimation();
+        document.getElementById('dodgeText').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('dodgeText').style.display = 'none';
+        }, 1000); // 顯示1秒後隱藏
+    }
+    // 重置閃避標誌
+    database.ref('rooms/' + currentRoomId).update({ dodgeBy: null });
+}
+        
+
         if (room.topicSelected && !room.gameStarted && !room.countdownStarted) {
     // 移除等待消息並開始倒數計時
     const waitingForTopic = document.getElementById('waitingForTopic');
