@@ -3058,14 +3058,17 @@ function selectDifficulty(difficulty) {
 }
     
 function selectSinglePlayerClass(className) {
-    const classData = {
-        warrior: { attack: 1.2, defense: 0.7, dodge: 0, skill: 'doubleDamage' }, // 霸刀流：攻擊+20%，防禦-30%
-        tank: { attack: 0.9, defense: 1.3, dodge: 0, skill: 'heal', healPercentage: 0.02 }, // 鐵甲宗：攻擊-10%，防禦+30%
-        assassin: { attack: 1.0, defense: 0.7, dodge: 0.3, skill: 'dodge' }, // 影流教：防禦-30%，閃避+30%
+    const baseClassData = {
+        warrior: { attack: 1.2, defense: 0.9, dodge: 0, skill: 'doubleDamage' }, // 霸刀流：攻擊+20%，防禦-10%
+        tank: { attack: 0.9, defense: 1.2, dodge: 0, skill: 'heal', healPercentage: 0.02 }, // 鐵甲宗：攻擊-10%，防禦+20%
+        assassin: { attack: 1.0, defense: 0.9, dodge: 0.3, skill: 'dodge' }, // 影流教：防禦-10%，閃避+30%
         mage: { attack: 1.1, defense: 1.0, dodge: 0, skill: 'counter', damageReduction: 0.3 } // 玄天閣：攻擊+10%，錯答減傷30%
     };
 
-    singlePlayerClass = classData[className];
+    // 根據等級動態調整攻擊力和防禦力
+    singlePlayerClass = { ...baseClassData[className] };
+    singlePlayerClass.attack *= (1 + (playerLevel - 1) * 0.05); // 每級增加5%攻擊力
+    singlePlayerClass.defense *= (1 + (playerLevel - 1) * 0.03); // 每級增加3%防禦力
     singlePlayerClass.type = className;
 
     // 選擇反饋
