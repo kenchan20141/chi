@@ -1611,16 +1611,16 @@ function displayQuestion(question) {
 
 function checkAnswer(isCorrect, questionId) {
     console.log('checkAnswer called, isCorrect:', isCorrect, 'questionId:', questionId);
-
+    
     // 如果問題已回答，則退出
     if (answeredQuestions.has(questionId)) return;
     answeredQuestions.add(questionId);
-
+    
     // 如果已回答或遊戲結束，則退出
     if (answered || gameOver) return;
     answered = true;
     clearInterval(timer);
-
+    
     // 樣式處理：禁用按鈕並高亮正確答案
     const buttons = document.querySelectorAll('#options button');
     const correctIndex = window.currentQuestion.correctIndex;
@@ -1634,7 +1634,7 @@ function checkAnswer(isCorrect, questionId) {
             `;
         }
     });
-
+    
     // 傷害計算
     let baseDamage;
     if (isCorrect) {
@@ -1642,7 +1642,7 @@ function checkAnswer(isCorrect, questionId) {
     } else {
         baseDamage = Math.floor(Math.random() * 31) + 50; // 答錯時 50-80 點
     }
-
+    
     // 霸刀門雙倍攻擊（30% 概率）
     if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
         baseDamage *= 2;
@@ -1657,12 +1657,12 @@ function checkAnswer(isCorrect, questionId) {
     } else if (isCorrect) {
         soundEffects.attack.play();
     }
-
+    
     // 震動效果
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
-
+    
     // 影流教閃避（30% 概率）
     if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
         baseDamage = 0;
@@ -1670,56 +1670,39 @@ function checkAnswer(isCorrect, questionId) {
         dodgeDisplay.style.display = 'block';
         setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
     }
-
-    // 計算最終傷害
-    let damage;
-    if (isCorrect) {
-        damage = Math.floor(baseDamage * playerClass.attack / opponentDefense);
-    } else {
-        damage = Math.floor(baseDamage / playerClass.defense);
-        if (playerClass.type === 'mage') {
-            damage = Math.floor(damage * 0.7);
-            const reduceDisplay = document.getElementById('reduceDamageText');
-            reduceDisplay.style.display = 'block';
-            setTimeout(() => reduceDisplay.style.display = 'none', 1200);
-        }
-    }
-
-    // 動畫效果
-    const targetElement = isCorrect ? document.getElementById('opponentHealthBar') : document.getElementById('myHealthBar');
-    targetElement.classList.add('damage-flash');
-    document.getElementById('gameArea').classList.add('screen-shake');
-    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.add('damage-effect'));
-
-    // 移除動畫
-    setTimeout(() => {
-        targetElement.classList.remove('damage-flash');
-        document.getElementById('gameArea').classList.remove('screen-shake');
-        document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    }, 500);
-
-    // 更新資料庫
-    const updates = {};
-    const playerPath = isHost ? 'player1' : 'player2';
-    const opponentPath = isHost ? 'player2' : 'player1';
-    if (isCorrect) {
-        updates[`${opponentPath}/health`] = firebase.database.ServerValue.increment(-damage);
-    } else {
-        updates[`${playerPath}/health`] = firebase.database.ServerValue.increment(-damage);
-    }
-
-    // 鐵甲宗恢復邏輯
-    if (playerClass.type === 'tank' && !hasHealedThisTurn) {
-        console.log('Before tank heal, hasHealedThisTurn:', hasHealedThisTurn);
-        hasHealedThisTurn = true;
-        // 從資料庫獲取房間數據以確保 maxHealth 可用
-        database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
-            const room = snapshot.val();
-            if (room && room[playerPath]) {
-                const maxHealth = room[playerPath].maxHealth;
+    
+    // 從資料庫獲取房間數據並處理氣血更新
+    database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
+        const room = snapshot.val();
+        if (!room) return;
+        
+        const playerPath = isHost ? 'player1' : 'player2';
+        const opponentPath = isHost ? 'player2' : 'player1';
+        const playerData = room[playerPath];
+        const opponentData = room[opponentPath];
+        const maxHealth = playerData.maxHealth;
+        
+        let totalPlayerHealthChange = 0;
+        let opponentHealthChange = 0;
+        
+        if (isCorrect) {
+            const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
+            opponentHealthChange -= damageToOpponent;
+        } else {
+            let damageToPlayer = Math.floor(baseDamage / playerClass.defense);
+            if (playerClass.type === 'mage') {
+                damageToPlayer = Math.floor(damageToPlayer * 0.7);
+                const reduceDisplay = document.getElementById('reduceDamageText');
+                reduceDisplay.style.display = 'block';
+                setTimeout(() => reduceDisplay.style.display = 'none', 1200);
+            }
+            totalPlayerHealthChange -= damageToPlayer;
+            
+            // 鐵甲宗恢復邏輯：合併傷害與恢復
+            if (playerClass.type === 'tank' && !hasHealedThisTurn) {
+                hasHealedThisTurn = true;
                 const healAmount = Math.round(maxHealth * 0.02);
-                updates[`${playerPath}/health`] = firebase.database.ServerValue.increment(healAmount);
-                
+                totalPlayerHealthChange += healAmount;
                 // UI 更新
                 const myHealthElement = document.getElementById('myHealth');
                 const shieldIcon = document.createElement('span');
@@ -1727,97 +1710,114 @@ function checkAnswer(isCorrect, questionId) {
                 shieldIcon.innerHTML = '🛡️';
                 myHealthElement.appendChild(shieldIcon);
                 setTimeout(() => shieldIcon.remove(), 1000);
-
                 console.log('Tank heal triggered, healAmount:', healAmount);
-            } else {
-                console.error('Room data unavailable for healing logic');
             }
-
-            // 執行資料庫更新（包含傷害與恢復）
-            performDatabaseUpdate(updates);
-        }).catch(error => {
-            console.error('Failed to fetch room data for healing:', error);
-            performDatabaseUpdate(updates); // 即使獲取失敗，仍嘗試更新傷害
-        });
-    } else {
-        // 非鐵甲宗或已恢復，直接更新傷害
-        performDatabaseUpdate(updates);
-    }
-
-    // 特效元素
-    let effectElement = document.createElement('div');
-    if (playerClass.type === 'warrior' && isCorrect) {
-        effectElement.className = 'sword-animation';
-        effectElement.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255,215,0,0.7) 50%, transparent 100%)';
-        effectElement.style.width = '150px';
-        effectElement.style.height = '30px';
-        effectElement.style.position = 'fixed';
-        effectElement.style.top = '50%';
-    } else if (playerClass.type === 'tank' && !isCorrect) {
-        effectElement.className = 'shield-animation';
-        effectElement.innerHTML = '🛡️';
-        effectElement.style.fontSize = '4rem';
-        effectElement.style.position = 'fixed';
-        effectElement.style.left = '50%';
-        effectElement.style.transform = 'translateX(-50%)';
-    }
-    if (effectElement.className) {
-        document.body.appendChild(effectElement);
-        setTimeout(() => effectElement.remove(), 1000);
-    }
-
-    // 後續特效
-    setTimeout(() => {
-        const buttons = document.querySelectorAll('#options button');
-        const correctIndex = window.currentQuestion.correctIndex;
-        if (buttons[correctIndex]) {
-            buttons[correctIndex].style.cssText = `
-                background: #2ecc71 !important;
-                border: 2px solid #27ae60 !important;
-                transform: scale(1.05);
-            `;
         }
-    }, 50);
-
-    const flash = document.createElement('div');
-    flash.className = 'sword-flash';
-    const startX = isHost ? '20%' : '80%';
-    flash.style.left = startX;
-    flash.style.top = `${Math.random() * 40 + 30}%`;
-    document.body.appendChild(flash);
-    setTimeout(() => flash.remove(), 400);
-    if (!isCorrect) {
-        flash.style.background = `linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,100,100,0.7) 50%, rgba(255,255,255,0) 100%)`;
-    }
-
-    const gameArea = document.getElementById('gameArea');
-    gameArea.style.boxShadow = `0 0 30px ${isCorrect ? '#2ecc71' : '#e74c3c'}`;
-    setTimeout(() => gameArea.style.boxShadow = '0 0 20px var(--gold)', 300);
-
-    const healthBar = isCorrect ? document.getElementById('opponentHealthBar') : document.getElementById('myHealthBar');
-    const wave = document.createElement('div');
-    wave.className = 'health-wave';
-    wave.style.background = `linear-gradient(90deg, transparent 0%, ${isCorrect ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'} 50%, transparent 100%)`;
-    healthBar.appendChild(wave);
-    setTimeout(() => wave.remove(), 500);
-
-    const hitText = document.createElement('div');
-    hitText.className = 'hit-marker';
-    hitText.textContent = `-${damage}`;
-    if (isCorrect) {
-        const opponentHealthContainer = document.getElementById('enemyHealthContainer');
-        hitText.style.position = 'absolute';
-        hitText.style.left = `${Math.random() * opponentHealthContainer.offsetWidth + opponentHealthContainer.offsetLeft}px`;
-        hitText.style.top = `${opponentHealthContainer.offsetTop + opponentHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-        opponentHealthContainer.appendChild(hitText);
-    } else {
-        const myHealthContainer = document.getElementById('myHealthContainer');
-        hitText.style.position = 'absolute';
-        hitText.style.left = `${Math.random() * myHealthContainer.offsetWidth + myHealthContainer.offsetLeft}px`;
-        hitText.style.top = `${myHealthContainer.offsetTop + myHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-        myHealthContainer.appendChild(hitText);
-    }
-    setTimeout(() => hitText.remove(), 300);
+        
+        // 應用健康變化
+        const updates = {};
+        if (totalPlayerHealthChange !== 0) {
+            updates[`${playerPath}/health`] = firebase.database.ServerValue.increment(totalPlayerHealthChange);
+        }
+        if (opponentHealthChange !== 0) {
+            updates[`${opponentPath}/health`] = firebase.database.ServerValue.increment(opponentHealthChange);
+        }
+        
+        // 執行資料庫更新
+        performDatabaseUpdate(updates);
+        
+        // 動畫效果
+        const targetElement = isCorrect ? document.getElementById('opponentHealthBar') : document.getElementById('myHealthBar');
+        targetElement.classList.add('damage-flash');
+        document.getElementById('gameArea').classList.add('screen-shake');
+        document.querySelectorAll('.health-fill').forEach(bar => bar.classList.add('damage-effect'));
+        
+        // 移除動畫
+        setTimeout(() => {
+            targetElement.classList.remove('damage-flash');
+            document.getElementById('gameArea').classList.remove('screen-shake');
+            document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
+        }, 500);
+        
+        // 特效元素
+        let effectElement = document.createElement('div');
+        if (playerClass.type === 'warrior' && isCorrect) {
+            effectElement.className = 'sword-animation';
+            effectElement.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255,215,0,0.7) 50%, transparent 100%)';
+            effectElement.style.width = '150px';
+            effectElement.style.height = '30px';
+            effectElement.style.position = 'fixed';
+            effectElement.style.top = '50%';
+        } else if (playerClass.type === 'tank' && !isCorrect) {
+            effectElement.className = 'shield-animation';
+            effectElement.innerHTML = '🛡️';
+            effectElement.style.fontSize = '4rem';
+            effectElement.style.position = 'fixed';
+            effectElement.style.left = '50%';
+            effectElement.style.transform = 'translateX(-50%)';
+        }
+        if (effectElement.className) {
+            document.body.appendChild(effectElement);
+            setTimeout(() => effectElement.remove(), 1000);
+        }
+        
+        // 後續特效
+        setTimeout(() => {
+            const buttons = document.querySelectorAll('#options button');
+            const correctIndex = window.currentQuestion.correctIndex;
+            if (buttons[correctIndex]) {
+                buttons[correctIndex].style.cssText = `
+                    background: #2ecc71 !important;
+                    border: 2px solid #27ae60 !important;
+                    transform: scale(1.05);
+                `;
+            }
+        }, 50);
+        
+        const flash = document.createElement('div');
+        flash.className = 'sword-flash';
+        const startX = isHost ? '20%' : '80%';
+        flash.style.left = startX;
+        flash.style.top = `${Math.random() * 40 + 30}%`;
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 400);
+        
+        if (!isCorrect) {
+            flash.style.background = `linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,100,100,0.7) 50%, rgba(255,255,255,0) 100%)`;
+        }
+        
+        const gameArea = document.getElementById('gameArea');
+        gameArea.style.boxShadow = `0 0 30px ${isCorrect ? '#2ecc71' : '#e74c3c'}`;
+        setTimeout(() => gameArea.style.boxShadow = '0 0 20px var(--gold)', 300);
+        
+        const healthBar = isCorrect ? document.getElementById('opponentHealthBar') : document.getElementById('myHealthBar');
+        const wave = document.createElement('div');
+        wave.className = 'health-wave';
+        wave.style.background = `linear-gradient(90deg, transparent 0%, ${isCorrect ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'} 50%, transparent 100%)`;
+        healthBar.appendChild(wave);
+        setTimeout(() => wave.remove(), 500);
+        
+        const damage = isCorrect ? Math.floor(baseDamage * playerClass.attack / opponentData.defense) : Math.floor(baseDamage / playerClass.defense) * (playerClass.type === 'mage' ? 0.7 : 1);
+        const hitText = document.createElement('div');
+        hitText.className = 'hit-marker';
+        hitText.textContent = `-${damage}`;
+        if (isCorrect) {
+            const opponentHealthContainer = document.getElementById('enemyHealthContainer');
+            hitText.style.position = 'absolute';
+            hitText.style.left = `${Math.random() * opponentHealthContainer.offsetWidth + opponentHealthContainer.offsetLeft}px`;
+            hitText.style.top = `${opponentHealthContainer.offsetTop + opponentHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
+            opponentHealthContainer.appendChild(hitText);
+        } else {
+            const myHealthContainer = document.getElementById('myHealthContainer');
+            hitText.style.position = 'absolute';
+            hitText.style.left = `${Math.random() * myHealthContainer.offsetWidth + myHealthContainer.offsetLeft}px`;
+            hitText.style.top = `${myHealthContainer.offsetTop + myHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
+            myHealthContainer.appendChild(hitText);
+        }
+        setTimeout(() => hitText.remove(), 300);
+    }).catch(error => {
+        console.error('Failed to fetch room data:', error);
+    });
 }
 
 // 將資料庫更新邏輯提取為獨立函數
