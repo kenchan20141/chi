@@ -3360,24 +3360,6 @@ function showDamageAnimation(damage, target) {
     function showHealAnimation(healAmount, target) {
     const healthContainerId = target === 'enemy' ? 'enemyHealthContainer' : 'myHealthContainer';
     const healthContainer = document.getElementById(healthContainerId);
-        const gif = document.createElement('img');
-    gif.src = 'https://i.ibb.co/CrGK4CR/image.gif';
-    gif.style.position = 'absolute';
-    gif.style.right = '10px'; // 顯示在氣血條右側
-    gif.style.top = '50%'; // 垂直居中
-    gif.style.transform = 'translateY(-50%)'; // 確保精確居中
-    gif.style.width = '50px'; // 設置 GIF 寬度
-    gif.style.height = '50px'; // 設置 GIF 高度
-    gif.style.zIndex = '1000'; // 確保 GIF 在氣血條上方
-    healthContainer.appendChild(gif);
-
-// 2秒後移除 GIF
-    setTimeout(() => {
-        if (healthContainer.contains(gif)) {
-            healthContainer.removeChild(gif);
-        }
-    }, 2000);
-        
     const healthBar = healthContainer.querySelector('.health-bar');
     const rect = healthBar.getBoundingClientRect();
 
