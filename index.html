@@ -1657,7 +1657,7 @@ function checkAnswer(isCorrect, questionId) {
         navigator.vibrate(200);
     }
     // 影流教閃避（30% 概率）
-    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
+    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.9) {
         baseDamage = 0;
         const dodgeDisplay = document.getElementById('dodgeText');
         dodgeDisplay.style.display = 'block';
