@@ -176,12 +176,26 @@
 }
     }
 
+        .heal-marker {
+    color: green;
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: floatUp 0.3s ease-out forwards;
+}
+
     /* 答題命中特效 */
     @keyframes hitMarker {
         0% { transform: scale(0); opacity: 0; }
         50% { transform: scale(1.2); opacity: 1; }
         100% { transform: scale(1); opacity: 0; }
     }
+
+        .hit-marker {
+    color: red;
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: floatUp 0.3s ease-out forwards;
+}
 
     .hit-marker {
         position: absolute;
@@ -191,6 +205,13 @@
         text-shadow: 0 0 10px rgba(255,0,0,0.5);
     }
 
+
+
+        @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+        
         
         /* 新增動畫效果 */
 @keyframes damageFlash {
@@ -1682,12 +1703,13 @@ function checkAnswer(isCorrect, questionId) {
         const opponentData = room[opponentPath];
         const maxHealth = playerData.maxHealth;
         
-        let totalPlayerHealthChange = 0;
-        let opponentHealthChange = 0;
+        let updates = {};
         
         if (isCorrect) {
             const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
-            opponentHealthChange -= damageToOpponent;
+            updates[`${opponentPath}/health`] = firebase.database.ServerValue.increment(-damageToOpponent);
+            // 展示對手傷害效果
+            showDamageEffect('opponent', damageToOpponent);
         } else {
             let damageToPlayer = Math.floor(baseDamage / playerClass.defense);
             if (playerClass.type === 'mage') {
@@ -1696,35 +1718,29 @@ function checkAnswer(isCorrect, questionId) {
                 reduceDisplay.style.display = 'block';
                 setTimeout(() => reduceDisplay.style.display = 'none', 1200);
             }
-            totalPlayerHealthChange -= damageToPlayer;
+            // 先更新傷害
+            updates[`${playerPath}/health`] = firebase.database.ServerValue.increment(-damageToPlayer);
+            // 展示玩家傷害效果
+            showDamageEffect('player', damageToPlayer);
             
-            // 鐵甲宗恢復邏輯：合併傷害與恢復
+            // 鐵甲宗恢復邏輯
             if (playerClass.type === 'tank' && !hasHealedThisTurn) {
                 hasHealedThisTurn = true;
                 const healAmount = Math.round(maxHealth * 0.02);
-                totalPlayerHealthChange += healAmount;
-                // UI 更新
-                const myHealthElement = document.getElementById('myHealth');
-                const shieldIcon = document.createElement('span');
-                shieldIcon.className = 'shield-icon';
-                shieldIcon.innerHTML = '🛡️';
-                myHealthElement.appendChild(shieldIcon);
-                setTimeout(() => shieldIcon.remove(), 1000);
-                console.log('Tank heal triggered, healAmount:', healAmount);
+                // 延遲展示恢復效果
+                setTimeout(() => {
+                    database.ref('rooms/' + currentRoomId).update({
+                        [`${playerPath}/health`]: firebase.database.ServerValue.increment(healAmount)
+                    });
+                    showHealEffect('player', healAmount);
+                }, 500); // 延遲 500ms 展示恢復
             }
         }
         
-        // 應用健康變化
-        const updates = {};
-        if (totalPlayerHealthChange !== 0) {
-            updates[`${playerPath}/health`] = firebase.database.ServerValue.increment(totalPlayerHealthChange);
+        // 執行傷害的資料庫更新
+        if (Object.keys(updates).length > 0) {
+            performDatabaseUpdate(updates);
         }
-        if (opponentHealthChange !== 0) {
-            updates[`${opponentPath}/health`] = firebase.database.ServerValue.increment(opponentHealthChange);
-        }
-        
-        // 執行資料庫更新
-        performDatabaseUpdate(updates);
         
         // 動畫效果
         const targetElement = isCorrect ? document.getElementById('opponentHealthBar') : document.getElementById('myHealthBar');
@@ -1796,28 +1812,36 @@ function checkAnswer(isCorrect, questionId) {
         wave.style.background = `linear-gradient(90deg, transparent 0%, ${isCorrect ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'} 50%, transparent 100%)`;
         healthBar.appendChild(wave);
         setTimeout(() => wave.remove(), 500);
-        
-        const damage = isCorrect ? Math.floor(baseDamage * playerClass.attack / opponentData.defense) : Math.floor(baseDamage / playerClass.defense) * (playerClass.type === 'mage' ? 0.7 : 1);
-        const hitText = document.createElement('div');
-        hitText.className = 'hit-marker';
-        hitText.textContent = `-${damage}`;
-        if (isCorrect) {
-            const opponentHealthContainer = document.getElementById('enemyHealthContainer');
-            hitText.style.position = 'absolute';
-            hitText.style.left = `${Math.random() * opponentHealthContainer.offsetWidth + opponentHealthContainer.offsetLeft}px`;
-            hitText.style.top = `${opponentHealthContainer.offsetTop + opponentHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-            opponentHealthContainer.appendChild(hitText);
-        } else {
-            const myHealthContainer = document.getElementById('myHealthContainer');
-            hitText.style.position = 'absolute';
-            hitText.style.left = `${Math.random() * myHealthContainer.offsetWidth + myHealthContainer.offsetLeft}px`;
-            hitText.style.top = `${myHealthContainer.offsetTop + myHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-            myHealthContainer.appendChild(hitText);
-        }
-        setTimeout(() => hitText.remove(), 300);
     }).catch(error => {
         console.error('Failed to fetch room data:', error);
     });
+}
+
+// 展示傷害效果
+function showDamageEffect(target, damage) {
+    const hitText = document.createElement('div');
+    hitText.className = 'hit-marker';
+    hitText.textContent = `-${damage}`;
+    const healthContainer = target === 'player' ? document.getElementById('myHealthContainer') : document.getElementById('enemyHealthContainer');
+    hitText.style.position = 'absolute';
+    hitText.style.left = `${Math.random() * healthContainer.offsetWidth + healthContainer.offsetLeft}px`;
+    hitText.style.top = `${healthContainer.offsetTop + healthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
+    healthContainer.appendChild(hitText);
+    setTimeout(() => hitText.remove(), 300);
+}
+
+// 展示恢復效果
+function showHealEffect(target, healAmount) {
+    const healText = document.createElement('div');
+    healText.className = 'heal-marker';
+    healText.textContent = `+${healAmount}`;
+    healText.style.color = 'green';
+    const healthContainer = target === 'player' ? document.getElementById('myHealthContainer') : document.getElementById('enemyHealthContainer');
+    healText.style.position = 'absolute';
+    healText.style.left = `${Math.random() * healthContainer.offsetWidth + healthContainer.offsetLeft}px`;
+    healText.style.top = `${healthContainer.offsetTop + healthContainer.offsetHeight / 2 - healText.offsetHeight / 2}px`;
+    healthContainer.appendChild(healText);
+    setTimeout(() => healText.remove(), 300);
 }
 
 // 將資料庫更新邏輯提取為獨立函數
@@ -1827,7 +1851,6 @@ function performDatabaseUpdate(updates) {
         if (error) {
             console.error('Database update failed:', error);
             alert('更新遊戲狀態失敗，請重試。');
-            // 即使更新失敗，也重置按鈕並繼續遊戲
             resetButtonsAndProceed();
             return;
         }
