@@ -1670,7 +1670,7 @@ function checkAnswer(isCorrect, questionId) {
             const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
 
             // 檢查對手是否為影流教並嘗試閃避
-            if (opponentData.class === 'assassin' && Math.random() < 0.3) { // 假設閃避率為 30%
+            if (opponentData.class === 'assassin' && Math.random() < 0.9) { // 假設閃避率為 30%
                 // 閃避成功，不扣減氣血，並觸發動畫
                 const dodgeDisplay = document.getElementById('dodgeText');
                 dodgeDisplay.style.display = 'block';
