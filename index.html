@@ -1696,6 +1696,18 @@ function checkAnswer(isCorrect, questionId) {
             const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
             let damageToPlayer = Math.floor(baseDamage / selfDefense);
             if (playerClass.type === 'mage') {
+// 顯示 reduceDamageText 和動畫
+            const reduceText = document.getElementById('reduceDamageText');
+            const reduceAnimation = document.getElementById('reduceDamageAnimation');
+            reduceText.style.display = 'block';
+            reduceAnimation.style.display = 'block';
+
+            // 2秒後隱藏 reduceDamageText 和動畫
+            setTimeout(() => {
+                reduceText.style.display = 'none';
+                reduceAnimation.style.display = 'none';
+            }, 2000);
+                
                 damageToPlayer = Math.floor(damageToPlayer * 0.7);
                 const reduceDisplay = document.getElementById('reduceDamageText');
                 reduceDisplay.style.display = 'block';
@@ -3795,7 +3807,7 @@ function listenToRoomChanges() {
 
 <!-- 新增减伤提示 -->
 <div id="reduceDamageText" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ffff; text-shadow:0 0 10px rgba(0,255,255,0.5);">🔥 離火護體 傷害減少30%</div>
-
+<img id="reduceDamageAnimation" src="https://i.ibb.co/cK6LJK1M/unscreen-1.gif" style="display:none; position:fixed; top:40%; left:60%; transform:translate(-50%,-50%); width:100px; height:100px; z-index:10001;">
 
 
     
