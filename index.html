@@ -1644,7 +1644,7 @@ function checkAnswer(isCorrect, questionId) {
     }
 
     // 霸刀門雙倍攻擊（30% 概率）
-    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.9) { // 修正概率為 0.3
+    if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
         baseDamage *= 2;
         const swordFlash = document.createElement('div');
         swordFlash.className = 'sword-flash';
@@ -1733,14 +1733,15 @@ function checkAnswer(isCorrect, questionId) {
                 console.error('Room data unavailable for healing logic');
             }
 
-            // 執行資料庫更新
+            // 執行資料庫更新（包含傷害與恢復）
             performDatabaseUpdate(updates);
         }).catch(error => {
             console.error('Failed to fetch room data for healing:', error);
-            performDatabaseUpdate(updates); // 即使獲取失敗，仍嘗試更新
+            performDatabaseUpdate(updates); // 即使獲取失敗，仍嘗試更新傷害
         });
     } else {
-        performDatabaseUpdate(updates); // 非鐵甲宗直接更新
+        // 非鐵甲宗或已恢復，直接更新傷害
+        performDatabaseUpdate(updates);
     }
 
     // 特效元素
