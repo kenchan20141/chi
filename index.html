@@ -1681,7 +1681,9 @@ function checkAnswer(isCorrect, questionId) {
                 return newHealth;
             });
         } else {
-            let damageToPlayer = Math.floor(baseDamage / playerClass.defense);
+            // 動態調整防禦力：鐵甲宗錯答時使用1.0，其他職業使用原始防禦力
+            const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
+            let damageToPlayer = Math.floor(baseDamage / selfDefense);
             if (playerClass.type === 'mage') {
                 damageToPlayer = Math.floor(damageToPlayer * 0.7);
                 const reduceDisplay = document.getElementById('reduceDamageText');
