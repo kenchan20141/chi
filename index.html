@@ -1778,24 +1778,7 @@ function checkAnswer(isCorrect, questionId) {
         wave.style.background = `linear-gradient(90deg, transparent 0%, ${isCorrect ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'} 50%, transparent 100%)`;
         healthBar.appendChild(wave);
         setTimeout(() => wave.remove(), 500);
-        const damage = isCorrect ? Math.floor(baseDamage * playerClass.attack / opponentData.defense) : Math.floor(baseDamage / playerClass.defense) * (playerClass.type === 'mage' ? 0.7 : 1);
-        const hitText = document.createElement('div');
-        hitText.className = 'hit-marker';
-        hitText.textContent = `-${damage}`;
-        if (isCorrect) {
-            const opponentHealthContainer = document.getElementById('enemyHealthContainer');
-            hitText.style.position = 'absolute';
-            hitText.style.left = `${Math.random() * opponentHealthContainer.offsetWidth + opponentHealthContainer.offsetLeft}px`;
-            hitText.style.top = `${opponentHealthContainer.offsetTop + opponentHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-            opponentHealthContainer.appendChild(hitText);
-        } else {
-            const myHealthContainer = document.getElementById('myHealthContainer');
-            hitText.style.position = 'absolute';
-            hitText.style.left = `${Math.random() * myHealthContainer.offsetWidth + myHealthContainer.offsetLeft}px`;
-            hitText.style.top = `${myHealthContainer.offsetTop + myHealthContainer.offsetHeight / 2 - hitText.offsetHeight / 2}px`;
-            myHealthContainer.appendChild(hitText);
-        }
-        setTimeout(() => hitText.remove(), 300);
+       
     }).catch(error => {
         console.error('Failed to fetch room data:', error);
     });
