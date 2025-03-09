@@ -15,12 +15,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>  
 
-
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    100% { opacity: 0; display: none; }
-}
-        
 .difficulty-icon {
     width: 140px;
     height: 140px;
@@ -941,7 +935,7 @@
     </style>
 </head>
 <body>
-   <div id="introAnimation" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: url('https://i.ibb.co/RWW0Xqc/image.png') center/cover no-repeat; animation: fadeOut 1.2s ease forwards;"></div>
+    <canvas id="animationCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;"></canvas>
     <button class="music-control" onclick="toggleMusic()">🎵</button>
     
 
@@ -1115,12 +1109,6 @@
     ">0000</span> 已開啟，靜候來者...
 </div>
 
-<div id="vsAnimation" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:black; z-index:10002;">
-  <img src="https://i.ibb.co/W4K1x37y/VS-unscreen.gif" style="width:100%; height:100%; object-fit:contain;">
-</div>
-
-
-    
     <div id="gameArea">
         <div class="decorative-border"></div>
         <!-- 敵方血條移至頂部 -->
@@ -1321,11 +1309,70 @@ const expRewards = {
 
 // Canvas 動畫代碼
 window.onload = function() {
-    const intro = document.getElementById('introAnimation');
-    setTimeout(() => {
-        intro.style.display = 'none';
+    const canvas = document.getElementById('animationCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 設置 Canvas 大小為全屏
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const img = new Image();
+    img.src = 'https://i.ibb.co/RWW0Xqc/image.png';
+    img.crossOrigin = 'Anonymous';
+
+    img.onload = function() {
+        // 全屏調整圖片大小（保持比例，覆蓋螢幕）
+        let imgWidth, imgHeight, imgX, imgY;
+        const aspectRatio = img.width / img.height;
+        const canvasRatio = canvas.width / canvas.height;
+
+        if (aspectRatio > canvasRatio) {
+            imgHeight = canvas.height;
+            imgWidth = imgHeight * aspectRatio;
+            imgX = (canvas.width - imgWidth) / 2;
+            imgY = 0;
+        } else {
+            imgWidth = canvas.width;
+            imgHeight = imgWidth / aspectRatio;
+            imgX = 0;
+            imgY = (canvas.height - imgHeight) / 2;
+        }
+
+        // 初始繪製全屏圖片
+        ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+
+        // 動畫邏輯
+        let startTime = Date.now();
+        const duration = 2; // 2秒動畫
+
+        function animate() {
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            const progress = Math.min(elapsedTime / duration, 1);
+
+            // 清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製圖片並漸變透明度
+            ctx.globalAlpha = 1 - progress; // 透明度從 1 到 0
+            ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+            ctx.globalAlpha = 1; // 重置透明度
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                canvas.style.display = 'none';
+                document.getElementById('roomControl').style.display = 'block';
+            }
+        }
+
+        requestAnimationFrame(animate);
+    };
+
+    img.onerror = function() {
+        console.error('圖片載入失敗，跳過動畫');
+        canvas.style.display = 'none';
         document.getElementById('roomControl').style.display = 'block';
-    }, 2000);
+    };
 };
 
 
@@ -1481,57 +1528,55 @@ function selectTopic(topic) {
     });
 }
     
-function startCountdown() {
-  database.ref(`rooms/${currentRoomId}`).once('value').then(snapshot => {
-    const room = snapshot.val();
-    if (!room || room.countdownStarted || room.gameStarted || !room.topicSelected) {
-      console.log('未滿足倒數條件：', {
-        countdownStarted: room?.countdownStarted,
-        gameStarted: room?.gameStarted,
-        topicSelected: room?.topicSelected
-      });
-      return;
-    }
+ function startCountdown() {
+    database.ref(`rooms/${currentRoomId}`).once('value').then(snapshot => {
+        const room = snapshot.val();
+        // 添加檢查：確保題庫已選擇且遊戲未開始
+        if (!room || room.countdownStarted || room.gameStarted || !room.topicSelected) {
+            console.log('未滿足倒數條件：', {
+                countdownStarted: room?.countdownStarted,
+                gameStarted: room?.gameStarted,
+                topicSelected: room?.topicSelected
+            });
+            return;
+        }
 
-    // 設置倒數計時開始標誌
-    database.ref(`rooms/${currentRoomId}`).update({ countdownStarted: true });
+        // 設置倒數計時開始標誌
+        database.ref(`rooms/${currentRoomId}`).update({ countdownStarted: true });
 
-    let countdown = 3;
-    const countdownElement = document.createElement('div');
-    countdownElement.id = 'countdown';
-    countdownElement.style.position = 'fixed';
-    countdownElement.style.top = '0';
-    countdownElement.style.left = '0';
-    countdownElement.style.width = '100%';
-    countdownElement.style.height = '100%';
-    countdownElement.style.display = 'flex';
-    countdownElement.style.alignItems = 'center';
-    countdownElement.style.justifyContent = 'center';
-    countdownElement.style.background = 'rgba(45, 41, 38, 0.95)';
-    countdownElement.style.color = 'var(--gold)';
-    countdownElement.style.fontSize = '10rem';
-    countdownElement.style.zIndex = '10001';
-    document.body.appendChild(countdownElement);
+        let countdown = 3;
+        const countdownElement = document.createElement('div');
+        countdownElement.id = 'countdown';
+        countdownElement.style.position = 'fixed';
+        countdownElement.style.top = '0';
+        countdownElement.style.left = '0';
+        countdownElement.style.width = '100%';
+        countdownElement.style.height = '100%';
+        countdownElement.style.display = 'flex';
+        countdownElement.style.alignItems = 'center';
+        countdownElement.style.justifyContent = 'center';
+        countdownElement.style.background = 'rgba(45, 41, 38, 0.95)';
+        countdownElement.style.color = 'var(--gold)';
+        countdownElement.style.fontSize = '10rem';
+        countdownElement.style.zIndex = '10001';
+        document.body.appendChild(countdownElement);
 
-    function updateCountdown() {
-      if (countdown > 0) {
-        countdownElement.textContent = countdown;
-        countdown--;
-        setTimeout(updateCountdown, 1000);
-      } else {
-        countdownElement.remove();
-        // 顯示 VS 動畫
-        document.getElementById('vsAnimation').style.display = 'block';
-        // 設置動畫播放時間，例如 2 秒
-        setTimeout(() => {
-          document.getElementById('vsAnimation').style.display = 'none';
-          // 開始遊戲
-          startGame();
-        }, 2000);
-      }
-    }
-    updateCountdown();
-  });
+        function updateCountdown() {
+            if (countdown > 0) {
+                countdownElement.textContent = countdown;
+                countdown--;
+                setTimeout(updateCountdown, 1000);
+            } else {
+                countdownElement.remove();
+                // 結束後統一設置遊戲開始並重置倒數標誌
+                database.ref(`rooms/${currentRoomId}`).update({
+                    gameStarted: true,
+                    countdownStarted: false
+                });
+            }
+        }
+        updateCountdown();
+    });
 }
 
 function displayQuestion(question) {
