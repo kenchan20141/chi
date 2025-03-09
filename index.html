@@ -3625,6 +3625,10 @@ document.getElementById('showLeaderboardBtn').onclick = function() {
         document.body.appendChild(leaderboardDiv);
     });
 };
+
+    document.getElementById('showStoryBtn').onclick = function() {
+    document.getElementById('storyModal').style.display = 'block';
+};
     
 function handleRematchRequest() {
     if (isRematching) return;
