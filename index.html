@@ -1656,13 +1656,6 @@ function checkAnswer(isCorrect, questionId) {
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
-    // 影流教閃避（30% 概率）
-    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.9) {
-        baseDamage = 0;
-        const dodgeDisplay = document.getElementById('dodgeText');
-        dodgeDisplay.style.display = 'block';
-        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
-    }
     // 從資料庫獲取房間數據並處理氣血更新
     database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
         const room = snapshot.val();
@@ -1675,11 +1668,21 @@ function checkAnswer(isCorrect, questionId) {
 
         if (isCorrect) {
             const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
-            database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
-                const newHealth = Math.max(0, currentHealth - damageToOpponent);
-                showDamageAnimation(damageToOpponent, 'enemy');
-                return newHealth;
-            });
+
+            // 檢查對手是否為影流教並嘗試閃避
+            if (opponentData.class === 'assassin' && Math.random() < 0.3) { // 假設閃避率為 30%
+                // 閃避成功，不扣減氣血，並觸發動畫
+                const dodgeDisplay = document.getElementById('dodgeText');
+                dodgeDisplay.style.display = 'block';
+                setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
+            } else {
+                // 正常扣減對手氣血
+                database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
+                    const newHealth = Math.max(0, currentHealth - damageToOpponent);
+                    showDamageAnimation(damageToOpponent, 'enemy');
+                    return newHealth;
+                });
+            }
         } else {
             // 動態調整防禦力：鐵甲宗錯答時使用1.0，其他職業使用原始防禦力
             const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
@@ -1795,7 +1798,6 @@ function checkAnswer(isCorrect, questionId) {
         loadNewQuestion();
     }, 700);
 }
-
 // 將資料庫更新邏輯提取為獨立函數
 function performDatabaseUpdate(updates) {
     console.log('Performing database update with:', updates);
