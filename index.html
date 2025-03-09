@@ -3615,7 +3615,6 @@ document.getElementById('showLeaderboardBtn').onclick = function() {
     });
 };
     
-
 function handleRematchRequest() {
     if (isRematching) return;
     isRematching = true;
@@ -3656,20 +3655,20 @@ function handleRematchRequest() {
 
         // 重置本地狀態
         gameOver = false;
-        answered = false;
+        answered = false;           // 重置回答狀態，讓新問題可以被回答
+        answeredQuestions.clear();  // 清空已回答問題集合，避免問題重複判定
+        hasHealedThisTurn = false;  // 重置回合恢復狀態（若適用）
         document.getElementById('gameArea').style.display = 'none';
         document.getElementById('classSelection').style.display = 'block';
 
-// **新增代碼：重置 topicSelection 的顯示狀態**
+        // 重置 topicSelection 的顯示狀態
         document.getElementById('topicSelection').style.display = 'none'; // 確保整個題庫選擇界面隱藏
         document.getElementById('gradeSelection').style.display = 'grid'; // 顯示年級選擇
         document.getElementById('topicDetail').style.display = 'none';    // 隱藏題庫選擇
         document.getElementById('selectedGrade').textContent = '';       // 清空選中年級文字
         document.getElementById('topicList').innerHTML = '';             // 清空題庫列表
-        
     });
 }
-
 
 function listenToRoomChanges() {
     const roomRef = database.ref('rooms/' + currentRoomId);
