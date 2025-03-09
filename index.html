@@ -1656,13 +1656,6 @@ function checkAnswer(isCorrect, questionId) {
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
-    // 影流教閃避（30% 概率）
-    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
-        baseDamage = 0;
-        const dodgeDisplay = document.getElementById('dodgeText');
-        dodgeDisplay.style.display = 'block';
-        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
-    }
     // 從資料庫獲取房間數據並處理氣血更新
     database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
         const room = snapshot.val();
@@ -1674,12 +1667,17 @@ function checkAnswer(isCorrect, questionId) {
         const maxHealth = playerData.maxHealth;
 
         if (isCorrect) {
+            // 計算傷害並添加到敵方的 damageQueue
             const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
-            database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
-                const newHealth = Math.max(0, currentHealth - damageToOpponent);
-                showDamageAnimation(damageToOpponent, 'enemy');
-                return newHealth;
-            });
+            const damageEntry = {
+                timestamp: Date.now(),
+                damage: damageToOpponent
+            };
+            database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/damageQueue/' + damageEntry.timestamp)
+                .set(damageEntry)
+                .then(() => {
+                    console.log(`Added ${damageToOpponent} damage to ${opponentPath}'s damageQueue`);
+                });
         } else {
             // 動態調整防禦力：鐵甲宗錯答時使用1.0，其他職業使用原始防禦力
             const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
@@ -3751,7 +3749,41 @@ if (room.hostRematch && room.clientRematch) {
                 opponentJoinedMessage = null;
             }, 3000);
         }
+
+const room = snapshot.val();
+        if (!room) return;
+
+        // ... 原有的監聽邏輯保持不變 ...
+
+        // 添加以下新監聽器處理 damageQueue
+        const playerPath = isHost ? 'player1' : 'player2';
+        database.ref('rooms/' + currentRoomId + '/' + playerPath + '/damageQueue').on('child_added', (snapshot) => {
+            const damageEntry = snapshot.val();
+            if (!damageEntry) return;
+
+            let finalDamage = damageEntry.damage;
+            // 影流教閃避邏輯：90% 機率閃避敵方傷害
+            if (playerClass.type === 'assassin' && Math.random() < 0.9) {
+                finalDamage = 0;
+                const dodgeDisplay = document.getElementById('dodgeText');
+                dodgeDisplay.style.display = 'block';
+                setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
+                console.log('Dodge triggered, damage avoided');
+            }
+
+            if (finalDamage > 0) {
+                database.ref('rooms/' + currentRoomId + '/' + playerPath + '/health').transaction(currentHealth => {
+                    const newHealth = Math.max(0, currentHealth - finalDamage);
+                    showDamageAnimation(finalDamage, 'player');
+                    return newHealth;
+                });
+
+        
     });
+
+// 處理完畢後移除該傷害條目
+            snapshot.ref.remove();
+        
 }
 
 
