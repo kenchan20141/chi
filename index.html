@@ -1054,7 +1054,7 @@
             <h3>鐵甲宗</h3>
             <p>防禦+20% 攻擊-10%</p>
             <ul class="class-stats">
-                <li>🛡️ 金鐘罩：每回合自動恢復2點氣血</li>
+                <li>🛡️ 金鐘罩：每回合自動恢復2%氣血</li>
             </ul>
             <div class="popup-image" style="display: none;">
                 <img src="https://i.ibb.co/ZR4Z2ZDT/image.png" alt="鐵甲宗全圖">
@@ -1247,7 +1247,7 @@
             <h3>鐵甲宗</h3>
             <p>防禦+20% 攻擊-10%</p>
             <ul class="class-stats">
-                <li>🛡️ 金鐘罩：每回合自動恢復2點氣血</li>
+                <li>🛡️ 金鐘罩：每回合自動恢復2%氣血</li>
             </ul>
             <div class="popup-image" style="display: none;">
                 <img src="https://i.ibb.co/ZR4Z2ZDT/image.png" alt="鐵甲宗全圖">
@@ -1676,7 +1676,7 @@ function checkAnswer(isCorrect, questionId) {
         if (isCorrect) {
             let damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
             // 新增：影流教答對時有90%機率不造成傷害
-            if (playerClass.type === 'assassin' && Math.random() < 0.9) {
+            if (playerClass.type === 'assassin' && Math.random() < 0.3) {
                 damageToOpponent = 0;
                 // 記錄閃避事件以通知對方顯示閃避提示
                 database.ref(`rooms/${currentRoomId}/dodgeEvent`).set({
@@ -3791,7 +3791,7 @@ function listenToRoomChanges() {
 </script>
 
 <!-- 新增治疗提示 -->
-<div id="healText" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">🛡️ 氣血恢復2點</div>
+<div id="healText" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">🛡️ 氣血恢復2%</div>
 
 <!-- 新增减伤提示 -->
 <div id="reduceDamageText" style="display:none; position:fixed; top:40%; left:50%; transform:translate(-50%,-50%); font-size:2rem; color:#00ffff; text-shadow:0 0 10px rgba(0,255,255,0.5);">🔥 離火護體 傷害減少30%</div>
