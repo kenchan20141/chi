@@ -149,6 +149,12 @@
     100% { transform: translateY(-50px); opacity: 0; }
 }
 
+ @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+        
     /* 血條衝擊波特效 */
     @keyframes healthWave {
         0% { transform: scaleX(1); opacity: 1; }
@@ -191,19 +197,13 @@
     }
 
         .hit-marker {
-    color: red;
-    font-size: 1.5rem;
-    font-weight: bold;
-    animation: floatUp 0.3s ease-out forwards;
-}
+        position: absolute;
+        color: #ff0000;
+        font-size: 3rem;
+        animation: hitMarker 0.3s ease-out;
+        text-shadow: 0 0 10px rgba(255,0,0,0.5);
+    }
 
-
-
-
-        @keyframes floatUp {
-    0% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-20px); }
-}
         
         
         /* 新增動畫效果 */
