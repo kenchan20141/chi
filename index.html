@@ -1656,6 +1656,13 @@ function checkAnswer(isCorrect, questionId) {
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
+    // 影流教閃避（30% 概率）
+    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
+        baseDamage = 0;
+        const dodgeDisplay = document.getElementById('dodgeText');
+        dodgeDisplay.style.display = 'block';
+        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
+    }
     // 從資料庫獲取房間數據並處理氣血更新
     database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
         const room = snapshot.val();
@@ -1667,25 +1674,12 @@ function checkAnswer(isCorrect, questionId) {
         const maxHealth = playerData.maxHealth;
 
         if (isCorrect) {
-            let damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
-            // 檢查對方是否為影流教並判斷閃避
-            if (opponentData.class === 'assassin' && Math.random() < 0.9) { // 閃避概率調整為 30%
-                // 閃避成功，不扣減氣血
-                const dodgeDisplay = document.getElementById('dodgeText');
-                dodgeDisplay.style.display = 'block';
-                showDodgeAnimation(); // 顯示閃避動畫
-                setTimeout(() => {
-                    dodgeDisplay.style.display = 'none';
-                }, 1000);
-                // 不扣減敵方氣血
-            } else {
-                // 閃避失敗，正常扣減氣血
-                database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
-                    const newHealth = Math.max(0, currentHealth - damageToOpponent);
-                    showDamageAnimation(damageToOpponent, 'enemy');
-                    return newHealth;
-                });
-            }
+            const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
+            database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
+                const newHealth = Math.max(0, currentHealth - damageToOpponent);
+                showDamageAnimation(damageToOpponent, 'enemy');
+                return newHealth;
+            });
         } else {
             // 動態調整防禦力：鐵甲宗錯答時使用1.0，其他職業使用原始防禦力
             const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
@@ -1786,6 +1780,7 @@ function checkAnswer(isCorrect, questionId) {
         wave.style.background = `linear-gradient(90deg, transparent 0%, ${isCorrect ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'} 50%, transparent 100%)`;
         healthBar.appendChild(wave);
         setTimeout(() => wave.remove(), 500);
+       
     }).catch(error => {
         console.error('Failed to fetch room data:', error);
     });
@@ -1801,7 +1796,6 @@ function checkAnswer(isCorrect, questionId) {
     }, 700);
 }
 
-    
 // 將資料庫更新邏輯提取為獨立函數
 function performDatabaseUpdate(updates) {
     console.log('Performing database update with:', updates);
@@ -3411,19 +3405,6 @@ function showEffect(className) {
     setTimeout(() => effect.remove(), 400);
 }
 
-
-function showDodgeAnimation() {
-    const dodgeAnimation = document.getElementById('dodgeAnimation');
-    const dodgePNG = document.getElementById('dodgePNG');
-    dodgeAnimation.style.display = 'block';
-    dodgePNG.style.display = 'block';
-    setTimeout(() => {
-        dodgeAnimation.style.display = 'none';
-        dodgePNG.style.display = 'none';
-    }, 1000); // 顯示1秒後隱藏
-}
-
-    
     function handleSinglePlayerGameOver(isWinner) {
     if (gameOver) return; // 避免重複觸發
     gameOver = true;
@@ -3692,21 +3673,6 @@ function listenToRoomChanges() {
 
         updateHealthDisplay(room);
 
-if (room.dodgeBy) {
-    const playerPath = isHost ? 'player1' : 'player2';
-    if (room.dodgeBy === playerPath) {
-        // 自己閃避了，觸發動畫
-        showDodgeAnimation();
-        document.getElementById('dodgeText').style.display = 'block';
-        setTimeout(() => {
-            document.getElementById('dodgeText').style.display = 'none';
-        }, 1000); // 顯示1秒後隱藏
-    }
-    // 重置閃避標誌
-    database.ref('rooms/' + currentRoomId).update({ dodgeBy: null });
-}
-        
-
         if (room.topicSelected && !room.gameStarted && !room.countdownStarted) {
     // 移除等待消息並開始倒數計時
     const waitingForTopic = document.getElementById('waitingForTopic');
@@ -3805,16 +3771,6 @@ if (room.hostRematch && room.clientRematch) {
 
 <div id="dodgeText" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:3rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">閃避成功！</div>
 
-<div id="dodgeText" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:3rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">閃避成功！</div>
 
-<div id="dodgeAnimation" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10000;">
-    <img src="https://i.ibb.co/zTRVPR2Q/unscreen.gif" style="width:200px; height:200px;">
-</div>
-<div id="dodgePNG" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10000;">
-    <img src="https://i.ibb.co/Y453Kt0R/image.png" style="width:200px; height:200px; margin-left:220px;">
-</div>
-
-</body>
-</html>
     
 </html>
