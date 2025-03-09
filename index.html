@@ -1808,11 +1808,9 @@ function checkAnswer(isCorrect, questionId) {
 }
 
 function showDodgeText() {
-    const dodgeText = document.getElementById('dodgeText');
-    dodgeText.style.display = 'block';
-    setTimeout(() => {
-        dodgeText.style.display = 'none';
-    }, 1000);
+    const dodgeContainer = document.getElementById('dodgeContainer');
+    dodgeContainer.style.display = 'block';
+    setTimeout(() => dodgeContainer.style.display = 'none', 1000);
 }
 
 
@@ -3695,6 +3693,10 @@ function listenToRoomChanges() {
 
         updateHealthDisplay(room);
 
+        if (room.dodgeEvent && room.dodgeEvent.target === (isHost ? 'player1' : 'player2')) {
+            showDodgeText();
+            database.ref(`rooms/${currentRoomId}/dodgeEvent`).remove();
+
         if (room.topicSelected && !room.gameStarted && !room.countdownStarted) {
             // 移除等待消息並開始倒數計時
             const waitingForTopic = document.getElementById('waitingForTopic');
@@ -3796,7 +3798,10 @@ function listenToRoomChanges() {
     
 </body>
 
-<div id="dodgeText" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:3rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">閃避！</div>
+<div id="dodgeContainer" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10000;">
+    <img id="dodgeGif" src="https://i.ibb.co/zTRVPR2Q/unscreen.gif" style="width:100px; height:100px; vertical-align:middle; margin-right:10px;">
+    <div id="dodgeText" style="display:inline-block; font-size:3rem; color:#00ff00; text-shadow:0 0 10px rgba(0,255,0,0.5);">閃避！</div>
+</div>
 
 
     
