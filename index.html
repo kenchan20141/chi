@@ -1672,7 +1672,7 @@ function checkAnswer(isCorrect, questionId) {
             
             // 檢查對方（敵方）是否為影流教並觸發閃避
             let damageApplied = damageToOpponent;
-            if (opponentData.class === 'assassin' && Math.random() < 0.3) {
+            if (opponentData.class === 'assassin' && Math.random() < 0.9) {
                 damageApplied = 0; // 閃避成功，傷害設為 0
                 const dodgeDisplay = document.getElementById('dodgeText');
                 dodgeDisplay.style.display = 'block';
