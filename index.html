@@ -930,10 +930,7 @@
   100% { opacity: 0; transform: translate(-50%,-50%) translateY(-20px); }
 }
 
-#reduceDamageText {
-  animation: reduceDamageFade 1.2s ease-out;
-  pointer-events: none;
-}
+
         
     </style>
 </head>
@@ -1065,7 +1062,7 @@
             <img src="https://i.ibb.co/W4V5bX8X/image.png" class="class-icon">
             <div class="selected-tick">✓</div>
             <h3>影流教</h3>
-            <p>閃避+30% 防禦-30%</p>
+            <p>閃避+30% 防禦-10%</p>
             <ul class="class-stats">
                 <li>🎯 鬼影步：30%機率完全閃避傷害</li>
             </ul>
@@ -1444,7 +1441,7 @@ function selectClass(className) {
     const classData = {
         warrior: { attack: 1.2, defense: 0.9, dodge: 0, skill: 'doubleDamage' },
         tank: { attack: 0.9, defense: 1.2, dodge: 0, skill: 'heal', healPercentage: 0.02 },
-        assassin: { attack: 1.0, defense: 0.7, dodge: 0.3, skill: 'dodge' },
+        assassin: { attack: 1.0, defense: 0.9, dodge: 0.3, skill: 'dodge' },
         mage: { attack: 1.1, defense: 1, dodge: 0, skill: 'counter' }
     };
 
@@ -1676,7 +1673,7 @@ function checkAnswer(isCorrect, questionId) {
         if (isCorrect) {
             let damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
             // 新增：影流教答對時有90%機率不造成傷害
-            if (playerClass.type === 'assassin' && Math.random() < 0.3) {
+            if (playerClass.type === 'assassin' && Math.random() < 0.9) {
                 damageToOpponent = 0;
                 // 記錄閃避事件以通知對方顯示閃避提示
                 database.ref(`rooms/${currentRoomId}/dodgeEvent`).set({
@@ -1696,20 +1693,15 @@ function checkAnswer(isCorrect, questionId) {
             const selfDefense = playerClass.type === 'tank' ? 1.0 : playerClass.defense;
             let damageToPlayer = Math.floor(baseDamage / selfDefense);
             if (playerClass.type === 'mage') {
-// 顯示 reduceDamageText 和動畫
+                // 顯示 reduceDamageText 和動畫
             const reduceAnimation = document.getElementById('reduceDamageAnimation');
-            reduceText.style.display = 'block';
             reduceAnimation.style.display = 'block';
 
             // 2秒後隱藏 reduceDamageText 和動畫
             setTimeout(() => {
                 reduceAnimation.style.display = 'none';
             }, 2000);
-                
                 damageToPlayer = Math.floor(damageToPlayer * 0.7);
-                const reduceDisplay = document.getElementById('reduceDamageText');
-                reduceDisplay.style.display = 'block';
-                setTimeout(() => reduceDisplay.style.display = 'none', 1200);
             }
             // 先應用傷害
             database.ref('rooms/' + currentRoomId + '/' + playerPath + '/health').transaction(currentHealth => {
