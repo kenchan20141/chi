@@ -1656,13 +1656,6 @@ function checkAnswer(isCorrect, questionId) {
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
-    // 影流教閃避（30% 概率）
-    if (playerClass.type === 'assassin' && !isCorrect && Math.random() < 0.3) {
-        baseDamage = 0;
-        const dodgeDisplay = document.getElementById('dodgeText');
-        dodgeDisplay.style.display = 'block';
-        setTimeout(() => dodgeDisplay.style.display = 'none', 1000);
-    }
     // 從資料庫獲取房間數據並處理氣血更新
     database.ref('rooms/' + currentRoomId).once('value').then(snapshot => {
         const room = snapshot.val();
@@ -1674,10 +1667,22 @@ function checkAnswer(isCorrect, questionId) {
         const maxHealth = playerData.maxHealth;
 
         if (isCorrect) {
+            // 計算對敵方造成的傷害
             const damageToOpponent = Math.floor(baseDamage * playerClass.attack / opponentData.defense);
+            
+            // 檢查對方（敵方）是否為影流教並觸發閃避
+            let damageApplied = damageToOpponent;
+            if (opponentData.class === 'assassin' && Math.random() < 0.3) {
+                damageApplied = 0; // 閃避成功，傷害設為 0
+                const dodgeDisplay = document.getElementById('dodgeText');
+                dodgeDisplay.style.display = 'block';
+                setTimeout(() => dodgeDisplay.style.display = 'none', 1000); // 顯示 1 秒後隱藏
+            }
+            
+            // 更新敵方氣血
             database.ref('rooms/' + currentRoomId + '/' + opponentPath + '/health').transaction(currentHealth => {
-                const newHealth = Math.max(0, currentHealth - damageToOpponent);
-                showDamageAnimation(damageToOpponent, 'enemy');
+                const newHealth = Math.max(0, currentHealth - damageApplied);
+                showDamageAnimation(damageApplied, 'enemy');
                 return newHealth;
             });
         } else {
