@@ -1017,13 +1017,16 @@
 
     <!-- 新增頁腳 -->
     <div class="footer">
-        <div class="decor-line"></div>
-        <p>⚔️ 選擇你的征戰之路 ⚔️</p>
-        <button id="showLeaderboardBtn" class="action-btn" style="background: linear-gradient(45deg, #f1c40f, #f39c12); margin-top: 1rem;">
-            <i class="fas fa-trophy"></i>
-            <span>查看排行榜</span>
-        </button>
-    </div>
+    <div class="decor-line"></div>
+    <p>⚔️ 選擇你的征戰之路 ⚔️</p>
+    <button id="showLeaderboardBtn" class="action-btn" style="background: linear-gradient(45deg, #f1c40f, #f39c12); margin-top: 1rem;">
+        <i class="fas fa-trophy"></i>
+        <span>查看排行榜</span>
+    </button>
+    <button id="showStoryBtn" class="action-btn" style="background: linear-gradient(45deg, #3498db, #2980b9); margin-top: 1rem;">
+        <i class="fas fa-book"></i>
+        <span>故事背景</span>
+    </button>
 </div>
 
 
@@ -3595,6 +3598,48 @@ document.getElementById('showLeaderboardBtn').onclick = function() {
         document.body.appendChild(leaderboardDiv);
     });
 };
+
+document.getElementById('showStoryBtn').onclick = function() {
+    const storyDiv = document.createElement('div');
+    storyDiv.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: rgba(45, 41, 38, 0.95); padding: 2rem; border: 3px solid var(--gold);
+        border-radius: 15px; width: 80%; max-width: 800px; max-height: 80vh;
+        overflow-y: auto; z-index: 10000; color: white; text-align: center;
+    `;
+    storyDiv.innerHTML = `
+        <h2 style="color: var(--gold); margin-bottom: 1.5rem;">《語弈錄》故事背景</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <h3 style="color: #e74c3c;">四脈傳承</h3>
+                <p>江湖百年，武林四脈鼎立：<br>
+                <strong>霸刀流</strong>以力破巧，刀勢如狂風；<br>
+                <strong>鐵甲宗</strong>固若金湯，守勢如泰山；<br>
+                <strong>影流教</strong>身法詭譎，似幽魂穿林；<br>
+                <strong>玄天閣</strong>術法通玄，以柔克剛。</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <h3 style="color: #e74c3c;">秘典現世</h3>
+                <p>《語弈錄》乃前朝國師所著，藏「以言為刃、以心為棋」之絕學，能破招式、控人心。四派為爭秘典，江湖腥風血雨，卻不知書已落入「幽冥四煞」之手。</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <h3 style="color: #e74c3c;">幽冥四煞</h3>
+                <p><strong>布魯貓</strong>：霸刀叛徒，血面閻羅，刀法暴烈；<br>
+                <strong>雪羽千央</strong>：影流奇才，冰魄針出必見血；<br>
+                <strong>鶴棲朔</strong>：玄天棄徒，笛聲控魂；<br>
+                <strong>赤淵綾音</strong>：四煞之首，欲血祭喚邪龍。</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px;">
+                <h3 style="color: #e74c3c;">正邪交鋒</h3>
+                <p>四煞盤踞四地，江湖動盪。四派聯手推「鐵甲宗」嶽擎山為盟主，其子嶽長河與「玄天閣」雲無月、「影流教」夜無痕、「霸刀流」雷破軍聯手抗敵。《語弈錄》奧義竟為封印邪龍之術，亂世棋局已開。</p>
+            </div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="margin-top: 1.5rem; padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white;">關閉</button>
+    `;
+    document.body.appendChild(storyDiv);
+};
+
+    
     
 function handleRematchRequest() {
     if (isRematching) return;
