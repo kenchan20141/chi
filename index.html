@@ -15,6 +15,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>  
 
+
+#dodgeText {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    animation: fadeInOut 1s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+        
 .difficulty-icon {
     width: 140px;
     height: 140px;
@@ -3414,6 +3428,14 @@ const healAnimation = document.createElement('img');
     setTimeout(() => healText.remove(), 1000);
 }
 
+
+ function showDodgeText() {
+    const dodgeText = document.getElementById('dodgeText');
+    dodgeText.style.display = 'block';
+    setTimeout(() => {
+        dodgeText.style.display = 'none';
+    }, 1000); // 顯示 1 秒後隱藏
+}   
     
 
 // 輔助函數：顯示特效
