@@ -3679,12 +3679,6 @@ function listenToRoomChanges() {
         const room = snapshot.val();
         if (!room) return;
 
-        // 優先檢查遊戲是否結束
-    if (room.gameEnded) {
-        handleGameEnd(room.winner);
-        return; // 確保結束後不再執行其他邏輯
-    }
-
         if (isHost) {
             opponentDefense = room.player2?.defense || 1.0;
         } else {
