@@ -75,9 +75,9 @@
 }
         
 .random-match-btn {
-    background: linear-gradient(45deg, #f4d03f, #f1c40f); /* 黄色渐变 */
+    background: linear-gradient(45deg, #f57f17, #ff6f00); /* 黄色渐变 */
     box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4); /* 阴影效果 */
-    background: linear-gradient(45deg, #f4d03f, #f1c40f); 
+    background: linear-gradient(45deg, #f57f17, #ff6f00); 
     transition: background 0.3s ease; /* 过渡效果，使渐变更平滑 */
 }
 
@@ -2255,39 +2255,10 @@ function createRoom() {
         alert('請輸入四位戰場編號');
         return;
     }
-    const user = auth.currentUser;
-    if (!user) {
-        alert('請先登入以創建戰場！');
-        return;
-    }
-
+    const userId = generateUserId();
     const player1Ref = database.ref('rooms/' + roomIdInput + '/player1');
-    const roomRef = database.ref('rooms/' + roomIdInput);
-    player1Ref.set({
-        userId: user.uid, // 使用 Firebase UID 代替 generateUserId()
-        health: 100,
-        class: null,
-        currentQuestion: null,
-        level: playerLevel // 保留等級資訊
-    });
-
-    // 設置斷線懲罰：遊戲進行中斷線扣200經驗值
-    const userRef = database.ref('users/' + user.uid);
-    roomRef.on('value', (snapshot) => {
-        const room = snapshot.val();
-        if (room && room.gameStarted && !room.gameEnded) {
-            userRef.transaction((userData) => {
-                if (userData) {
-                    userData.exp = Math.max(0, (userData.exp || 0) - 200);
-                }
-                return userData;
-            });
-        }
-    }).onDisconnect();
-
-    // 原有斷線移除邏輯保留
+    player1Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
     player1Ref.onDisconnect().remove();
-
     currentRoomId = roomIdInput;
     isHost = true;
     document.getElementById('roomControl').style.display = 'none';
@@ -2297,19 +2268,13 @@ function createRoom() {
     listenToRoomChanges();
 }
 
-    
 function joinRoom() {
     const roomId = document.getElementById('roomId').value.trim();
     if (roomId.length !== 4) {
         alert('請輸入四位戰場編號');
         return;
     }
-    const user = auth.currentUser;
-    if (!user) {
-        alert('請先登入以加入征伐！');
-        return;
-    }
-
+    const userId = generateUserId();
     const roomRef = database.ref('rooms/' + roomId);
     roomRef.once('value').then(snapshot => {
         if (snapshot.exists()) {
@@ -2319,31 +2284,8 @@ function joinRoom() {
                 return;
             }
             const player2Ref = database.ref('rooms/' + roomId + '/player2');
-            player2Ref.set({
-                userId: user.uid, // 使用 Firebase UID 代替 generateUserId()
-                health: 100,
-                class: null,
-                currentQuestion: null,
-                level: playerLevel // 保留等級資訊
-            });
-
-            // 設置斷線懲罰：遊戲進行中斷線扣200經驗值
-            const userRef = database.ref('users/' + user.uid);
-            roomRef.on('value', (snapshot) => {
-                const room = snapshot.val();
-                if (room && room.gameStarted && !room.gameEnded) {
-                    userRef.transaction((userData) => {
-                        if (userData) {
-                            userData.exp = Math.max(0, (userData.exp || 0) - 200);
-                        }
-                        return userData;
-                    });
-                }
-            }).onDisconnect();
-
-            // 原有斷線移除邏輯保留
+            player2Ref.set({ userId: userId, health: 100, class: null, currentQuestion: null });
             player2Ref.onDisconnect().remove();
-
             currentRoomId = roomId;
             isHost = false;
             document.getElementById('roomControl').style.display = 'none';
@@ -2356,6 +2298,7 @@ function joinRoom() {
         }
     });
 }
+
 
 async function getIpAddress() {
     try {
