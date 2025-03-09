@@ -1578,12 +1578,9 @@ function checkAnswer(isCorrect, questionId) {
     let baseDamage;
     if (isCorrect) {
         baseDamage = Math.floor(Math.random() * 31) + 50; // 50-80 點
-
-// 修改傷害計算：根據玩家等級增加傷害
-        const baseDamage = (50 + Math.random() * 30) * (1 + (playerLevel - 1) * 0.05); // 每級增加5%傷害
-        let damageToPlayer = Math.round(baseDamage * opponentDefense);
-        damageToPlayer = Math.max(damageToPlayer, 0); // 確保傷害不為負數
-        
+    } else {
+        baseDamage = Math.floor(Math.random() * 31) + 50; // 答錯時 50-80 點
+    }
     // 霸刀門雙倍攻擊（30% 概率）
     if (playerClass.type === 'warrior' && isCorrect && Math.random() < 0.3) {
         baseDamage *= 2;
