@@ -952,21 +952,6 @@
 <body>
    
     <button class="music-control" onclick="toggleMusic()">🎵</button>
-
-
-<div id="roomControl">
-    <!-- 在線信息顯示 -->
-    <div id="onlineInfo" style="position: absolute; top: 10px; right: 10px; color: white; font-family: Arial, sans-serif;">
-        <div style="font-size: 1.2rem;">在線人數: <span id="onlineCountNumber">0</span></div>
-        <button id="toggleOnlineUsers" style="background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 1rem; margin-top: 5px;">
-            查看在線用戶
-        </button>
-        <div id="onlineUsersContainer" style="display: none; margin-top: 5px; max-height: 0; overflow-y: auto; background: rgba(0, 0, 0, 0.8); padding: 0 10px; border-radius: 5px; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;">
-            <div style="font-size: 1rem; padding-top: 10px;">在線用戶:</div>
-            <div id="onlineUsersList" style="font-size: 0.9rem; padding-bottom: 10px;">無</div>
-        </div>
-    </div>
-
     
 
 <div id="roomControl">
@@ -2059,65 +2044,6 @@ firebase.initializeApp(firebaseConfig);
         });
     }
 
-// 更新在線信息的函數
-function updateOnlineInfo() {
-    const roomsRef = db.ref('rooms');
-    roomsRef.once('value')
-        .then((snapshot) => {
-            const roomsData = snapshot.val();
-            if (!roomsData) {
-                document.getElementById('onlineCountNumber').textContent = '0';
-                document.getElementById('onlineUsersList').textContent = '無';
-                return;
-            }
-            const onlineUsers = new Set();
-            let playerCount = 0;
-            Object.values(roomsData).forEach(room => {
-                if (room.player1 && room.player1.name) {
-                    onlineUsers.add(room.player1.name);
-                    playerCount++;
-                }
-                if (room.player2 && room.player2.name) {
-                    onlineUsers.add(room.player2.name);
-                    playerCount++;
-                }
-            });
-            document.getElementById('onlineCountNumber').textContent = playerCount;
-            document.getElementById('onlineUsersList').textContent = onlineUsers.size > 0 ? Array.from(onlineUsers).join(', ') : '無';
-        })
-        .catch((error) => {
-            console.error('Error fetching online info:', error);
-            document.getElementById('onlineCountNumber').textContent = '錯誤';
-            document.getElementById('onlineUsersList').textContent = '無法獲取';
-        });
-}
-
-// 自動更新，每 5 秒執行一次，並在頁面載入時立即執行
-setInterval(updateOnlineInfo, 5000);
-updateOnlineInfo();
-
-// 展開/隱藏用戶列表
-document.getElementById('toggleOnlineUsers').addEventListener('click', function() {
-    const container = document.getElementById('onlineUsersContainer');
-    if (container.style.maxHeight === '0px' || container.style.display === 'none') {
-        container.style.display = 'block';
-        container.style.maxHeight = '200px';
-        container.style.padding = '0 10px';
-        this.textContent = '隱藏在線用戶';
-    } else {
-        container.style.maxHeight = '0';
-        container.style.padding = '0 10px';
-        setTimeout(() => { container.style.display = 'none'; }, 300); // 等待動畫完成後隱藏
-        this.textContent = '查看在線用戶';
-    }
-});
-
-
-
-
-
-
-    
 // 「登入」按鈕事件
 document.getElementById('loginBtn').onclick = function() {
     const email = prompt("請輸入郵箱");
