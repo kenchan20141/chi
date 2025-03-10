@@ -75,9 +75,9 @@
 }
         
 .random-match-btn {
-    background: linear-gradient(45deg, #f57f17, #ff6f00); /* 黄色渐变 */
+    background: linear-gradient(45deg, #f1c40f, #f1c40f); /* 黄色渐变 */
     box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4); /* 阴影效果 */
-    background: linear-gradient(45deg, #f57f17, #ff6f00); 
+    background: linear-gradient(45deg, #f1c40f, #f1c40f); 
     transition: background 0.3s ease; /* 过渡效果，使渐变更平滑 */
 }
 
@@ -268,7 +268,7 @@
 
     /* 修改现有元素样式 */
     #roomControl {
-    display: none; /* 添加這行 */
+    display: block; /* 改為初始顯示 */
     position: relative;
     background: linear-gradient(45deg, rgba(45, 41, 38, 0.95), rgba(25, 22, 20, 0.95)),
                 url('https://i.ibb.co/tM82mXtr/3.png');
@@ -950,13 +950,25 @@
     </style>
 </head>
 <body>
-    <div id="animationContainer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: url('https://i.ibb.co/RWW0Xqc/image.png') center/cover fixed; opacity: 1; transition: opacity 1s ease-out;"></div>
+   
     <button class="music-control" onclick="toggleMusic()">🎵</button>
     
 
 <div id="roomControl">
     <!-- 新增裝飾性邊框 -->
     <div class="main-border"></div>
+
+    <div id="roomControl">
+    <!-- 新增裝飾性邊框 -->
+    <div class="main-border"></div>
+    <!-- 在線資訊顯示區 -->
+    <div id="onlineInfo" style="position: absolute; top: 10px; right: 10px; color: white; font-size: 1.2rem; text-align: right;">
+        <div>在線人數: <span id="onlineCountNumber">0</span></div>
+        <div>在線用戶: <span id="onlineUsersList"></span></div>
+    </div>
+    <!-- 原有的其他內容 -->
+    <div id="userInfo" class="info-box" style="display: none;">
+    <!-- ... -->
     
     <!-- 修改1: 在用户信息部分添加百分比和升级所需 -->
 <div id="userInfo" class="info-box" style="display: none;">
@@ -1378,19 +1390,7 @@ const expRewards = {
 
     let damageInterval;
 
-// Canvas 動畫代碼
-window.onload = function() {
-    const animationContainer = document.getElementById('animationContainer');
-    setTimeout(() => {
-        animationContainer.style.opacity = '0'; // 開始淡出
-    }, 0); // 立即觸發
 
-    // 2秒後隱藏動畫容器並顯示主頁
-    setTimeout(() => {
-        animationContainer.style.display = 'none';
-        document.getElementById('roomControl').style.display = 'block';
-    }, 2000);
-};
 
 
 async function getIpAddress() {
@@ -1516,7 +1516,7 @@ database.ref(`rooms/${currentRoomId}/${playerPath}`).update({
     document.getElementById('topicDetail').style.display = 'block';
     
     // 根據年級加載相應的題庫
-    const topics = grade === '中一' ? ['御人之妻'] : ['廉頗藺相如列傳', '出師表'];
+    const topics = grade === '中一' ? ['御人之妻'] : ['廉頗藺相如列傳', '出師表', '師說'];
     const topicList = document.getElementById('topicList');
     topicList.innerHTML = '';
     topics.forEach(topic => {
@@ -1990,7 +1990,7 @@ const firebaseConfig = {
 apiKey: "AIzaSyBLUpaWYdcJTrI9KmiiCJ7ZeTE2IRjkobU",
 authDomain: "for-test-6bc8f.firebaseapp.com",
 databaseURL: "https://for-test-6bc8f-default-rtdb.firebaseio.com",
-projectId: "for-test-6bc8f", 
+projectId: "for-test-6bc8f",
 storageBucket: "for-test-6bc8f.firebasestorage.app",
 messagingSenderId: "948613965375",
 appId: "1:948613965375:web:ae966d7dd461e328093a8a"
@@ -3113,7 +3113,7 @@ function selectSinglePlayerClass(className) {
     document.getElementById('singlePlayerTopicDetail').style.display = 'block';
 
     // 根據年級加載相應的題庫
-    const topics = grade === '中一' ? ['御人之妻'] : ['廉頗藺相如列傳', '出師表'];
+    const topics = grade === '中一' ? ['御人之妻'] : ['廉頗藺相如列傳', '出師表', '師說'];
     const topicList = document.getElementById('singlePlayerTopicList');
     topicList.innerHTML = '';
     topics.forEach(topic => {
@@ -3901,7 +3901,22 @@ function listenToRoomChanges() {
     });
 }
 
+function updateOnlineInfo() {
+    fetch('/api/online-info')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('onlineCountNumber').textContent = data.count;
+            const usersList = data.users.join(', ');
+            document.getElementById('onlineUsersList').textContent = usersList;
+        })
+        .catch(error => console.error('Error fetching online info:', error));
+}
 
+// 每5秒更新一次
+setInterval(updateOnlineInfo, 5000);
+
+// 頁面載入時立即更新
+updateOnlineInfo();
 
 </script>
 
