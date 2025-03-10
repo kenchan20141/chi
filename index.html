@@ -957,18 +957,6 @@
 <div id="roomControl">
     <!-- 新增裝飾性邊框 -->
     <div class="main-border"></div>
-
-    <div id="roomControl">
-    <!-- 新增裝飾性邊框 -->
-    <div class="main-border"></div>
-    <!-- 在線資訊顯示區 -->
-    <div id="onlineInfo" style="position: absolute; top: 10px; right: 10px; color: white; font-size: 1.2rem; text-align: right;">
-        <div>在線人數: <span id="onlineCountNumber">0</span></div>
-        <div>在線用戶: <span id="onlineUsersList"></span></div>
-    </div>
-    <!-- 原有的其他內容 -->
-    <div id="userInfo" class="info-box" style="display: none;">
-    <!-- ... -->
     
     <!-- 修改1: 在用户信息部分添加百分比和升级所需 -->
 <div id="userInfo" class="info-box" style="display: none;">
@@ -3901,22 +3889,7 @@ function listenToRoomChanges() {
     });
 }
 
-function updateOnlineInfo() {
-    fetch('/api/online-info')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('onlineCountNumber').textContent = data.count;
-            const usersList = data.users.join(', ');
-            document.getElementById('onlineUsersList').textContent = usersList;
-        })
-        .catch(error => console.error('Error fetching online info:', error));
-}
 
-// 每5秒更新一次
-setInterval(updateOnlineInfo, 5000);
-
-// 頁面載入時立即更新
-updateOnlineInfo();
 
 </script>
 
