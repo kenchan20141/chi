@@ -945,25 +945,7 @@
   100% { opacity: 0; transform: translate(-50%,-50%) translateY(-20px); }
 }
 
-#gameCanvas {
-    background: url('https://i.ibb.co/kgdHCJX8/image.png') center/cover; /* 可替換為武俠風背景圖 */
-}
 
-.action-btn {
-    padding: 0.5rem 1rem;
-    background: #2ecc71;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    cursor: pointer;
-}
-
-.action-btn:hover {
-    background: #27ae60;
-}
-
-
-    
         
     </style>
 </head>
@@ -1029,30 +1011,7 @@
 </button>
     </div>
 
-
-<!-- 小遊戲選單 -->
-<div id="miniGamesMenu" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10001; overflow-y: auto;">
-    <h2 style="color: #ffd700; text-align: center;">選擇小遊戲</h2>
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; width: 300px; margin: 0 auto;">
-        <button onclick="startShootingGame()" class="action-btn">飛行射擊</button>
-        <!-- 可在此處添加其他小遊戲按鈕 -->
-    </div>
-</div>
-
-<button onclick="showMiniGames()">挑戰小遊戲</button>
-    
-<!-- 飛行射擊遊戲界面 -->
-<div id="shootingGame" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10002; overflow-y: auto;">
-    <h2 style="color: #ffd700; text-align: center;">飛行射擊</h2>
-    <canvas id="gameCanvas" width="800" height="600" style="border: 2px solid #ffd700; display: block; margin: 0 auto;"></canvas>
-    <div style="text-align: center; margin-top: 1rem;">
-        <button id="startGameBtn" onclick="startShootingGameLogic()" style="padding: 0.5rem 1rem; background: #2ecc71; border: none; border-radius: 5px; color: white; cursor: pointer;">開始遊戲</button>
-        <button onclick="endShootingGame()" style="padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white; cursor: pointer;">放棄</button>
-    </div>
-</div>
-
-
-    
+   
      
     <div class="input-group">
          <button id="registerBtn" class="action-btn" style="background: linear-gradient(45deg, #2ecc71, #27ae60);">
@@ -3940,148 +3899,7 @@ function listenToRoomChanges() {
     });
 }
 
-let shootingGameInterval;
-let score = 0;
-let gameTime = 30; // 遊戲時間 30 秒
-let gameTimer;
-let player;
-let bullets = [];
-let enemies = [];
-let isGameRunning = false;
 
-function showMiniGames() {
-    // 假設你的主遊戲界面有一個 #roomControl 元素
-    document.getElementById('roomControl').style.display = 'none';
-    document.getElementById('miniGamesMenu').style.display = 'block';
-}
-
-function startShootingGame() {
-    document.getElementById('miniGamesMenu').style.display = 'none';
-    document.getElementById('shootingGame').style.display = 'block';
-}
-
-function startShootingGameLogic() {
-    if (isGameRunning) return;
-    isGameRunning = true;
-    score = 0;
-    gameTime = 30;
-    player = { x: 50, y: 300, width: 20, height: 20 }; // 飛劍初始位置
-    bullets = [];
-    enemies = [];
-    document.getElementById('startGameBtn').disabled = true;
-
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    // 鍵盤控制
-    document.addEventListener('keydown', (e) => {
-        switch (e.key) {
-            case 'ArrowUp': player.y -= 10; break;
-            case 'ArrowDown': player.y += 10; break;
-            case 'ArrowLeft': player.x -= 10; break;
-            case 'ArrowRight': player.x += 10; break;
-            case ' ': // 空格鍵射擊
-                bullets.push({ x: player.x + player.width, y: player.y + player.height / 2 });
-                break;
-        }
-    });
-
-    // 遊戲主循環（每秒 60 幀）
-    shootingGameInterval = setInterval(() => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 繪製玩家（飛劍）
-        ctx.fillStyle = 'gold';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
-
-        // 繪製子彈
-        bullets.forEach((bullet, index) => {
-            bullet.x += 5;
-            ctx.fillStyle = 'red';
-            ctx.fillRect(bullet.x, bullet.y, 5, 2);
-            if (bullet.x > canvas.width) bullets.splice(index, 1);
-        });
-
-        // 繪製敵人
-        if (Math.random() < 0.1) {
-            enemies.push({ x: canvas.width, y: Math.random() * canvas.height, width: 20, height: 20 });
-        }
-        enemies.forEach((enemy, index) => {
-            enemy.x -= 3;
-            ctx.fillStyle = 'purple';
-            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-            if (enemy.x < 0) enemies.splice(index, 1);
-        });
-
-        // 碰撞檢測（子彈與敵人）
-        bullets.forEach((bullet, bIndex) => {
-            enemies.forEach((enemy, eIndex) => {
-                if (bullet.x < enemy.x + enemy.width && bullet.x + 5 > enemy.x &&
-                    bullet.y < enemy.y + enemy.height && bullet.y + 2 > enemy.y) {
-                    enemies.splice(eIndex, 1);
-                    bullets.splice(bIndex, 1);
-                    score += 10;
-                    if (score >= 100) {
-                        endShootingGame(true);
-                    }
-                }
-            });
-        });
-
-        // 玩家與敵人碰撞
-        enemies.forEach(enemy => {
-            if (player.x < enemy.x + enemy.width && player.x + player.width > enemy.x &&
-                player.y < enemy.y + enemy.height && player.y + player.height > enemy.y) {
-                endShootingGame(false);
-            }
-        });
-
-        // 顯示分數和時間
-        ctx.fillStyle = 'white';
-        ctx.font = '20px Arial';
-        ctx.fillText(`分數: ${score}`, 10, 30);
-        ctx.fillText(`時間: ${gameTime}`, 10, 60);
-    }, 1000 / 60);
-
-    // 遊戲計時器
-    gameTimer = setInterval(() => {
-        gameTime--;
-        if (gameTime <= 0) {
-            endShootingGame(score >= 100);
-        }
-    }, 1000);
-}
-
-function endShootingGame(success = false) {
-    clearInterval(shootingGameInterval);
-    clearInterval(gameTimer);
-    isGameRunning = false;
-    document.getElementById('startGameBtn').disabled = false;
-    document.getElementById('shootingGame').style.display = 'none';
-    document.getElementById('miniGamesMenu').style.display = 'block';
-    if (success) {
-        alert('恭喜你完成遊戲！獲得 10 點經驗值');
-        grantExperience(10); // 假設你有經驗值系統
-    } else {
-        alert('遊戲結束！未達到目標');
-    }
-}
-
-function grantExperience(exp) {
-    // 這裡假設你使用 Firebase 來管理用戶數據，請根據實際情況調整
-    const user = auth.currentUser; // 需自行定義 auth
-    if (user) {
-        const userRef = database.ref('users/' + user.uid); // 需自行定義 database
-        userRef.transaction((userData) => {
-            if (!userData) userData = { exp: 0 };
-            userData.exp += exp;
-            return userData;
-        });
-    }
-}
-
-
-    
 
 </script>
 
