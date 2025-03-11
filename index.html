@@ -4,6 +4,26 @@
     
 <head>
 
+<title>在線用戶</title>
+    <style>
+        #onlineUsersContainer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        在線人數: <span id="onlineCountNumber">0</span>
+        <button id="toggleOnlineUsers">查看在線用戶</button>
+        <div id="onlineUsersContainer">
+            <span id="onlineUsersList">無</span>
+        </div>
+    </div>
+
+
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1985,6 +2005,91 @@ appId: "1:948613965375:web:ae966d7dd461e328093a8a"
 
 };
 firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 設置 Presence 狀態
+function setupPresence(user) {
+    if (!user) return; // 如果用戶未登錄，直接返回
+    const uid = user.uid;
+    const presenceRef = db.ref(`presence/${uid}`);
+    const connectedRef = db.ref('.info/connected');
+
+    // 監聽用戶的連接狀態
+    connectedRef.on('value', (snap) => {
+        if (snap.val() === true) {
+            // 用戶在線，將 presence 設置為 true
+            presenceRef.set(true);
+            // 當用戶斷開連接時，自動移除 presence 記錄
+            presenceRef.onDisconnect().remove();
+        }
+    });
+}
+
+// 更新在線信息的函數
+function updateOnlineInfo() {
+    const presenceRef = db.ref('presence');
+    presenceRef.once('value')
+        .then((snapshot) => {
+            const presenceData = snapshot.val();
+            if (!presenceData) {
+                // 如果沒有在線用戶，顯示 0 和 "無"
+                document.getElementById('onlineCountNumber').textContent = '0';
+                document.getElementById('onlineUsersList').textContent = '無';
+                return;
+            }
+            const onlineUsers = Object.keys(presenceData); // 獲取在線用戶的 UID 列表
+            const playerCount = onlineUsers.length;
+
+            // 從 users 節點獲取用戶名稱
+            const usersRef = db.ref('users');
+            usersRef.once('value')
+                .then((userSnapshot) => {
+                    const usersData = userSnapshot.val();
+                    const onlineNames = onlineUsers.map(uid => usersData[uid]?.displayName || '未知用戶');
+                    document.getElementById('onlineCountNumber').textContent = playerCount;
+                    document.getElementById('onlineUsersList').textContent = onlineNames.length > 0 ? onlineNames.join(', ') : '無';
+                });
+        })
+        .catch((error) => {
+            console.error('獲取在線信息失敗:', error);
+            document.getElementById('onlineCountNumber').textContent = '錯誤';
+            document.getElementById('onlineUsersList').textContent = '無法獲取';
+        });
+}
+
+// 展開或隱藏在線用戶列表
+function toggleOnlineUsers() {
+    const container = document.getElementById('onlineUsersContainer');
+    const toggleButton = document.getElementById('toggleOnlineUsers');
+    if (container.style.maxHeight === '0px' || container.style.display === 'none') {
+        container.style.display = 'block';
+        container.style.maxHeight = '200px';
+        container.style.padding = '0 10px';
+        toggleButton.textContent = '隱藏在線用戶';
+    } else {
+        container.style.maxHeight = '0';
+        container.style.padding = '0 10px';
+        setTimeout(() => { container.style.display = 'none'; }, 300); // 等待動畫完成後隱藏
+        toggleButton.textContent = '查看在線用戶';
+    }
+}
+
+// 初始化事件監聽器
+document.getElementById('toggleOnlineUsers').addEventListener('click', toggleOnlineUsers);
+
+// 自動更新在線信息，每 5 秒執行一次，並在頁面載入時立即執行
+setInterval(updateOnlineInfo, 5000);
+updateOnlineInfo();
+
+// 監聽用戶登錄狀態並設置 Presence
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        setupPresence(user); // 用戶登錄後設置 Presence
+    }
+});
+
+
+    
 
 
     // 監聽認證狀態變化
