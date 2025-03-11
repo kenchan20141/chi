@@ -945,6 +945,26 @@
   100% { opacity: 0; transform: translate(-50%,-50%) translateY(-20px); }
 }
 
+.card {
+    width: 80px;
+    height: 80px;
+    background: #2d2926;
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: transparent;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.card.flipped {
+    background: #d4af37;
+    color: white;
+}
+
+    
 
         
     </style>
@@ -1011,6 +1031,10 @@
 </button>
     </div>
 
+    <button onclick="showMiniGames()" class="action-btn" style="background: linear-gradient(45deg, #f1c40f, #f39c12);">
+    <i class="fas fa-gamepad"></i>
+    <span>挑戰小遊戲</span>
+</button>
    
      
     <div class="input-group">
@@ -3890,7 +3914,97 @@ function listenToRoomChanges() {
 }
 
 
+let memoryGameCards = [];
+let flippedCards = [];
+let matchedCards = 0;
 
+function showMiniGames() {
+    document.getElementById('roomControl').style.display = 'none';
+    document.getElementById('miniGamesMenu').style.display = 'block';
+}
+
+function startMemoryGame() {
+    document.getElementById('miniGamesMenu').style.display = 'none';
+    document.getElementById('memoryGame').style.display = 'block';
+    initializeMemoryGame();
+}
+
+function initializeMemoryGame() {
+    const gameBoard = document.getElementById('gameBoard');
+    gameBoard.innerHTML = '';
+    memoryGameCards = generateMemoryCards();
+    memoryGameCards.forEach((card, index) => {
+        const cardElement = document.createElement('div');
+        cardElement.className = 'card';
+        cardElement.dataset.index = index;
+        cardElement.onclick = () => flipCard(cardElement);
+        gameBoard.appendChild(cardElement);
+    });
+}
+
+function generateMemoryCards() {
+    const symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    const cards = symbols.concat(symbols); // 創建配對
+    return shuffleArray(cards);
+}
+
+function flipCard(cardElement) {
+    if (flippedCards.length < 2 && !cardElement.classList.contains('flipped')) {
+        cardElement.classList.add('flipped');
+        cardElement.textContent = memoryGameCards[cardElement.dataset.index];
+        flippedCards.push(cardElement);
+        if (flippedCards.length === 2) {
+            setTimeout(checkMatch, 500);
+        }
+    }
+}
+
+function checkMatch() {
+    const [card1, card2] = flippedCards;
+    if (card1.textContent === card2.textContent) {
+        matchedCards += 2;
+        if (matchedCards === memoryGameCards.length) {
+            alert('恭喜你完成遊戲！');
+            endMemoryGame(true);
+        }
+    } else {
+        card1.classList.remove('flipped');
+        card2.classList.remove('flipped');
+        card1.textContent = '';
+        card2.textContent = '';
+    }
+    flippedCards = [];
+}
+
+function endMemoryGame(success = false) {
+    document.getElementById('memoryGame').style.display = 'none';
+    document.getElementById('miniGamesMenu').style.display = 'block';
+    if (success) {
+        grantExperience(10);
+    }
+}
+
+function grantExperience(exp) {
+    const user = auth.currentUser;
+    if (user) {
+        const userRef = database.ref('users/' + user.uid);
+        userRef.transaction((userData) => {
+            if (!userData) userData = { exp: 0 };
+            userData.exp += exp;
+            return userData;
+        });
+    }
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+    
 </script>
 
 <!-- 新增治疗提示 -->
@@ -3900,6 +4014,20 @@ function listenToRoomChanges() {
 
 <img id="reduceDamageAnimation" src="https://i.ibb.co/cK6LJK1M/unscreen-1.gif" style="display:none; position:fixed; top:40%; left:60%; transform:translate(-50%,-50%); width:250px; height:250px; z-index:10001;">
 
+
+    <div id="miniGamesMenu" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10001; overflow-y: auto;">
+    <h2 style="color: var(--gold); text-align: center;">選擇小遊戲</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; width: 300px; margin: 0 auto;">
+        <button onclick="startMemoryGame()" class="action-btn">記憶翻牌</button>
+        <!-- 可在此處添加其他小遊戲按鈕 -->
+    </div>
+</div>
+
+    <div id="memoryGame" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10002; overflow-y: auto;">
+    <h2 style="color: var(--gold); text-align: center;">記憶翻牌遊戲</h2>
+    <div id="gameBoard" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 2rem auto; width: 400px;"></div>
+    <button onclick="endMemoryGame()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #e74c3c; border: none; border-radius: 5px; color: white; cursor: pointer;">放棄</button>
+</div>
 
     
 </body>
