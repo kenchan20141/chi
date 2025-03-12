@@ -1396,11 +1396,6 @@ async function getIpAddress() {
 
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
-
-    let currentRoomId = null; // 假設這在創建或加入房間時設置
-const auth = firebase.auth();
-const database = firebase.database();
-    
     let skillTriggered = false; // 在外部聲明 skillTriggered
 let singlePlayerClass = null; // 單機模式選中的職業
 let singlePlayerSelectedGrade = null; // 單機模式選中的年級
@@ -1446,49 +1441,6 @@ joinRoomBtn.onclick = function() {
         joinWaitingQueue();
     }
 };
-
-
-// 處理玩家斷開連接的函數
-function handlePlayerDisconnect(playerId) {
-    const roomRef = database.ref('rooms/' + currentRoomId);
-    roomRef.once('value', (snapshot) => {
-        const room = snapshot.val();
-        if (room && room.gameStarted && !room.gameEnded && room.isMultiplayer) {
-            // 確認遊戲正在進行中，且是多人模式
-            const userRef = database.ref('users/' + playerId);
-            userRef.transaction((userData) => {
-                if (userData) {
-                    // 扣減200點經驗值和積分，確保不低於0
-                    userData.exp = Math.max(0, (userData.exp || 0) - 200);
-                    userData.score = Math.max(0, (userData.score || 0) - 200);
-                }
-                return userData;
-            }).then(() => {
-                console.log(`玩家 ${playerId} 中途離開，已扣減200經驗值和200積分`);
-            }).catch((error) => {
-                console.error('更新用戶數據失敗:', error);
-            });
-        }
-    });
-}
-
-// 設置斷開連接監聽器
-function setupDisconnectListener(playerId) {
-    const connectedRef = database.ref('.info/connected');
-    connectedRef.on('value', (snapshot) => {
-        if (snapshot.val() === false) {
-            // 玩家斷開連接
-            handlePlayerDisconnect(playerId);
-        }
-    });
-}
-
-// 在遊戲開始時調用，例如在createRoom或joinRoom函數中
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        setupDisconnectListener(user.uid);
-    }
-});
 
     
     
@@ -2297,20 +2249,6 @@ function toggleMusic() {
 }
 
 function createRoom() {
-
-currentRoomId = document.getElementById('roomId').value || Math.floor(1000 + Math.random() * 9000).toString();
-    const user = auth.currentUser;
-    if (user) {
-        database.ref('rooms/' + currentRoomId).set({
-            player1: { id: user.uid, health: 100 },
-            gameStarted: false,
-            gameEnded: false,
-            isMultiplayer: true, // 標識為多人模式
-            createdAt: Date.now()
-        });
-    }
-
-    
     const roomIdInput = document.getElementById('roomId').value.trim();
     if (roomIdInput.length !== 4) {
         alert('請輸入四位戰場編號');
@@ -2330,23 +2268,6 @@ currentRoomId = document.getElementById('roomId').value || Math.floor(1000 + Mat
 }
 
 function joinRoom() {
-
-
-currentRoomId = document.getElementById('roomId').value;
-    const user = auth.currentUser;
-    if (user) {
-        const roomRef = database.ref('rooms/' + currentRoomId);
-        roomRef.once('value', (snapshot) => {
-            const room = snapshot.val();
-            if (room && !room.player2) {
-                roomRef.update({
-                    player2: { id: user.uid, health: 100 },
-                    isMultiplayer: true // 確保多人模式
-                });
-            }
-        });
-    }
-    
     const roomId = document.getElementById('roomId').value.trim();
     if (roomId.length !== 4) {
         alert('請輸入四位戰場編號');
