@@ -946,26 +946,6 @@
 }
 
 
-/* 確保以下動畫定義存在 */
-@keyframes screenShake {
-    0% { transform: translate(0, 0); }
-    10% { transform: translate(-5px, 5px); }
-    20% { transform: translate(5px, -5px); }
-    30% { transform: translate(-5px, 5px); }
-    40% { transform: translate(5px, -5px); }
-    50% { transform: translate(-5px, 5px); }
-    60% { transform: translate(5px, -5px); }
-    70% { transform: translate(-5px, 5px); }
-    80% { transform: translate(5px, -5px); }
-    90% { transform: translate(-5px, 5px); }
-    100% { transform: translate(0, 0); }
-}
-
-.screen-shake {
-    animation: screenShake 0.5s ease-in-out;
-}
-    
-
         
     </style>
 </head>
@@ -1416,11 +1396,6 @@ async function getIpAddress() {
 
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
-    // 多人模式初始氣血
-let previousMyHealth = 100;
-
-// 單人模式初始氣血
-let previousSinglePlayerHealth = 1000;
     let skillTriggered = false; // 在外部聲明 skillTriggered
 let singlePlayerClass = null; // 單機模式選中的職業
 let singlePlayerSelectedGrade = null; // 單機模式選中的年級
@@ -1969,17 +1944,6 @@ function updateHealthDisplay(room) {
     const myHealthPercentage = (myHealth / myMaxHealth) * 100;
     const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
 
-// 檢測己方氣血是否減少並觸發抖動
-    if (myHealth < previousMyHealth) {
-        const gameArea = document.getElementById('gameArea');
-        gameArea.classList.add('screen-shake');
-        setTimeout(() => gameArea.classList.remove('screen-shake'), 500); // 動畫持續0.5秒
-    }
-    previousMyHealth = myHealth;
-}
-
-
-    
     // 更新己方顯示
     document.getElementById('myHealthContainer').innerHTML = `
         <div>${user.displayName || '未知玩家'} (等級 ${playerLevel || 1}) 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
@@ -3254,18 +3218,6 @@ function updateSinglePlayerHealthDisplay() {
     document.getElementById('opponentHealth').textContent = `${enemyHealth} / ${maxEnemyHealth}`;
     document.getElementById('opponentHealthBar').style.width = `${(enemyHealth / maxEnemyHealth) * 100}%`;
 
-// 檢測己方氣血是否減少並觸發抖動
-    if (myHealth < previousMyHealth) {
-        const gameArea = document.getElementById('gameArea');
-        gameArea.classList.add('screen-shake');
-        setTimeout(() => gameArea.classList.remove('screen-shake'), 500); // 動畫持續0.5秒
-    }
-    previousMyHealth = myHealth;
-}
-
-
-
-    
     // 添加動畫效果
     const healthBar = singlePlayerHealth < maxPlayerHealth * 0.3 ? 'myHealthBar' : 'opponentHealthBar';
     const wave = document.createElement('div');
