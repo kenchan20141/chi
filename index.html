@@ -154,14 +154,6 @@
     100% { transform: translateY(-50px); opacity: 0; }
 }
 
-        @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    75% { transform: translateX(-5px); }
-    100% { transform: translateX(0); }
-}
-
     /* 血條衝擊波特效 */
     @keyframes healthWave {
         0% { transform: scaleX(1); opacity: 1; }
@@ -1952,19 +1944,6 @@ function updateHealthDisplay(room) {
     const myHealthPercentage = (myHealth / myMaxHealth) * 100;
     const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
 
-    // 獲取當前顯示的己方氣血（如果元素存在）
-    const myHealthElement = document.getElementById('myHealth');
-    let currentMyHealth = myHealth; // 預設為當前氣血
-    if (myHealthElement) {
-        const currentText = myHealthElement.textContent.split(' / ')[0];
-        currentMyHealth = parseInt(currentText) || myHealth;
-    }
-
-    // 檢查己方氣血是否減少
-    if (myHealth < currentMyHealth) {
-        shakeScreen(); // 觸發畫面抖動
-    }
-
     // 更新己方顯示
     document.getElementById('myHealthContainer').innerHTML = `
         <div>${user.displayName || '未知玩家'} (等級 ${playerLevel || 1}) 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
@@ -3415,9 +3394,6 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         }
 
         damageToPlayer = Math.round(damageToPlayer / defenseMultiplier);
-        if (damageToPlayer > 0) {
-            shakeScreen(); // 觸發畫面抖動
-        }
         singlePlayerHealth = Math.max(singlePlayerHealth - damageToPlayer, 0);
         updateSinglePlayerHealthDisplay();
         showDamageAnimation(damageToPlayer, 'player');
@@ -3448,15 +3424,6 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         if (!gameOver) loadNewQuestionSinglePlayer();
     }, 700);
 }
-
-function shakeScreen() {
-    const gameArea = document.getElementById('gameArea');
-    gameArea.style.animation = 'shake 0.2s ease-in-out';
-    setTimeout(() => {
-        gameArea.style.animation = '';
-    }, 200);
-}
-
 
     
 function showDamageAnimation(damage, target) {
