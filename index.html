@@ -705,6 +705,11 @@
             100% { transform: translate(0); }
         }
 
+        .screen-shake {
+    animation: screenShake 0.5s ease-in-out;
+    animation-fill-mode: none; /* 確保動畫結束後不保留樣式 */
+}
+
         @keyframes victoryPulse {
             0% { opacity: 0; transform: scale(0); }
             80% { opacity: 1; transform: scale(1.2); }
@@ -3440,10 +3445,10 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
 
 function applyScreenShake() {
     const gameArea = document.getElementById('gameArea');
-    gameArea.style.animation = 'screenShake 0.5s ease-in-out';
+    gameArea.classList.add('screen-shake');
     setTimeout(() => {
-        gameArea.style.animation = ''; // 動畫結束後清除
-    }, 500);
+        gameArea.classList.remove('screen-shake'); // 移除類別，避免殘留
+    }, 500); // 與動畫時長一致
 }
 
 
