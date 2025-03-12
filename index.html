@@ -597,6 +597,7 @@
             min-height: calc(100vh - 40px);
             position: relative;
             display: none;
+            will-change: transform; /* 新增這一行 */
         }
 
         .health-bar {
@@ -613,6 +614,7 @@
        .health-fill {
     height: 100%;
     transition: width 0.5s ease;
+    will-change: width; /* 新增這一行 */
 }
 
 /* 新增區分敵我的顏色 */
@@ -3436,13 +3438,17 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
 
 function applyScreenShake() {
     const gameArea = document.getElementById('gameArea');
-    gameArea.style.animation = 'screenShake 0.5s ease-in-out';
-    
-    gameArea.addEventListener('animationend', function handler() {
-        gameArea.style.animation = '';
-        gameArea.style.transform = 'none';
-        gameArea.removeEventListener('animationend', handler);
-    });
+    // 在觸發抖動前稍作延遲，避免與氣血條動畫重疊
+    setTimeout(() => {
+        gameArea.style.animation = 'screenShake 0.5s ease-in-out';
+        
+        gameArea.addEventListener('animationend', function handler() {
+            gameArea.style.animation = '';
+            gameArea.style.transform = 'none';
+            gameArea.style.willChange = 'auto'; // 動畫結束後恢復默認值
+            gameArea.removeEventListener('animationend', handler);
+        });
+    }, 50); // 延遲 50ms，給氣血條動畫一點緩衝時間
 }
 
 
