@@ -3436,11 +3436,12 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
 
 function applyScreenShake() {
     const gameArea = document.getElementById('gameArea');
-    gameArea.classList.add('screen-shake');
+    gameArea.style.animation = 'screenShake 0.5s ease-in-out';
     setTimeout(() => {
-        gameArea.classList.remove('screen-shake'); // 移除類別，避免殘留
-    }, 500); // 與動畫時長一致
+        gameArea.style.animation = ''; // 動畫結束後清除
+    }, 500);
 }
+
 
 
     
