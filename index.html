@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>  
 
+        
 .difficulty-icon {
     width: 140px;
     height: 140px;
@@ -126,6 +127,15 @@
     box-shadow: 0 0 15px rgba(0,0,0,0.3);
 }
 
+
+@keyframes screenShake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-5px, 5px); }
+    50% { transform: translate(5px, -5px); }
+    75% { transform: translate(-5px, -5px); }
+    100% { transform: translate(0, 0); }
+}
+        
 /* 弹出图片的动画关键帧 */
 @keyframes popImage {
     0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
@@ -3396,7 +3406,10 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         damageToPlayer = Math.round(damageToPlayer / defenseMultiplier);
         singlePlayerHealth = Math.max(singlePlayerHealth - damageToPlayer, 0);
         updateSinglePlayerHealthDisplay();
-        showDamageAnimation(damageToPlayer, 'player');
+        if (damageToPlayer > 0) {
+            showDamageAnimation(damageToPlayer, 'player');
+            applyScreenShake(); // 氣血減少時觸發抖動
+        }
 
         if (singlePlayerHealth <= 0) {
             handleSinglePlayerGameOver(false);
@@ -3424,6 +3437,15 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         if (!gameOver) loadNewQuestionSinglePlayer();
     }, 700);
 }
+
+function applyScreenShake() {
+    const gameArea = document.getElementById('gameArea');
+    gameArea.style.animation = 'screenShake 0.5s ease-in-out';
+    setTimeout(() => {
+        gameArea.style.animation = ''; // 動畫結束後清除
+    }, 500);
+}
+
 
     
 function showDamageAnimation(damage, target) {
@@ -3792,9 +3814,19 @@ function listenToRoomChanges() {
     const roomRef = database.ref('rooms/' + currentRoomId);
     roomRef.off('value');
 
+    let previousHealth = 100; // 初始氣血，假設滿血為 100
+
     roomRef.on('value', (snapshot) => {
         const room = snapshot.val();
         if (!room) return;
+
+        const currentHealth = isHost ? room.player1.health : room.player2.health;
+
+        // 檢測己方氣血是否減少
+        if (currentHealth < previousHealth) {
+            applyScreenShake(); // 氣血減少時觸發抖動
+        }
+        previousHealth = currentHealth; // 更新前一次氣血值
 
         if (isHost) {
             opponentDefense = room.player2?.defense || 1.0;
