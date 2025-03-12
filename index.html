@@ -13,7 +13,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
-    <style>  
+    <style> 
+
 
 .difficulty-icon {
     width: 140px;
@@ -152,6 +153,18 @@
 @keyframes damageFloat {
     0% { transform: translateY(0); opacity: 1; }
     100% { transform: translateY(-50px); opacity: 0; }
+}
+
+        @keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+.shake-animation {
+  animation: shake 0.3s ease-in-out;
 }
 
     /* 血條衝擊波特效 */
@@ -1944,6 +1957,11 @@ function updateHealthDisplay(room) {
     const myHealthPercentage = (myHealth / myMaxHealth) * 100;
     const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
 
+    // 獲取之前的己方氣血值（從 HTML 元素中提取）
+    const myHealthElement = document.getElementById('myHealth');
+    const previousHealthText = myHealthElement ? myHealthElement.textContent.split(' / ')[0] : myMaxHealth;
+    const previousHealth = parseInt(previousHealthText) || myMaxHealth;
+
     // 更新己方顯示
     document.getElementById('myHealthContainer').innerHTML = `
         <div>${user.displayName || '未知玩家'} (等級 ${playerLevel || 1}) 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
@@ -1975,6 +1993,15 @@ function updateHealthDisplay(room) {
             <div>等待玩家加入... 氣血: <span id="opponentHealth">${opponentHealth} / ${opponentMaxHealth}</span></div>
             <div class="health-bar"><div class="health-fill" id="opponentHealthBar" style="width: ${opponentHealthPercentage}%"></div></div>
         `;
+    }
+
+    // 如果己方氣血減少，觸發抖動效果
+    if (myHealth < previousHealth) {
+        const gameArea = document.getElementById('gameArea');
+        gameArea.classList.add('shake-animation');
+        setTimeout(() => {
+            gameArea.classList.remove('shake-animation');
+        }, 300); // 動畫持續 0.3 秒
     }
 }
     
@@ -3212,13 +3239,29 @@ function updateSinglePlayerHealthDisplay() {
     const maxPlayerHealth = 1000 + (playerLevel - 1) * 100; // 動態計算最大氣血
     const maxEnemyHealth = difficultySettings[selectedDifficulty].enemyHealth;
 
+    // 獲取之前的己方氣血值（從 HTML 元素中提取）
+    const myHealthElement = document.getElementById('myHealth');
+    const previousHealthText = myHealthElement ? myHealthElement.textContent.split(' / ')[0] : maxPlayerHealth;
+    const previousHealth = parseInt(previousHealthText) || maxPlayerHealth;
+
+    // 更新己方氣血顯示
     document.getElementById('myHealth').textContent = `${singlePlayerHealth} / ${maxPlayerHealth}`;
     document.getElementById('myHealthBar').style.width = `${(singlePlayerHealth / maxPlayerHealth) * 100}%`;
 
+    // 更新敵方氣血顯示
     document.getElementById('opponentHealth').textContent = `${enemyHealth} / ${maxEnemyHealth}`;
     document.getElementById('opponentHealthBar').style.width = `${(enemyHealth / maxEnemyHealth) * 100}%`;
 
-    // 添加動畫效果
+    // 如果己方氣血減少，觸發抖動效果
+    if (singlePlayerHealth < previousHealth) {
+        const gameArea = document.getElementById('gameArea');
+        gameArea.classList.add('shake-animation');
+        setTimeout(() => {
+            gameArea.classList.remove('shake-animation');
+        }, 300); // 動畫持續 0.3 秒
+    }
+
+    // 添加動畫效果（原有的波紋效果）
     const healthBar = singlePlayerHealth < maxPlayerHealth * 0.3 ? 'myHealthBar' : 'opponentHealthBar';
     const wave = document.createElement('div');
     wave.className = 'health-wave';
