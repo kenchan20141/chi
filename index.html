@@ -3824,6 +3824,8 @@ function listenToRoomChanges() {
 
         // 檢測己方氣血是否減少
         if (currentHealth < previousHealth) {
+            const damage = previousHealth - currentHealth; // 計算扣減的氣血
+            showDamageAnimation(damage, 'player'); // 顯示扣減數字
             applyScreenShake(); // 氣血減少時觸發抖動
         }
         previousHealth = currentHealth; // 更新前一次氣血值
