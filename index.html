@@ -15,6 +15,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>  
 
+@keyframes shake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(2px, 2px); }
+  50% { transform: translate(-2px, -2px); }
+  75% { transform: translate(2px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+
+        
 .difficulty-icon {
     width: 140px;
     height: 140px;
@@ -1944,6 +1958,28 @@ function updateHealthDisplay(room) {
     const myHealthPercentage = (myHealth / myMaxHealth) * 100;
     const opponentHealthPercentage = (opponentHealth / opponentMaxHealth) * 100;
 
+// 更新氣血顯示
+  document.getElementById('myHealth').textContent = Math.max(myHealth, 0);
+  document.getElementById('myHealthBar').style.width = Math.max(myHealth, 0) + '%';
+  document.getElementById('opponentHealth').textContent = Math.max(opponentHealth, 0);
+  document.getElementById('opponentHealthBar').style.width = Math.max(opponentHealth, 0) + '%';
+
+  // 如果己方氣血減少，觸發抖動
+  if (typeof previousMyHealth !== 'undefined' && myHealth < previousMyHealth) {
+    const gameArea = document.getElementById('gameArea');
+    gameArea.classList.add('shake');
+    setTimeout(() => {
+      gameArea.classList.remove('shake');
+    }, 300); // 與動畫持續時間一致
+  }
+
+  // 更新前一次氣血值
+  previousMyHealth = myHealth;
+}
+
+
+
+    
     // 更新己方顯示
     document.getElementById('myHealthContainer').innerHTML = `
         <div>${user.displayName || '未知玩家'} (等級 ${playerLevel || 1}) 氣血: <span id="myHealth">${myHealth} / ${myMaxHealth}</span></div>
@@ -2719,6 +2755,11 @@ function startGame(room) {
             displayQuestion(question);
         }
     }
+
+previousMyHealth = isHost ? room.player1.health : room.player2.health;
+}
+
+    
 }
 
 function shuffleArray(array) {
@@ -3158,6 +3199,13 @@ function selectSinglePlayerTopic(topic) {
     countdownElement.style.zIndex = '10001';
     document.body.appendChild(countdownElement);
 
+const settings = difficultySettings[selectedDifficulty];
+  singlePlayerHealth = 1000 + (playerLevel - 1) * 100; // 重置氣血
+  enemyHealth = settings.enemyHealth;
+  previousSinglePlayerHealth = singlePlayerHealth; // 初始化
+
+
+      
     function updateCountdown() {
         if (countdown > 0) {
             countdownElement.textContent = countdown;
@@ -3218,6 +3266,20 @@ function updateSinglePlayerHealthDisplay() {
     document.getElementById('opponentHealth').textContent = `${enemyHealth} / ${maxEnemyHealth}`;
     document.getElementById('opponentHealthBar').style.width = `${(enemyHealth / maxEnemyHealth) * 100}%`;
 
+// 如果己方氣血減少，觸發抖動
+  if (typeof previousSinglePlayerHealth !== 'undefined' && singlePlayerHealth < previousSinglePlayerHealth) {
+    const gameArea = document.getElementById('gameArea');
+    gameArea.classList.add('shake');
+    setTimeout(() => {
+      gameArea.classList.remove('shake');
+    }, 300); // 與動畫持續時間一致
+  }
+
+  // 更新前一次氣血值
+  previousSinglePlayerHealth = singlePlayerHealth;
+
+
+    
     // 添加動畫效果
     const healthBar = singlePlayerHealth < maxPlayerHealth * 0.3 ? 'myHealthBar' : 'opponentHealthBar';
     const wave = document.createElement('div');
