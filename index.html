@@ -2359,18 +2359,6 @@ async function getIpAddress() {
     });
 
     listenToRoomChanges();
-
-// 添加懲罰機制：設置 onDisconnect 事件
-        const userRef = database.ref('users/' + user.uid);
-        roomRef.child('player1').onDisconnect().update({ health: 0 }); // 標記玩家離開
-        userRef.onDisconnect().transaction((userData) => {
-            if (userData && !room.gameEnded) { // 確保遊戲未結束時才扣減
-                userData.exp = Math.max(0, (userData.exp || 0) - 200);
-                userData.score = Math.max(0, (userData.score || 0) - 200);
-            }
-            return userData;
-
-       
 }
 
 async function joinRoomWithId(roomId) {
@@ -2417,16 +2405,6 @@ async function joinRoomWithId(roomId) {
     document.getElementById('roomControl').style.display = 'none';
     document.getElementById('classSelection').style.display = 'block';
     listenToRoomChanges();
-
-    // 添加懲罰機制：設置 onDisconnect 事件
-            const userRef = database.ref('users/' + user.uid);
-            roomRef.child('player2').onDisconnect().update({ health: 0 }); // 標記玩家離開
-            userRef.onDisconnect().transaction((userData) => {
-                if (userData && !room.gameEnded) { // 確保遊戲未結束時才扣減
-                    userData.exp = Math.max(0, (userData.exp || 0) - 200);
-                    userData.score = Math.max(0, (userData.score || 0) - 200);
-                }
-                return userData;
 
     const player2Ref = database.ref('rooms/' + currentRoomId + '/player2');
     await player2Ref.set({
@@ -3012,10 +2990,6 @@ function handleGameEnd(winnerType) {
                         statsOverlay.innerHTML += `<p style="color: #FFD700; font-size: 1.5rem; animation: levelUp 1s infinite;">恭喜升級！</p>`;
                     }
                     document.body.appendChild(statsOverlay);
-
-roomRef.child(isHost ? 'player1' : 'player2').onDisconnect().cancel();
-userRef.onDisconnect().cancel();
-                    
                 });
             });
         });
