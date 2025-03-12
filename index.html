@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
     
@@ -14,7 +15,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>  
 
-        
 .difficulty-icon {
     width: 140px;
     height: 140px;
@@ -126,7 +126,6 @@
     box-shadow: 0 0 15px rgba(0,0,0,0.3);
 }
 
-        
 /* 弹出图片的动画关键帧 */
 @keyframes popImage {
     0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
@@ -597,7 +596,6 @@
             min-height: calc(100vh - 40px);
             position: relative;
             display: none;
-            will-change: transform; /* 新增這一行 */
         }
 
         .health-bar {
@@ -614,7 +612,6 @@
        .health-fill {
     height: 100%;
     transition: width 0.5s ease;
-    will-change: width; /* 新增這一行 */
 }
 
 /* 新增區分敵我的顏色 */
@@ -692,16 +689,11 @@
 
         @keyframes screenShake {
             0% { transform: translate(0); }
-            25% { transform: translate(-5px, 5px); }
-            50% { transform: translate(5px, -5px); }
-            75% { transform: translate(-5px, -5px); }
+            25% { transform: translate(-10px, 10px); }
+            50% { transform: translate(10px, -10px); }
+            75% { transform: translate(-10px, -10px); }
             100% { transform: translate(0); }
         }
-
-        .screen-shake {
-    animation: screenShake 0.5s ease-in-out;
-    animation-fill-mode: none; /* 確保動畫結束後不保留樣式 */
-}
 
         @keyframes victoryPulse {
             0% { opacity: 0; transform: scale(0); }
@@ -1404,6 +1396,11 @@ async function getIpAddress() {
 
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
+
+    let currentRoomId = null; // 假設這在創建或加入房間時設置
+const auth = firebase.auth();
+const database = firebase.database();
+    
     let skillTriggered = false; // 在外部聲明 skillTriggered
 let singlePlayerClass = null; // 單機模式選中的職業
 let singlePlayerSelectedGrade = null; // 單機模式選中的年級
@@ -1449,6 +1446,49 @@ joinRoomBtn.onclick = function() {
         joinWaitingQueue();
     }
 };
+
+
+// 處理玩家斷開連接的函數
+function handlePlayerDisconnect(playerId) {
+    const roomRef = database.ref('rooms/' + currentRoomId);
+    roomRef.once('value', (snapshot) => {
+        const room = snapshot.val();
+        if (room && room.gameStarted && !room.gameEnded && room.isMultiplayer) {
+            // 確認遊戲正在進行中，且是多人模式
+            const userRef = database.ref('users/' + playerId);
+            userRef.transaction((userData) => {
+                if (userData) {
+                    // 扣減200點經驗值和積分，確保不低於0
+                    userData.exp = Math.max(0, (userData.exp || 0) - 200);
+                    userData.score = Math.max(0, (userData.score || 0) - 200);
+                }
+                return userData;
+            }).then(() => {
+                console.log(`玩家 ${playerId} 中途離開，已扣減200經驗值和200積分`);
+            }).catch((error) => {
+                console.error('更新用戶數據失敗:', error);
+            });
+        }
+    });
+}
+
+// 設置斷開連接監聽器
+function setupDisconnectListener(playerId) {
+    const connectedRef = database.ref('.info/connected');
+    connectedRef.on('value', (snapshot) => {
+        if (snapshot.val() === false) {
+            // 玩家斷開連接
+            handlePlayerDisconnect(playerId);
+        }
+    });
+}
+
+// 在遊戲開始時調用，例如在createRoom或joinRoom函數中
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        setupDisconnectListener(user.uid);
+    }
+});
 
     
     
@@ -2257,6 +2297,20 @@ function toggleMusic() {
 }
 
 function createRoom() {
+
+currentRoomId = document.getElementById('roomId').value || Math.floor(1000 + Math.random() * 9000).toString();
+    const user = auth.currentUser;
+    if (user) {
+        database.ref('rooms/' + currentRoomId).set({
+            player1: { id: user.uid, health: 100 },
+            gameStarted: false,
+            gameEnded: false,
+            isMultiplayer: true, // 標識為多人模式
+            createdAt: Date.now()
+        });
+    }
+
+    
     const roomIdInput = document.getElementById('roomId').value.trim();
     if (roomIdInput.length !== 4) {
         alert('請輸入四位戰場編號');
@@ -2276,6 +2330,23 @@ function createRoom() {
 }
 
 function joinRoom() {
+
+
+currentRoomId = document.getElementById('roomId').value;
+    const user = auth.currentUser;
+    if (user) {
+        const roomRef = database.ref('rooms/' + currentRoomId);
+        roomRef.once('value', (snapshot) => {
+            const room = snapshot.val();
+            if (room && !room.player2) {
+                roomRef.update({
+                    player2: { id: user.uid, health: 100 },
+                    isMultiplayer: true // 確保多人模式
+                });
+            }
+        });
+    }
+    
     const roomId = document.getElementById('roomId').value.trim();
     if (roomId.length !== 4) {
         alert('請輸入四位戰場編號');
@@ -3404,10 +3475,7 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         damageToPlayer = Math.round(damageToPlayer / defenseMultiplier);
         singlePlayerHealth = Math.max(singlePlayerHealth - damageToPlayer, 0);
         updateSinglePlayerHealthDisplay();
-        if (damageToPlayer > 0) {
-            showDamageAnimation(damageToPlayer, 'player');
-            applyScreenShake(); // 氣血減少時觸發抖動
-        }
+        showDamageAnimation(damageToPlayer, 'player');
 
         if (singlePlayerHealth <= 0) {
             handleSinglePlayerGameOver(false);
@@ -3435,23 +3503,6 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         if (!gameOver) loadNewQuestionSinglePlayer();
     }, 700);
 }
-
-function applyScreenShake() {
-    const gameArea = document.getElementById('gameArea');
-    // 在觸發抖動前稍作延遲，避免與氣血條動畫重疊
-    setTimeout(() => {
-        gameArea.style.animation = 'screenShake 0.5s ease-in-out';
-        
-        gameArea.addEventListener('animationend', function handler() {
-            gameArea.style.animation = '';
-            gameArea.style.transform = 'none';
-            gameArea.style.willChange = 'auto'; // 動畫結束後恢復默認值
-            gameArea.removeEventListener('animationend', handler);
-        });
-    }, 50); // 延遲 50ms，給氣血條動畫一點緩衝時間
-}
-
-
 
     
 function showDamageAnimation(damage, target) {
@@ -3820,21 +3871,9 @@ function listenToRoomChanges() {
     const roomRef = database.ref('rooms/' + currentRoomId);
     roomRef.off('value');
 
-    let previousHealth = 100; // 初始氣血，假設滿血為 100
-
     roomRef.on('value', (snapshot) => {
         const room = snapshot.val();
         if (!room) return;
-
-        const currentHealth = isHost ? room.player1.health : room.player2.health;
-
-        // 檢測己方氣血是否減少
-        if (currentHealth < previousHealth) {
-            const damage = previousHealth - currentHealth; // 計算扣減的氣血
-            showDamageAnimation(damage, 'player'); // 顯示扣減數字
-            applyScreenShake(); // 氣血減少時觸發抖動
-        }
-        previousHealth = currentHealth; // 更新前一次氣血值
 
         if (isHost) {
             opponentDefense = room.player2?.defense || 1.0;
