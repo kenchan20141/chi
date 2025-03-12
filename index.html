@@ -3437,9 +3437,12 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
 function applyScreenShake() {
     const gameArea = document.getElementById('gameArea');
     gameArea.style.animation = 'screenShake 0.5s ease-in-out';
-    setTimeout(() => {
-        gameArea.style.animation = ''; // 動畫結束後清除
-    }, 500);
+    
+    gameArea.addEventListener('animationend', function handler() {
+        gameArea.style.animation = '';
+        gameArea.style.transform = 'none';
+        gameArea.removeEventListener('animationend', handler);
+    });
 }
 
 
