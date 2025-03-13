@@ -1202,6 +1202,7 @@
     <h2 style="color: #d4af37; text-align: center;">選擇題庫</h2>
     <div id="gradeSelection" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; width: 300px;">
         <button onclick="selectGrade('中一')" class="grade-btn">中一</button>
+        <button onclick="selectGrade('中一')" class="grade-btn">中一</button>
         <button onclick="selectGrade('中四')" class="grade-btn">中四</button>
         <button onclick="selectGrade('中五')" class="grade-btn">中五</button>
         <button onclick="selectGrade('【中史】')" class="grade-btn">【中史】</button>
@@ -1518,6 +1519,8 @@ database.ref(`rooms/${currentRoomId}/${playerPath}`).update({
     let topics;
     if (grade === '中一') {
         topics = ['楊修之死','背影','燕詩','御人之妻','故宮博物院','風雪中的北平'];
+    } else if (grade === '中二') {
+        topics = ['回家'];
     } else if (grade === '中四') {
         topics = ['山居秋暝','月下獨酌','登樓','論仁論孝論君子','魚我所欲也','師說'];
     } else if (grade === '中五') {
@@ -3129,6 +3132,8 @@ function selectSinglePlayerClass(className) {
     let topics;
     if (grade === '中一') {
         topics = ['楊修之死','背影','燕詩','御人之妻','故宮博物院','風雪中的北平'];
+     } else if (grade === '中二') {
+        topics = ['回家'];
     } else if (grade === '中四') {
         topics = ['山居秋暝','月下獨酌','登樓','論仁論孝論君子','魚我所欲也','師說'];
     } else if (grade === '中五') {
