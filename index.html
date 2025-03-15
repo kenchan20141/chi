@@ -1413,7 +1413,6 @@ async function getIpAddress() {
 
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
-    let isBlocked = false;
     let skillTriggered = false; // 在外部聲明 skillTriggered
 let singlePlayerClass = null; // 單機模式選中的職業
 let singlePlayerSelectedGrade = null; // 單機模式選中的年級
@@ -1888,97 +1887,6 @@ function showDodgeText() {
         dodgeText.style.display = 'none';      // 1秒後隱藏文字
         dodgeAnimation.style.display = 'none'; // 同時隱藏動畫
     }, 1300); // 1000毫秒 = 1秒，與原有的動畫持續時間一致
-
-
-// 如果處於遮擋狀態，直接返回
-    if (isBlocked) return;
-
-    if (answeredQuestions.has(questionId) || answered || gameOver) return;
-    answeredQuestions.add(questionId);
-    answered = true;
-
-    clearInterval(timer);
-
-    const buttons = document.querySelectorAll('#options button');
-    const correctIndex = currentQuestion.correctIndex;
-    buttons.forEach((btn, index) => {
-        btn.style.pointerEvents = 'none';
-        if (index === correctIndex) {
-            btn.style.cssText = `
-                background: #2ecc71 !important;
-                border: 2px solid #27ae60 !important;
-                transform: scale(1.05);
-            `;
-        }
-    });
-
-    const roomRef = database.ref('rooms/' + currentRoomId);
-    const playerPath = isHost ? 'player1' : 'player2';
-    const opponentPath = isHost ? 'player2' : 'player1';
-
-    roomRef.once('value').then(snapshot => {
-        const room = snapshot.val();
-        const playerClass = room[playerPath].class;
-        const opponentClass = room[opponentPath].class;
-
-        const baseDamage = 50 + Math.random() * 30;
-        let damageToOpponent = baseDamage * playerClass.attack;
-        let damageToSelf = baseDamage / playerClass.defense;
-
-        if (isCorrect) {
-            soundEffects.attack.play();
-            if (navigator.vibrate) navigator.vibrate(200);
-
-            if (playerClass.type === 'warrior' && Math.random() < 0.3) {
-                damageToOpponent *= 2;
-                showEffect('sword-flash');
-            } else if (playerClass.type === 'assassin' && Math.random() < playerClass.dodge) {
-                showEffect('dodgeAnimation');
-            } else if (playerClass.type === 'mage') {
-                showEffect('fireEffect');
-            } else if (playerClass.type === 'tank') {
-                showEffect('shieldEffect');
-            }
-
-            room[opponentPath].health = Math.max(room[opponentPath].health - damageToOpponent, 0);
-            if (room[opponentPath].health <= 0) {
-                handleGameEnd(playerPath);
-                return;
-            }
-        } else {
-            if (navigator.vibrate) navigator.vibrate(200);
-
-            if (playerClass.type === 'tank') {
-                damageToSelf = baseDamage; // 錯答時防禦無效
-            } else if (playerClass.type === 'mage') {
-                damageToSelf *= (1 - playerClass.damageReduction);
-                showEffect('fireEffect');
-            } else if (playerClass.type === 'assassin' && Math.random() < playerClass.dodge) {
-                showEffect('dodgeAnimation');
-                damageToSelf = 0;
-            }
-
-            room[playerPath].health = Math.max(room[playerPath].health - damageToSelf, 0);
-            if (room[playerPath].health <= 0) {
-                handleGameEnd(opponentPath);
-                return;
-            }
-        }
-
-        roomRef.set(room).then(() => {
-            setTimeout(() => {
-                buttons.forEach(btn => {
-                    btn.style.cssText = '';
-                    btn.style.pointerEvents = 'auto';
-                });
-                answered = false;
-                if (!gameOver) loadNewQuestion();
-            }, 700);
-        });
-    });
-
-
-    
 }
 
 
@@ -2904,58 +2812,8 @@ function loadNewQuestion() {
             console.error('獲取問題總數時出錯:', error);
         });
     });
-
-const roomRef = database.ref('rooms/' + currentRoomId);
-    roomRef.child('questions').orderByKey().limitToLast(1).once('value').then(snapshot => {
-        snapshot.forEach(childSnapshot => {
-            const questionData = childSnapshot.val();
-            currentQuestion = questionData;
-            displayQuestion(questionData);
-
-            // 添加遮擋事件判斷（90% 機率）
-            if (Math.random() < 0.9) {
-                startBlockEvent();
-            }
-        });
-    }).catch(error => {
-        console.error('下載問題數據時出錯:', error);
-    });
-
-    
 }
 
-function startBlockEvent() {
-    const questionDiv = document.getElementById('question');
-    const optionsDiv = document.getElementById('options');
-    const originalQuestion = questionDiv.textContent;
-
-    // 設置遮擋狀態
-    isBlocked = true;
-
-    // 顯示遮擋提示並禁用按鈕
-    questionDiv.textContent = '遮擋中，請稍候...';
-    const buttons = optionsDiv.querySelectorAll('button');
-    buttons.forEach(btn => btn.disabled = true);
-
-    // 倒計時提示
-    let remainingTime = 3;
-    const interval = setInterval(() => {
-        remainingTime--;
-        if (remainingTime > 0) {
-            questionDiv.textContent = `遮擋中，剩餘${remainingTime}秒...`;
-        } else {
-            // 遮擋結束，恢復狀態
-            clearInterval(interval);
-            questionDiv.textContent = originalQuestion;
-            buttons.forEach(btn => btn.disabled = false);
-            isBlocked = false;
-        }
-    }, 1000);
-}
-
-
-
-    
 function displayQuestion(question) {
     this.answered = false; // 重置答題狀態
     window.currentQuestion = question;
