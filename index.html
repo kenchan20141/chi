@@ -1232,7 +1232,7 @@
     <div id="timer">🕒15</div>
 </div>
 
-<div id="obstructionOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10002; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+<div id="obstructionOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10002; color: white; font-size: 2rem; text-align: center; line-height: 100vh;">
     敵人施放煙霧！
 </div>
 
@@ -1384,6 +1384,10 @@
     
 <script>
 
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('obstructionOverlay').style.display = 'none';
+});
+    
 
 function triggerObstruction(callback) {
     const overlay = document.getElementById('obstructionOverlay');
