@@ -2844,27 +2844,11 @@ function triggerObstructionMultiplayer() {
     obstruction.textContent = '遮擋中...';
 
     // 隨機選擇遮擋問題或選項
-    if (Math.random() < 0.5) {
+    if (Math.random() < 0.9) {
         questionElement.appendChild(obstruction);
     } else {
         optionsElement.appendChild(obstruction);
     }
-
-    // 顯示提示框
-    const notification = document.createElement('div');
-    notification.textContent = '遮擋效果已發動！';
-    notification.style.cssText = `
-        position: fixed;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        z-index: 1000;
-    `;
-    document.body.appendChild(notification);
 
     // 3秒後移除遮擋和提示
     setTimeout(() => {
