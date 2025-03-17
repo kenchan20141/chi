@@ -2837,37 +2837,17 @@ function displayQuestion(question) {
 
 
 function startTimer() {
-    let timeLeft = 15; // 初始倒計時15秒
-    const timerElement = document.getElementById('timer');
-    timerElement.textContent = `🕒${timeLeft}`; // 初始顯示
-
-    // 清除之前的計時器（防止多個計時器同時運行）
-    if (timer) clearInterval(timer);
-
-    // 每秒更新倒計時
+    clearInterval(timer);
+    // 新增以下兩行重置動畫狀態
+    document.getElementById('gameArea').classList.remove('screen-shake');
+    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
+    timeLeft = 15;
+    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
     timer = setInterval(() => {
-        timeLeft -= 1;
-        timerElement.textContent = `🕒${timeLeft}`;
-
-        // 當時間到達0時，執行超時邏輯
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            handleTimeout();
-        }
+        timeLeft--;
+        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+        if (timeLeft <= 0) checkAnswer(false);
     }, 1000);
-}
-
-// 處理倒計時結束的邏輯
-function handleTimeout() {
-    if (gameOver || answered) return; // 如果遊戲已結束或已回答，則不執行
-
-    // 根據遊戲模式執行不同的超時處理
-    if (selectedDifficulty) { // 單機模式
-        checkAnswerSinglePlayer(false, currentQuestion.id); // 視為答錯
-    } else { // 多玩家模式
-        // 可根據需求添加多玩家模式的超時邏輯，例如通知伺服器
-        console.log("時間到，未作答！");
-    }
 }
 
 function checkGameOver() {
