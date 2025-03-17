@@ -660,13 +660,13 @@
             background: var(--main-red);
         }
         
-        #timer {
-            font-size: 3rem;
-            position: fixed;
-    top: 20px;  /* 改到上方 */
+       .timer {
+    font-size: 3rem;
+    position: absolute;
+    top: 20px;
     right: 20px;
-    z-index: 999; /* 確保在最上層 */
-        }
+    z-index: 999;
+}
 
         .decorative-border {
             position: absolute;
@@ -1228,7 +1228,7 @@
         </div>
     </div>
     
-    <div id="timer">🕒15</div>
+    <div id="myTimer" class="timer">🕒15</div> <!-- 己方計時器 -->
 </div>
 
 <div id="skillEffect" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000;"></div>
@@ -2231,8 +2231,8 @@ function uploadQuestions(grade, topic, questions) {
 
 let currentRoomId = null;
 let isHost = false;
-let timer;
-let timeLeft = 15;
+let myTimerInterval;
+let myTimeLeft;
 let gameOver = false;
 let playerClass = null; // 存储玩家选择的职业
 
@@ -2680,6 +2680,14 @@ function updateHealthDisplay(room) {
     }
 }
 
+function handleTimeout() {
+    const roomRef = database.ref('rooms/' + currentRoomId);
+    const playerPath = isHost ? 'player1' : 'player2';
+    const damage = 20; // 超時扣血量
+    roomRef.child(playerPath).child('health').transaction(health => Math.max(0, (health || 100) - damage));
+}
+
+    
 function startGame(room) {
     if (!room.player1 || !room.player2) {
         console.log('等待對手加入...');
@@ -2837,16 +2845,26 @@ function displayQuestion(question) {
 
 
 function startTimer() {
-    clearInterval(timer);
-    // 新增以下兩行重置動畫狀態
-    document.getElementById('gameArea').classList.remove('screen-shake');
-    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
+    const settings = { answerTime: 15 }; // 預設15秒，可根據遊戲難度調整
+    myTimeLeft = settings.answerTime * 1000; // 轉為毫秒
+
+    // 清除舊的計時器
+    clearInterval(myTimerInterval);
+
+    // 更新己方計時器顯示
+    const myTimerElement = document.getElementById('myTimer');
+    myTimerElement.textContent = `🕒${Math.ceil(myTimeLeft / 1000)}`;
+
+    // 啟動計時器
+    myTimerInterval = setInterval(() => {
+        myTimeLeft -= 1000;
+        if (myTimeLeft <= 0) {
+            clearInterval(myTimerInterval);
+            myTimerElement.textContent = '🕒0';
+            handleTimeout(); // 處理己方超時
+        } else {
+            myTimerElement.textContent = `🕒${Math.ceil(myTimeLeft / 1000)}`;
+        }
     }, 1000);
 }
 
