@@ -2837,16 +2837,17 @@ function displayQuestion(question) {
 
 
 function startTimer() {
-    clearInterval(timer);
-    // 新增以下兩行重置動畫狀態
-    document.getElementById('gameArea').classList.remove('screen-shake');
-    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+    let timeLeft = 15; // 根據難度設置
+    document.getElementById('timer').textContent = `🕒${timeLeft}`;
     timer = setInterval(() => {
         timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
+        document.getElementById('timer').textContent = `🕒${timeLeft}`;
+        if (timeLeft <= 0) {
+            clearInterval(timer); // 清除計時器
+            if (!answered && !gameOver) { // 確保未回答且遊戲未結束
+                checkAnswerSinglePlayer(false, currentQuestion.id); // 超時視為答錯
+            }
+        }
     }, 1000);
 }
 
@@ -3449,14 +3450,17 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
         showEffect('shieldEffect');
     }
 
+   // 修改後的重置與刷新邏輯
     setTimeout(() => {
         buttons.forEach(btn => {
-            btn.style.cssText = '';
-            btn.style.pointerEvents = 'auto';
+            btn.style.cssText = ''; // 重置樣式
+            btn.style.pointerEvents = 'auto'; // 恢復點擊功能
         });
-        answered = false;
-        hasHealedThisTurn = false;
-        if (!gameOver) loadNewQuestionSinglePlayer();
+        answered = false; // 重置回答狀態
+        hasHealedThisTurn = false; // 重置恢復狀態
+        if (!gameOver) {
+            loadNewQuestionSinglePlayer(); // 加載新問題
+        }
     }, 700);
 }
 
