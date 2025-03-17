@@ -1181,11 +1181,6 @@
     ">0000</span> 已開啟，靜候來者...
 </div>
 
-
-<div id="timer-player1">🕒15秒</div>
-<div id="timer-player2">🕒15秒</div>
-
-    
     <div id="gameArea">
         <div class="decorative-border"></div>
         <!-- 敵方血條移至頂部 -->
@@ -2016,13 +2011,13 @@ function stopDangerAlert() {
 
     
 const firebaseConfig = {
-apiKey: "AIzaSyBLUpaWYdcJTrI9KmiiCJ7ZeTE2IRjkobU",
-authDomain: "for-test-6bc8f.firebaseapp.com",
-databaseURL: "https://for-test-6bc8f-default-rtdb.firebaseio.com",
-projectId: "for-test-6bc8f",
-storageBucket: "for-test-6bc8f.firebasestorage.app",
-messagingSenderId: "948613965375",
-appId: "1:948613965375:web:ae966d7dd461e328093a8a"
+  apiKey: "AIzaSyB6MC_t2CXC1HG-QLjZ7lYk-pYJFp3PSjw",
+  authDomain: "for-test2-dd394.firebaseapp.com",
+  databaseURL: "https://for-test2-dd394-default-rtdb.firebaseio.com",
+  projectId: "for-test2-dd394",
+  storageBucket: "for-test2-dd394.firebasestorage.app",
+  messagingSenderId: "348250219431",
+  appId: "1:348250219431:web:60631c8395154270568c82"
 
 
 };
@@ -2841,62 +2836,18 @@ function displayQuestion(question) {
 }
 
 
-// 全局計時器物件，用於管理兩個玩家的計時狀態
-let timers = {
-    player1: { time: 15, interval: null },
-    player2: { time: 15, interval: null }
-};
-
-function startTimer(player) {
-    // 停止另一個玩家的計時器
-    const otherPlayer = player === 'player1' ? 'player2' : 'player1';
-    stopTimer(otherPlayer);
-
-    // 重置動畫狀態（來自您的原始代碼）
+function startTimer() {
+    clearInterval(timer);
+    // 新增以下兩行重置動畫狀態
     document.getElementById('gameArea').classList.remove('screen-shake');
     document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-
-    // 重置指定玩家的計時器時間
-    timers[player].time = 15;
-
-    // 更新計時器顯示
-    updateTimerDisplay(player);
-
-    // 啟動計時器
-    timers[player].interval = setInterval(() => {
-        timers[player].time--;
-        if (timers[player].time <= 0) {
-            clearInterval(timers[player].interval);
-            timers[player].interval = null;
-            // 超時時調用 checkAnswer，視為答錯
-            checkAnswer(false, player);
-        }
-        updateTimerDisplay(player);
+    timeLeft = 15;
+    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+        if (timeLeft <= 0) checkAnswer(false);
     }, 1000);
-}
-
-function stopTimer(player) {
-    // 停止指定玩家的計時器
-    if (timers[player].interval) {
-        clearInterval(timers[player].interval);
-        timers[player].interval = null;
-    }
-}
-
-function updateTimerDisplay(player) {
-    // 更新指定玩家的計時器顯示，確保時間不顯示負數
-    const timerElement = document.getElementById(`timer-${player}`);
-    if (timerElement) {
-        timerElement.textContent = `🕒${timers[player].time > 0 ? timers[player].time : 0}秒`;
-    }
-}
-
-function checkAnswer(isCorrect, player) {
-    // 這裡是您的 checkAnswer 邏輯範例，根據 isCorrect 和 player 處理
-    if (!isCorrect) {
-        console.log(`${player} 超時或答錯！`);
-        // 在這裡添加您的超時處理邏輯
-    }
 }
 
 function checkGameOver() {
