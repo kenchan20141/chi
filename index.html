@@ -1377,7 +1377,10 @@
     
 <script>
 
+let player1Timer = null;
+let player2Timer = null;
 
+    
     function showStoryBackground() {
     document.getElementById('storyModal').style.display = 'block';
 }
@@ -1655,6 +1658,12 @@ function checkAnswer(isCorrect, questionId) {
     // 如果已回答或遊戲結束，則退出
     if (answered || gameOver) return;
     answered = true;
+
+// 清除當前玩家的計時器
+    if (isHost) clearInterval(player1Timer);
+    else clearInterval(player2Timer);
+
+    
     clearInterval(timer);
     // 樣式處理：禁用按鈕並高亮正確答案
     const buttons = document.querySelectorAll('#options button');
@@ -2796,6 +2805,9 @@ function loadNewQuestion() {
                     id: Date.now()
                 };
 
+displayQuestion(currentQuestion);
+        startTimer(); // 在這裡啟動計時器
+                
                 // 更新當前問題
                 currentQuestionId = processedQuestion.id;
                 const playerPath = isHost ? 'player1' : 'player2';
@@ -2837,18 +2849,74 @@ function displayQuestion(question) {
 
 
 function startTimer() {
-    clearInterval(timer);
-    document.getElementById('gameArea').classList.remove('screen-shake');
-    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
-    }, 1000);
+    const timerElement = document.getElementById('timer');
+    let timeLeft = 15; // 假設初始時間為15秒，可根據需要調整
+
+    // 清空舊計時器
+    clearInterval(player1Timer);
+    clearInterval(player2Timer);
+
+    // 為玩家1啟動計時器
+    if (isHost) { // 如果是房主（player1）
+        timerElement.textContent = `🕒${timeLeft}`;
+        player1Timer = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = `🕒${timeLeft}`;
+            if (timeLeft <= 0) {
+                clearInterval(player1Timer);
+                handleTimeout('player1'); // 玩家1超時
+            }
+        }, 1000);
+    }
+
+    // 為玩家2啟動計時器
+    if (!isHost) { // 如果是加入者（player2）
+        timerElement.textContent = `🕒${timeLeft}`;
+        player2Timer = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = `🕒${timeLeft}`;
+            if (timeLeft <= 0) {
+                clearInterval(player2Timer);
+                handleTimeout('player2'); // 玩家2超時
+            }
+        }, 1000);
+    }
 }
 
+function handleTimeout(player) {
+    if (gameOver || answered) return; // 避免重複處理
+    answered = true;
+
+    const roomRef = database.ref('rooms/' + currentRoomId);
+    roomRef.once('value', (snapshot) => {
+        const room = snapshot.val();
+        if (!room) return;
+
+        const playerHealthPath = `${player}/health`;
+        const opponentDefense = player === 'player1' ? room.player2?.defense || 1.0 : room.player1?.defense || 1.0;
+        let currentHealth = room[player].health || 100;
+        const baseDamage = 50; // 假設基礎傷害為50，可調整
+        const damage = Math.round(baseDamage / opponentDefense); // 按錯答計算傷害
+
+        currentHealth = Math.max(currentHealth - damage, 0);
+        roomRef.update({ [playerHealthPath]: currentHealth });
+
+        // 更新顯示並檢查遊戲結束
+        updateHealthDisplay(room);
+        if (currentHealth <= 0) {
+            roomRef.update({ gameEnded: true, winner: player === 'player1' ? 'player2' : 'player1' });
+        }
+
+        // 加載新問題
+        setTimeout(() => {
+            answered = false;
+            loadNewQuestion();
+        }, 700);
+    });
+}
+
+
+    
 function checkGameOver() {
     const roomRef = database.ref('rooms/' + currentRoomId);
     roomRef.once('value').then(snapshot => {
