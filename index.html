@@ -660,13 +660,6 @@
             background: var(--main-red);
         }
         
-        #timer {
-            font-size: 3rem;
-            position: fixed;
-    top: 20px;  /* 改到上方 */
-    right: 20px;
-    z-index: 999; /* 確保在最上層 */
-        }
 
         .decorative-border {
             position: absolute;
@@ -959,7 +952,11 @@
    
     <button class="music-control" onclick="toggleMusic()">🎵</button>
     
+<div id="timer-player1" style="font-size: 3rem; position: fixed; top: 20px; right: 20px; z-index: 999;"></div>
+<div id="timer-player2" style="font-size: 3rem; position: fixed; top: 60px; right: 20px; z-index: 999;"></div>
 
+
+    
 <div id="roomControl">
     <!-- 新增裝飾性邊框 -->
     <div class="main-border"></div>
@@ -1645,9 +1642,21 @@ function displayQuestion(question) {
     });
 
     startTimer();
+
+// 啟動計時器
+    if (isHost) {
+        startTimer('player1');
+    } else {
+        startTimer('player2');
+    }
+
+    
 }
 
 function checkAnswer(isCorrect, questionId) {
+
+clearInterval(timers[playerId]); // 停止該玩家的計時器
+    
     console.log('checkAnswer called, isCorrect:', isCorrect, 'questionId:', questionId);
     // 如果問題已回答，則退出
     if (answeredQuestions.has(questionId)) return;
@@ -2836,17 +2845,49 @@ function displayQuestion(question) {
 }
 
 
-function startTimer() {
-    clearInterval(timer);
-    // 新增以下兩行重置動畫狀態
+// 在全局範圍內定義 timers 對象，用於儲存每個玩家的計時器
+let timers = {};
+let timeLefts = {}; // 儲存每個玩家的剩餘時間
+
+function startTimer(playerId) {
+    // 清除該玩家的舊計時器
+    clearInterval(timers[playerId]);
+
+    // 重置動畫狀態
     document.getElementById('gameArea').classList.remove('screen-shake');
     document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
+
+    // 初始化該玩家的倒計時
+    timeLefts[playerId] = 15;
+
+    // 確保每個玩家有獨立的計時器顯示元素
+    let timerElement = document.getElementById(`timer-${playerId}`);
+    if (!timerElement) {
+        timerElement = document.createElement('div');
+        timerElement.id = `timer-${playerId}`;
+        timerElement.style.fontSize = '3rem';
+        timerElement.style.position = 'fixed';
+        timerElement.style.zIndex = '999';
+        // 根據玩家身份定位計時器
+        if (playerId === 'player1') {
+            timerElement.style.top = '20px';
+            timerElement.style.right = '20px';
+        } else if (playerId === 'player2') {
+            timerElement.style.top = '60px'; // 避免與 player1 重疊
+            timerElement.style.right = '20px';
+        }
+        document.body.appendChild(timerElement);
+    }
+    timerElement.textContent = `🕒${timeLefts[playerId]}秒`;
+
+    // 啟動該玩家的計時器
+    timers[playerId] = setInterval(() => {
+        timeLefts[playerId]--;
+        timerElement.textContent = `🕒${timeLefts[playerId]}秒`;
+        if (timeLefts[playerId] <= 0) {
+            checkAnswer(false, playerId); // 傳遞 playerId 給 checkAnswer
+            clearInterval(timers[playerId]); // 時間到時清除計時器
+        }
     }, 1000);
 }
 
