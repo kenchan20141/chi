@@ -2836,19 +2836,6 @@ function displayQuestion(question) {
 }
 
 
-function startTimer(playerId) {
-    let timeLeft = 15; // 初始倒數時間
-    const timerElement = document.getElementById('timer');
-    let timer = setInterval(() => {
-        timeLeft--;
-        timerElement.textContent = `🕒${timeLeft}`;
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            checkAnswer(false, playerId); // 根據玩家ID處理超時
-        }
-    }, 1000);
-}
-
 function checkGameOver() {
     const roomRef = database.ref('rooms/' + currentRoomId);
     roomRef.once('value').then(snapshot => {
