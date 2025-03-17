@@ -2850,61 +2850,6 @@ function startTimer() {
     }, 1000);
 }
 
-
-function handleTimeout() {
-    if (isSinglePlayer) {
-        // 單人模式邏輯
-        answered = true; // 設置為已回答，防止重複處理
-        clearInterval(timer); // 確保計時器已清除
-
-        // 模擬答錯題的邏輯：扣除玩家生命值
-        const maxPlayerHealth = 1000 + (playerLevel - 1) * 100;
-        const difficultyMultiplier = {
-            easy: 0.8,
-            normal: 1.0,
-            hard: 3.5,
-            hell: 4.25
-        }[selectedDifficulty];
-        const baseDamage = 50 + Math.random() * 30 + (playerLevel - 1) * 5;
-
-        let defenseMultiplier = singlePlayerClass.defense;
-        let damageToPlayer = baseDamage * difficultyMultiplier;
-
-        // 職業特性處理
-        if (singlePlayerClass.type === 'tank') {
-            defenseMultiplier = 1.0; // 鐵甲宗錯答時防禦無效
-        } else if (singlePlayerClass.type === 'mage') {
-            damageToPlayer *= (1 - singlePlayerClass.damageReduction); // 玄天閣減傷
-            showEffect('fireEffect');
-        } else if (singlePlayerClass.type === 'assassin' && Math.random() < singlePlayerClass.dodge) {
-            showEffect('dodgeAnimation');
-            damageToPlayer = 0; // 閃避成功
-        }
-
-        damageToPlayer = Math.round(damageToPlayer / defenseMultiplier);
-        singlePlayerHealth = Math.max(singlePlayerHealth - damageToPlayer, 0);
-        updateSinglePlayerHealthDisplay();
-        if (damageToPlayer > 0) showDamageAnimation(damageToPlayer, 'player');
-
-        // 檢查遊戲是否結束
-        if (singlePlayerHealth <= 0) {
-            handleSinglePlayerGameOver(false);
-            return;
-        }
-
-        // 載入下一道問題
-        setTimeout(() => {
-            answered = false; // 重置回答狀態
-            loadNewQuestionSinglePlayer(); // 載入新問題
-        }, 700);
-    } else {
-        // 多人模式邏輯（保持不變）
-        // 在此處添加多人模式的處理，如果已有實現則保留
-    }
-}
-
-    
-
 function checkGameOver() {
     const roomRef = database.ref('rooms/' + currentRoomId);
     roomRef.once('value').then(snapshot => {
