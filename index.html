@@ -660,13 +660,6 @@
             background: var(--main-red);
         }
         
-        #timer {
-            font-size: 3rem;
-            position: fixed;
-    top: 20px;  /* 改到上方 */
-    right: 20px;
-    z-index: 999; /* 確保在最上層 */
-        }
 
         .decorative-border {
             position: absolute;
@@ -958,6 +951,9 @@
 <body>
    
     <button class="music-control" onclick="toggleMusic()">🎵</button>
+
+<div id="timerA">🕒15秒</div>
+<div id="timerB">🕒15秒</div>
     
 
 <div id="roomControl">
@@ -1412,6 +1408,12 @@ async function getIpAddress() {
 
     
 // 在代码开头部分，添加一个新的变量用于存储提示信息的元素
+
+let playerATimer;
+let playerBTimer;
+let playerATimeLeft = 15;
+let playerBTimeLeft = 15;
+    
     let skillTriggered = false; // 在外部聲明 skillTriggered
 let singlePlayerClass = null; // 單機模式選中的職業
 let singlePlayerSelectedGrade = null; // 單機模式選中的年級
@@ -1648,6 +1650,11 @@ function displayQuestion(question) {
 }
 
 function checkAnswer(isCorrect, questionId) {
+
+// 在這裡實現答案檢查邏輯，根據玩家參數處理對應的結果
+    // 例如：if (player === 'A') { ... } else if (player === 'B') { ... }
+    console.log(`玩家 ${player} 的答案是否正確: ${isCorrect}`);
+    
     console.log('checkAnswer called, isCorrect:', isCorrect, 'questionId:', questionId);
     // 如果問題已回答，則退出
     if (answeredQuestions.has(questionId)) return;
@@ -2836,18 +2843,38 @@ function displayQuestion(question) {
 }
 
 
-function startTimer() {
-    clearInterval(timer);
-    // 新增以下兩行重置動畫狀態
+function startTimer(player) {
+    if (player === 'A') {
+        // 清除玩家A的舊計時器
+        clearInterval(playerATimer);
+        // 重置玩家A的時間
+        playerATimeLeft = 15;
+        // 更新玩家A的計時器顯示（假設HTML中有id為'timerA'的元素）
+        document.getElementById('timerA').textContent = `🕒${playerATimeLeft}秒`;
+        // 啟動玩家A的計時器
+        playerATimer = setInterval(() => {
+            playerATimeLeft--;
+            document.getElementById('timerA').textContent = `🕒${playerATimeLeft}秒`;
+            if (playerATimeLeft <= 0) checkAnswer(false, 'A');
+        }, 1000);
+    } else if (player === 'B') {
+        // 清除玩家B的舊計時器
+        clearInterval(playerBTimer);
+        // 重置玩家B的時間
+        playerBTimeLeft = 15;
+        // 更新玩家B的計時器顯示（假設HTML中有id為'timerB'的元素）
+        document.getElementById('timerB').textContent = `🕒${playerBTimeLeft}秒`;
+        // 啟動玩家B的計時器
+        playerBTimer = setInterval(() => {
+            playerBTimeLeft--;
+            document.getElementById('timerB').textContent = `🕒${playerBTimeLeft}秒`;
+            if (playerBTimeLeft <= 0) checkAnswer(false, 'B');
+        }, 1000);
+    }
+
+    // 重置動畫狀態（適用於兩個玩家）
     document.getElementById('gameArea').classList.remove('screen-shake');
     document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
-    }, 1000);
 }
 
 function checkGameOver() {
