@@ -2836,17 +2836,47 @@ function displayQuestion(question) {
 }
 
 
+let timerA, timerB; // 為玩家A和玩家B分別定義計時器變量
+let timeLeftA = 15; // 玩家A的剩餘時間
+let timeLeftB = 15; // 玩家B的剩餘時間
+
 function startTimer() {
-    clearInterval(timer);
-    // 新增以下兩行重置動畫狀態
+    // 清除現有的計時器
+    clearInterval(timerA);
+    clearInterval(timerB);
+
+    // 重置動畫狀態
     document.getElementById('gameArea').classList.remove('screen-shake');
     document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
+
+    // 重置兩個玩家的時間
+    timeLeftA = 15;
+    timeLeftB = 15;
+
+    // 更新兩個玩家的計時器顯示
+    document.getElementById('timerA').textContent = `玩家A 🕒${timeLeftA}秒`;
+    document.getElementById('timerB').textContent = `玩家B 🕒${timeLeftB}秒`;
+
+    // 啟動玩家A的計時器
+    timerA = setInterval(() => {
+        timeLeftA--;
+        document.getElementById('timerA').textContent = `玩家A 🕒${timeLeftA}秒`;
+        if (timeLeftA <= 0) {
+            clearInterval(timerA); // 停止計時器
+            timeLeftA = 0; // 防止負數
+            checkAnswer(false); // 處理超時
+        }
+    }, 1000);
+
+    // 啟動玩家B的計時器
+    timerB = setInterval(() => {
+        timeLeftB--;
+        document.getElementById('timerB').textContent = `玩家B 🕒${timeLeftB}秒`;
+        if (timeLeftB <= 0) {
+            clearInterval(timerB); // 停止計時器
+            timeLeftB = 0; // 防止負數
+            checkAnswer(false); // 處理超時
+        }
     }, 1000);
 }
 
