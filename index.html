@@ -1377,11 +1377,6 @@
     
 <script>
 
-    let timers = {
-    player1: null,
-    player2: null
-};
-
 
     function showStoryBackground() {
     document.getElementById('storyModal').style.display = 'block';
@@ -2842,33 +2837,17 @@ function displayQuestion(question) {
 
 
 function startTimer() {
-    const player = isHost ? 'player1' : 'player2'; // 根據玩家身份選擇計時器
-    const timeDisplay = document.getElementById('timer'); // 假設顯示計時器的元素
-    let timeLeft = 15; // 初始時間，例如15秒
-
-    // 先清除舊計時器
-    if (timers[player]) {
-        clearInterval(timers[player]);
-    }
-
-    // 啟動新計時器
-    timers[player] = setInterval(() => {
-        timeDisplay.textContent = `🕒${timeLeft}`;
+    clearInterval(timer);
+    // 新增以下兩行重置動畫狀態
+    document.getElementById('gameArea').classList.remove('screen-shake');
+    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
+    timeLeft = 15;
+    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+    timer = setInterval(() => {
         timeLeft--;
-        if (timeLeft < 0) {
-            clearInterval(timers[player]);
-            timers[player] = null;
-            // 可在此處添加超時邏輯，例如扣分
-        }
+        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+        if (timeLeft <= 0) checkAnswer(false);
     }, 1000);
-}
-
-    function stopTimer() {
-    const player = isHost ? 'player1' : 'player2';
-    if (timers[player]) {
-        clearInterval(timers[player]);
-        timers[player] = null;
-    }
 }
 
 function checkGameOver() {
@@ -3377,8 +3356,6 @@ function checkAnswerSinglePlayer(isCorrect, questionId) {
     if (answeredQuestions.has(questionId) || answered || gameOver) return;
     answeredQuestions.add(questionId);
     answered = true;
-
-    stopTimer(); // 停止當前玩家的計時器
 
     clearInterval(timer);
 
