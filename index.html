@@ -1873,6 +1873,9 @@ function checkAnswer(isCorrect, questionId) {
             }
         });
     }, 700);
+
+    if (player1Answered && player2Answered) { // 雙方都回答後
+        loadNewQuestion(); // 加載新問題
 }
 
 function showDodgeText() {
@@ -2836,17 +2839,20 @@ function displayQuestion(question) {
 }
 
 
-function startTimer() {
-    clearInterval(timer);
-    // 新增以下兩行重置動畫狀態
-    document.getElementById('gameArea').classList.remove('screen-shake');
-    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
+let playerTimers = { player1: null, player2: null }; // 儲存每個玩家的計時器
+let remainingTimes = { player1: 15, player2: 15 };   // 儲存每個玩家的剩餘時間
+
+function startTimer(player) {
+    clearInterval(playerTimers[player]); // 清除該玩家的舊計時器
+    remainingTimes[player] = 15;          // 重置該玩家的時間
+    document.getElementById('timer').textContent = `🕒${remainingTimes[player]}`; // 更新顯示
+    playerTimers[player] = setInterval(() => {
+        remainingTimes[player]--;
+        document.getElementById('timer').textContent = `🕒${remainingTimes[player]}`;
+        if (remainingTimes[player] <= 0) {
+            clearInterval(playerTimers[player]);
+            checkAnswer(false, player); // 時間到，自動檢查答案
+        }
     }, 1000);
 }
 
