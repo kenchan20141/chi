@@ -961,6 +961,14 @@
     
 
 <div id="roomControl">
+
+
+<div id="doubleTimeAnnouncement" style="display: none; text-align: center; margin: 1rem 0; padding: 1rem; background: rgba(255, 215, 0, 0.2); border: 2px solid gold; border-radius: 10px; color: gold; font-size: 1.2rem;">
+        <i class="fas fa-star" style="color: #FFD700; margin-right: 0.5rem;"></i>
+        <strong>雙倍時段已開啟！</strong> 由19:00至20:00，參與多人模式可獲得雙倍積分和經驗值！
+        <i class="fas fa-star" style="color: #FFD700; margin-left: 0.5rem;"></i>
+    </div>
+    
     <!-- 新增裝飾性邊框 -->
     <div class="main-border"></div>
     
@@ -1377,6 +1385,28 @@
     
 <script>
 
+
+// 檢查是否在雙倍時段
+function checkDoubleTime() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const isDoubleTime = (hours === 19 && minutes >= 0 && minutes < 60);
+    
+    const announcement = document.getElementById('doubleTimeAnnouncement');
+    if (isDoubleTime) {
+        announcement.style.display = 'block';
+    } else {
+        announcement.style.display = 'none';
+    }
+}
+
+// 頁面加載時立即檢查
+checkDoubleTime();
+
+// 每分鐘檢查一次
+setInterval(checkDoubleTime, 60000);
+    
 
     function showStoryBackground() {
     document.getElementById('storyModal').style.display = 'block';
