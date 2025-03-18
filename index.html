@@ -1391,7 +1391,7 @@ function checkDoubleTime() {
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
-    const isDoubleTime = (hours === 19 && minutes >= 0 && minutes < 60);
+    const isDoubleTime = (hours === 19 && minutes >= 0 && minutes < 10);
     
     const announcement = document.getElementById('doubleTimeAnnouncement');
     if (isDoubleTime) {
