@@ -2896,7 +2896,7 @@ function handleGameEnd(winnerType) {
     const minutes = now.getMinutes();
 
     // 檢查是否在晚上8時至8時半 (20:00 - 20:30)
-    const isDoubleTime = (hours === 19 && minutes >= 0 && minutes < 60);
+    const isDoubleTime = (hours === 19 && minutes >= 0 && minutes < 10);
 
     // 定義基礎積分和經驗值變化
     const currentPlayerPath = isHost ? 'player1' : 'player2';
