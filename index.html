@@ -2867,26 +2867,16 @@ function displayQuestion(question) {
 
 
 function startTimer() {
-    // 清除現有的定時器，防止重疊
     clearInterval(timer);
-    
-    // 初始化倒計時為 15 秒
+    // 新增以下兩行重置動畫狀態
+    document.getElementById('gameArea').classList.remove('screen-shake');
+    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
     timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}`;
-    
-    // 設置每秒更新一次的定時器
+    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
     timer = setInterval(() => {
-        if (timeLeft > 0) {
-            // 僅當 timeLeft 大於 0 時減少並更新顯示
-            timeLeft--;
-            document.getElementById('timer').textContent = `🕒${timeLeft}`;
-        } else {
-            // 當 timeLeft 達到 0 時，停止定時器並處理結束邏輯
-            clearInterval(timer);
-            if (!answered) {
-                checkAnswer(false); // 未回答時視為答錯
-            }
-        }
+        timeLeft--;
+        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+        if (timeLeft <= 0) checkAnswer(false);
     }, 1000);
 }
 
