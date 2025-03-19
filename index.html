@@ -1994,8 +1994,12 @@ function showSkillEffect(damage) {
     
 // 修改 updateHealthDisplay 函數
 function updateHealthDisplay(room) {
+
     const user = auth.currentUser;
     if (!user) return;
+
+    const myHealth = isHost ? room.player1?.health : room.player2?.health;
+    const opponentHealth = isHost ? room.player2?.health : room.player1?.health;
 
     const playerPath = isHost ? 'player1' : 'player2';
     const opponentPath = isHost ? 'player2' : 'player1';
@@ -2875,22 +2879,61 @@ function displayQuestion(question) {
 }
 
 
-function startTimer() {
-    // 清除現有的計時器，避免重疊
-    clearInterval(timer);
-    timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}`;
-    
-    timer = setInterval(() => {
-        if (timeLeft > 0) {
-            timeLeft--;
-            document.getElementById('timer').textContent = `🕒${timeLeft}`;
-        } else {
-            // 當時間到達0時，清除計時器並檢查條件
-            clearInterval(timer);
-            if (!answered && !gameOver) {
-                checkAnswer(false); // 視為錯答
-            }
+// 定義每個玩家的計時器和剩餘時間
+const timers = {}; // 用於存儲每個玩家的計時器
+const timeLeft = {}; // 用於存儲每個玩家的剩餘時間
+
+function startTimer(playerId) {
+    // 初始化該玩家的剩餘時間
+    timeLeft[playerId] = 15;
+    document.getElementById('timer').textContent = `🕒${timeLeft[playerId]}`;
+
+    // 清除該玩家的舊計時器（若存在）
+    if (timers[playerId]) {
+        clearInterval(timers[playerId]);
+    }
+
+    // 啟動該玩家的獨立計時器
+    timers[playerId] = setInterval(() => {
+        timeLeft[playerId]--;
+        document.getElementById('timer').textContent = `🕒${timeLeft[playerId]}`;
+        
+        if (timeLeft[playerId] <= 0) {
+            clearInterval(timers[playerId]);
+            handleTimeout(playerId); // 倒計時結束，處理該玩家的懲罰
+        }
+    }, 1000);
+}
+
+    function handleTimeout(playerId) {
+    if (answered || gameOver) return; // 避免重複處理
+    answered = true;
+
+    const roomRef = database.ref(`rooms/${currentRoomId}`);
+    const damage = 10; // 每次懲罰扣減10點氣血
+
+    // 根據 playerId 動態選擇氣血路徑
+    const healthPath = playerId === 'player1' ? 'player1/health' : 'player2/health';
+    roomRef.child(healthPath).transaction((health) => {
+        console.log(`${playerId} health before: ${health}`);
+        const newHealth = (health || 100) - damage;
+        console.log(`${playerId} health after: ${newHealth}`);
+        return Math.max(0, newHealth); // 確保氣血不低於0
+    });
+
+    // 禁用該玩家的選項按鈕，提供視覺反饋
+    const buttons = document.querySelectorAll('#options button');
+    buttons.forEach((btn) => {
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.5';
+    });
+
+    // 加載新問題並重啟該玩家的計時器
+    setTimeout(() => {
+        if (!gameOver) {
+            answered = false;
+            loadNewQuestion(); // 加載下一題（需確保此函數適用於多人模式）
+            startTimer(playerId); // 僅為該玩家重啟計時器
         }
     }, 1000);
 }
