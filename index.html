@@ -2261,8 +2261,8 @@ function uploadQuestions(grade, topic, questions) {
 
 let currentRoomId = null;
 let isHost = false;
-let hostTimer, clientTimer; // 獨立的計時器
-let hostTimeLeft = 15, clientTimeLeft = 15; // 獨立的倒計時時間
+let timer;
+let timeLeft = 15;
 let gameOver = false;
 let playerClass = null; // 存储玩家选择的职业
 
@@ -2867,50 +2867,17 @@ function displayQuestion(question) {
 
 
 function startTimer() {
-    let timeLeft = 15; // 初始時間
-    const timerElement = document.getElementById('timer');
-    timerElement.textContent = `🕒${timeLeft}`;
-
-    // 根據玩家身份選擇計時器
-    const timer = setInterval(() => {
+    clearInterval(timer);
+    // 新增以下兩行重置動畫狀態
+    document.getElementById('gameArea').classList.remove('screen-shake');
+    document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
+    timeLeft = 15;
+    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+    timer = setInterval(() => {
         timeLeft--;
-        if (timeLeft < 0) timeLeft = 0; // 防止負數
-        timerElement.textContent = `🕒${timeLeft}`;
-
-        if (timeLeft <= 0) {
-            clearInterval(isHost ? hostTimer : clientTimer); // 停止計時器
-            handleTimeout(); // 處理倒計時結束
-        }
+        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+        if (timeLeft <= 0) checkAnswer(false);
     }, 1000);
-
-    // 分配計時器
-    if (isHost) {
-        hostTimeLeft = timeLeft;
-        hostTimer = timer;
-    } else {
-        clientTimeLeft = timeLeft;
-        clientTimer = timer;
-    }
-}
-
-    function handleTimeout() {
-    const damage = 200; // 固定扣減200點氣血
-    const roomRef = database.ref('rooms/' + currentRoomId);
-
-    // 根據玩家身份扣減氣血
-    if (isHost) {
-        roomRef.child('player1/health').transaction(health => {
-            return Math.max(0, (health || 100) - damage); // 確保氣血不低於0
-        });
-    } else {
-        roomRef.child('player2/health').transaction(health => {
-            return Math.max(0, (health || 100) - damage); // 確保氣血不低於0
-        });
-    }
-
-    // 更新顯示並載入新題目
-    updateHealthDisplayFromDatabase();
-    loadNewQuestion();
 }
 
 function checkGameOver() {
