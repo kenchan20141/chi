@@ -2872,11 +2872,15 @@ function startTimer() {
     document.getElementById('gameArea').classList.remove('screen-shake');
     document.querySelectorAll('.health-fill').forEach(bar => bar.classList.remove('damage-effect'));
     timeLeft = 15;
-    document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
+    document.getElementById('timer').textContent = `🕒${timeLeft}`;
     timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = `🕒${timeLeft}秒`;
-        if (timeLeft <= 0) checkAnswer(false);
+        if (timeLeft > 0) {
+            timeLeft--;
+            document.getElementById('timer').textContent = `🕒${timeLeft}`;
+        } else {
+            clearInterval(timer);
+            checkAnswer(false);
+        }
     }, 1000);
 }
 
